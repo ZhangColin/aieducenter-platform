@@ -20,6 +20,7 @@ repositories {
 dependencies {
     // Spring Boot Starter
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     // cartisan-core 和 cartisan-web
     implementation("com.cartisan:cartisan-core:0.1.0-SNAPSHOT")

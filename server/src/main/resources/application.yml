@@ -4,3 +4,14 @@ server:
 spring:
   application:
     name: aieducenter-platform
+
+# Actuator 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health      # 仅暴露 health 端点
+      base-path: /actuator   # Actuator 基础路径
+  endpoint:
+    health:
+      show-details: never    # 不显示详情，仅返回 status
