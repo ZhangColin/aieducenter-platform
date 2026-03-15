@@ -1,0 +1,33 @@
+plugins {
+    java
+    id("org.springframework.boot") version "3.4.0"
+    id("io.spring.dependency-management") version "1.1.6"
+}
+
+group = "com.aieducenter"
+version = "1.0.0-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot Starter
+    implementation("org.springframework.boot:spring-boot-starter-web")
+
+    // cartisan-core 和 cartisan-web
+    implementation("com.cartisan:cartisan-core:0.1.0-SNAPSHOT")
+    implementation("com.cartisan:cartisan-web:0.1.0-SNAPSHOT")
+
+    testImplementation("com.cartisan:cartisan-test:0.1.0-SNAPSHOT")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}

@@ -127,3 +127,28 @@
   - 标题反映对话内容，方便历史查找
   - 异步生成不阻塞对话流程
 - **Prompt 模板**："用不超过 10 个字概括以下对话的主题：{第一条用户消息}"
+
+---
+
+## ADR-011：cartisan-boot 通过 Composite Build 引用
+
+- **日期**：2026-03-15
+- **决策**：开发期通过 Gradle Composite Build 引用本地 cartisan-boot，而非 Maven Local
+- **理由**：
+  - 修改 cartisan-boot 后无需重新发布，aieducenter-platform 自动获取最新代码
+  - IntelliJ IDEA 可同时导航到两个项目，调试方便
+  - 两个项目保持独立的版本控制
+- **配置**：`server/settings.gradle.kts` 中 `includeBuild("../../cartisan-boot")`
+- **替代方案**：Maven Local（每次修改框架后需手动 publish，容易遗忘）
+
+---
+
+## ADR-012：Spring Boot 依赖直接声明而非 Platform BOM
+
+- **日期**：2026-03-15
+- **决策**：`build.gradle.kts` 中直接添加 `spring-boot-starter-web`，而非通过 `implementation(platform("com.cartisan:cartisan-dependencies"))`
+- **理由**：
+  - cartisan-dependencies 是 `java-platform` 类型，与 Spring Boot 插件的 runtime classpath 解析有冲突
+  - 直接声明依赖更明确，避免 Composite Build 中的 variant 匹配问题
+- **影响**：F01-01 实现方式与设计文档 02_interface.md 有差异，但功能等效
+- **风险**：如需统一管理依赖版本，需后续调整
