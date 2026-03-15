@@ -152,3 +152,34 @@
   - 直接声明依赖更明确，避免 Composite Build 中的 variant 匹配问题
 - **影响**：F01-01 实现方式与设计文档 02_interface.md 有差异，但功能等效
 - **风险**：如需统一管理依赖版本，需后续调整
+
+---
+
+## ADR-013：前端 Monorepo 采用 pnpm workspace
+
+- **日期**：2026-03-16
+- **决策**：前端使用 pnpm workspace 管理 Monorepo，包含 web、admin 应用和 ui/api-client/shared 共享包
+- **理由**：
+  - pnpm workspace 是轻量级 Monorepo 方案，配置简单
+  - workspace:* 协议自动链接本地包，开发期无需手动更新
+  - 发布时自动替换为实际版本号
+  - 与 TypeScript paths 配合实现类型安全的包引用
+- **配置**：
+  - `pnpm-workspace.yaml` 定义 workspace 成员
+  - `tsconfig.base.json` 统一管理 TypeScript 配置和 paths 别名
+  - `transpilePackages` 确保 Next.js 转译 workspace 包源码
+- **替代方案**：npm workspaces（慢）、yarn workspaces（不使用 hoisting）
+- **相关 Feature**：F01-04
+
+---
+
+## ADR-014：共享包空壳占位，延迟引入依赖
+
+- **日期**：2026-03-16
+- **决策**：F01-04 阶段 packages/ui/api-client/shared 仅创建包结构，不引入 shadcn/ui 等依赖
+- **理由**：
+  - F01-04 验收标准为 "Monorepo 可运行"
+  - shadcn/ui 集成属于 F01-06 职责
+  - 保持 Feature 边界清晰，符合 SOP 原子化原则
+- **影响**：packages/ui 的 React peerDependencies 留到 F01-06 添加
+- **相关 Feature**：F01-04、F01-06

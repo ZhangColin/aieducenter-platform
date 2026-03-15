@@ -478,6 +478,91 @@ public Flux<String> chatStream(ChatRequest request) {
 
 ---
 
+## 前端 / Monorepo
+
+### 规则 FRONT-001：Next.js 配置 transpilePackages 转译 workspace 包
+
+**问题**：从 workspace 包导入源码（.ts）时，Next.js 默认不会转译，导致运行时错误。
+
+**正确做法**：
+```ts
+// next.config.ts
+const nextConfig: NextConfig = {
+  transpilePackages: ['@aieducenter/ui', '@aieducenter/api-client', '@aieducenter/shared'],
+}
+```
+
+**记忆口诀**：workspace 包导入源码？transpilePackages 必配。
+
+---
+
+### 规则 FRONT-002：TypeScript jsx 配置用 preserve
+
+**问题**：Next.js 15 + React 19 应使用 `jsx: "preserve"`，而非 `react`。
+
+**正确做法**：
+```json
+{
+  "compilerOptions": {
+    "jsx": "preserve"  // 让 Next.js 处理 JSX
+  }
+}
+```
+
+---
+
+### 规则 FRONT-003：isolatedModules 必须启用
+
+**问题**：Next.js 要求 `isolatedModules: true`，否则可能构建失败。
+
+**正确做法**：
+```json
+{
+  "compilerOptions": {
+    "isolatedModules": true  // tsconfig.base.json
+  }
+}
+```
+
+---
+
+### 规则 FRONT-004：workspace:* 协议用于开发期本地引用
+
+**正确做法**：
+```json
+{
+  "dependencies": {
+    "@aieducenter/ui": "workspace:*"  // 开发期自动链接
+  }
+}
+```
+
+**注意**：发布时 pnpm 自动替换为实际版本号。
+
+---
+
+### 规则 FRONT-005：共享包空壳占位，延迟引入依赖
+
+**原则**：F01-04 仅创建包结构，shadcn/ui 等 React peerDependencies 留到 F01-06 添加。
+
+```json
+// F01-04 阶段
+{
+  "name": "@aieducenter/ui",
+  "exports": { ".": "./src/index.ts" }
+  // ❌ 不添加 React peerDependencies
+
+// F01-06 阶段
+{
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+```
+
+---
+
 ## 踩坑记录
 
 ### PIT-001 (2026-03-15)：MessageFormat 参数不足时不会抛异常
