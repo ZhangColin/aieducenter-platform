@@ -613,3 +613,89 @@ new BigDecimal(0.1)  // 实际是 0.10000000000000000555111512312578270211815834
 // ✅ 正确：先转字符串
 new BigDecimal("0.1")  // 或 BigDecimal.valueOf(0.1)
 ```
+
+---
+
+### 规则 FRONT-006：packages/ui 的 tsconfig.json 需配置 jsx: react-jsx
+
+**问题**：React 组件（.tsx）编译报错 `Cannot use JSX unless the '--jsx' flag is provided`。
+
+**正确做法**：
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx"  // 或 "preserve"，但不能省略
+  }
+}
+```
+
+**记忆口诀**：UI 包用 JSX？jsx 配置必须有。
+
+---
+
+### 规则 FRONT-007：shadcn add 组件导入路径需手动修复
+
+**问题**：shadcn add 生成的组件使用 `import { cn } from "@/lib"`，但 `@/lib` 是 packages/ui 的路径别名，在组件文件中解析为 `@/components/.../lib`。
+
+**正确做法**：运行 shadcn add 后，批量替换导入路径：
+```bash
+# 在 packages/ui/src/components 目录下
+sed -i '' 's|from "@/lib"|from "../lib/utils"|g' *.tsx
+```
+
+**记忆口诀**：shadcn 组件导入？执行后先修路径。
+
+---
+
+### 规则 FRONT-008：packages/ui 必须导出 CSS 文件
+
+**问题**：web/admin 无法 `import '@aieducenter/ui/src/index.css'`，报错 `Package path ./src/index.css is not exported`。
+
+**正确做法**：
+```json
+{
+  "name": "@aieducenter/ui",
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/index.css": "./src/index.css"  // 必须显式导出
+  }
+}
+```
+
+**记忆口诀**：共享包导 CSS？exports 字段要配。
+
+---
+
+### 规则 FRONT-009：应用层 tsconfig.json 需配置 baseUrl 和 paths
+
+**问题**：`import { ThemeToggle } from '@/components/theme-toggle'` 报错 `Cannot find module`。
+
+**正确做法**：
+```json
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+**记忆口诀**：@ 别名找不到？baseUrl + paths 配置好。
+
+---
+
+### 规则 FRONT-010：html 标签需 suppressHydrationWarning 属性
+
+**问题**：使用 next-themes 时控制台警告 `Text content did not match`。
+
+**正确做法**：
+```tsx
+<html lang="zh-CN" suppressHydrationWarning>
+  {/* next-themes 需要这个属性避免 hydration 不匹配警告 */}
+</html>
+```
+
+**记忆口诀**：next-themes 主题切换？suppressHydrationWarning 要加。

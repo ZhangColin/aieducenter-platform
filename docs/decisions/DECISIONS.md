@@ -183,3 +183,24 @@
   - 保持 Feature 边界清晰，符合 SOP 原子化原则
 - **影响**：packages/ui 的 React peerDependencies 留到 F01-06 添加
 - **相关 Feature**：F01-04、F01-06
+
+---
+
+## ADR-015：共享 UI 组件库采用 shadcn/ui New York 风格
+
+- **日期**：2026-03-16
+- **决策**：packages/ui 基于 shadcn/ui 构建，采用 New York 风格、CSS 变量主题系统
+- **理由**：
+  - shadcn/ui 使用"复制到项目"模式，组件源码可控，AI 理解度高
+  - New York 风格现代简洁，偏方角设计，适合 AI 对话类产品
+  - CSS 变量主题系统便于亮/暗模式切换
+  - 扁平导出方式，使用简洁：`import { Button } from '@aieducenter/ui'`
+- **实现细节**：
+  - cn 工具函数放在 packages/shared，全项目复用
+  - ThemeProvider 基于 next-themes，使用 class 切换模式
+  - exports 字段同时导出 TypeScript 和 CSS
+- **相关 Feature**：F01-06
+- **修复记录**：
+  - tsconfig.json 需添加 `jsx: "react-jsx"` 配置
+  - shadcn add 命令可能将组件安装到字面路径 `@/components/`，需移动到正确位置
+  - 组件内 `@/lib` 导入需改为相对路径 `../lib/utils`
