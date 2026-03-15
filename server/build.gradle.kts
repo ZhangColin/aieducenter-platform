@@ -26,6 +26,9 @@ dependencies {
     implementation("com.cartisan:cartisan-core:0.1.0-SNAPSHOT")
     implementation("com.cartisan:cartisan-web:0.1.0-SNAPSHOT")
 
+    // SpringDoc OpenAPI
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
     testImplementation("com.cartisan:cartisan-test:0.1.0-SNAPSHOT")
 }
 
