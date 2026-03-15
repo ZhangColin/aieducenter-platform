@@ -278,7 +278,37 @@ List<Conversation> findActiveByTenantId(@Param("tenantId") Long tenantId);
 
 ## Spring Boot / Web
 
-### 规则 WEB-001：@Validated 必须放在类上触发 @RequestParam 校验
+### 规则 WEB-001：Actuator 与全局异常处理器的交互
+
+**场景**：访问未暴露的 Actuator 端点时，期望返回 404，但实际返回 500。
+
+**原因**：cartisan-web 的 `@ControllerAdvice` 全局异常处理器捕获了 Spring 抛出的 `HandlerNotFoundException`，转换为 ApiResponse 格式的 500 响应。
+
+**影响**：不影响核心功能（端点确实未暴露，通过 `/actuator` 可验证），但响应格式与纯 Actuator 环境不同。
+
+**预期行为**：
+```bash
+# 访问未暴露的端点
+curl http://localhost:8080/actuator/info
+# 返回: {"code":500,"message":"Internal server error",...}
+# 而非标准的 404
+```
+
+**后续优化（可选）**：在 cartisan-web 的 GlobalExceptionHandler 中排除 `/actuator/**` 路径：
+```java
+@ExceptionHandler(HandlerNotFoundException.class)
+public ResponseEntity<ApiResponse<Void>> handleNotFound(HandlerNotFoundException e, HttpServletRequest request) {
+    // 排除 Actuator 路径，让 Spring 返回标准 404
+    if (request.getRequestURI().startsWith("/actuator/")) {
+        throw e;  // 重新抛出，让 Spring 处理
+    }
+    return ApiResponse.error(404, "Not Found");
+}
+```
+
+---
+
+### 规则 WEB-002：@Validated 必须放在类上触发 @RequestParam 校验
 
 ```java
 // ✅ 添加 @Validated
@@ -295,7 +325,7 @@ public class ConversationController {
 
 ---
 
-### 规则 WEB-002：@Component 默认 bean 名称可能与自动配置冲突
+### 规则 WEB-003：@Component 默认 bean 名称可能与自动配置冲突
 
 **问题**：`@Component` 默认 bean 名称可能与 Spring Boot 自动配置冲突。
 
