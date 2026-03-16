@@ -90,11 +90,17 @@ pnpm dev:admin
 
 | 文档 | 说明 |
 |------|------|
-| [开发指南](docs/guides/development-guide.md) | 开发环境配置、功能开发流程 |
+| **面向用户/运维** |
+| [使用手册](docs/guides/aieducenter-platform-使用手册.md) | 功能说明、系统操作、部署指南 |
+| **面向开发者** |
+| [开发手册](docs/guides/aieducenter-platform-开发手册.md) | 开发步骤、命令、示例、注意事项 |
 | [cartisan-boot 使用手册](docs/guides/cartisan-boot-使用手册.md) | 后端框架使用指南 |
+| [AI 协作开发 SOP](docs/sop/AI协作开发SOP.md) | 完整开发流程规范 |
+| **参考资料** |
 | [项目设计](docs/海创元智研云平台设计.md) | 技术架构、业务模型设计 |
 | [架构决策](docs/decisions/DECISIONS.md) | 技术决策记录 |
 | [团队规则](docs/skills/SKILL.md) | 开发规范、踩坑经验 |
+| [Epic 1 规格](docs/specs/epic-001-project-skeleton/) | 项目骨架详细规格文档 |
 
 ## 开源协议
 
