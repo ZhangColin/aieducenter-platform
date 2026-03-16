@@ -6,6 +6,28 @@ const config: Config = {
     './src/**/*.{ts,tsx}',
     '../../packages/ui/src/**/*.{ts,tsx}',
   ],
+  safelist: [
+    // Custom color utilities for shadcn/ui
+    'bg-primary', 'text-primary-foreground',
+    'bg-secondary', 'text-secondary-foreground',
+    'bg-destructive', 'text-destructive-foreground',
+    'bg-muted', 'text-muted-foreground',
+    'bg-accent', 'text-accent-foreground',
+    'bg-popover', 'text-popover-foreground',
+    'bg-card', 'text-card-foreground',
+    'bg-background', 'text-foreground',
+    'border-border', 'input-border',
+    // Hover states
+    'hover:bg-primary/90',
+    'hover:bg-destructive/90',
+    'hover:bg-secondary/80',
+    'hover:bg-accent',
+    'hover:text-accent-foreground',
+    'hover:bg-muted/50',
+    // Other variants
+    'bg-ring', 'text-ring',
+    'focus-visible:ring-ring',
+  ],
   theme: {
     container: {
       center: true,
