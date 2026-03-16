@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@aieducenter/ui'
-import '@aieducenter/ui/src/index.css'
+import './globals.css'
 
 export default function RootLayout({
   children,

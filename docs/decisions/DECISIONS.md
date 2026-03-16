@@ -204,3 +204,8 @@
   - tsconfig.json 需添加 `jsx: "react-jsx"` 配置
   - shadcn add 命令可能将组件安装到字面路径 `@/components/`，需移动到正确位置
   - 组件内 `@/lib` 导入需改为相对路径 `../lib/utils`
+  - **F01-06 实现时发现**：应用层需有独立的 Tailwind 配置
+    - `web/src/app/globals.css`：包含 `@tailwind` 指令和 CSS 变量
+    - `web/tailwind.config.ts`：content 需包含 `./src` 和 `../../packages/ui/src`
+    - `web/postcss.config.mjs`：必须是 `.mjs` 格式（Next.js 15 要求）
+    - `darkMode` 配置用字符串 `'class'` 而非数组 `['class']`

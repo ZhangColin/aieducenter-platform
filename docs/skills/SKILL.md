@@ -699,3 +699,67 @@ sed -i '' 's|from "@/lib"|from "../lib/utils"|g' *.tsx
 ```
 
 **记忆口诀**：next-themes 主题切换？suppressHydrationWarning 要加。
+
+---
+
+### 规则 FRONT-011：Next.js 应用需有独立的 Tailwind 配置
+
+**问题**：从 workspace 包导入 CSS 时，Tailwind `@tailwind` 指令未被处理，导致样式不生效。
+
+**原因**：Tailwind 的 `content` 配置只包含 `packages/ui/src`，不包含 `web/src` 的页面文件。
+
+**正确做法**：
+1. 在 `web/src/app/globals.css` 中添加 `@tailwind` 指令和 CSS 变量
+2. 在 `web/tailwind.config.ts` 中配置 `content` 包含两个目录：
+```ts
+content: [
+  './src/**/*.{ts,tsx}',
+  '../../packages/ui/src/**/*.{ts,tsx}',
+],
+```
+3. 创建 `web/postcss.config.mjs`（注意是 `.mjs` 格式）：
+```js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+```
+4. 在 `web/src/app/layout.tsx` 中导入本地的 `./globals.css`
+
+**记忆口诀**：Tailwind 不生效？查 content 配置和 postcss.config.mjs。
+
+---
+
+### 规则 FRONT-012：darkMode 配置用字符串而非数组
+
+**问题**：`darkMode: ['class']` 导致 TypeScript 类型错误。
+
+**正确做法**：
+```ts
+darkMode: 'class',  // 字符串，不是数组
+```
+
+**记忆口诀**：darkMode 配置？字符串形式。
+
+---
+
+### 规则 FRONT-013：Tailwind CSS 需固定版本 v3
+
+**问题**：`tailwindcss-animate` 会安装 Tailwind CSS v4 作为依赖，导致 PostCSS 配置不兼容。
+
+**正确做法**：
+```json
+{
+  "devDependencies": {
+    "tailwindcss": "3.4.19",  // 固定版本，不使用 ^
+    "tailwindcss-animate": "^1.0.7"
+  }
+}
+```
+
+**原因**：Tailwind CSS v4 的 PostCSS 插件已移至 `@tailwindcss/postcss`，语法完全不同。shadcn/ui 组件期望 v3 的 `hsl(var(--...))` 语法。
+
+**记忆口诀**：shadcn/ui 组件？Tailwind CSS 锁 v3。
+
