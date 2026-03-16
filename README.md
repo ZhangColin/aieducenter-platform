@@ -1,119 +1,101 @@
-# 海创元智研云平台 (aieducenter-platform)
+# 海创元智研云平台
 
-> AI 聚合 SaaS 平台 — 接入各类大模型，提供智能体服务，做好费用管理
+> 面向学校和企业的 AI 聚合 SaaS 平台
 
-## 项目简介
+## 简介
 
-海创元智研云平台是一个面向学校和企业的 AI 聚合 SaaS 平台，核心价值：
+海创元智研云平台是一个集成多种大模型能力的一站式 AI 服务平台，为学校和企业提供：
 
-1. **统一入口**：接入各类大模型（文字对话、生图、生音视频、AI 编程），用户无需分别注册各厂商
-2. **智能体**：提供预制和自定义智能体（PPT 生成、文档分析等），处理复杂 AI 任务
-3. **费用管理**：虚拟币体系 + 各模型汇率，用户充值后按量使用，企业可控制成员配额
-4. **多租户**：支持企业/机构入驻，成员管理，权限配置
+- **模型统一接入**：一次接入，使用多家大模型（GPT、Claude、文心一言等）
+- **智能体市场**：预制和自定义 AI 智能体，处理复杂任务（PPT 生成、文档分析、编程助手等）
+- **费用统一管理**：虚拟币计费，企业配额控制，用量统计透明
+- **多租户支持**：企业/机构入驻，成员管理，权限配置
 
-## 技术栈
+## 核心功能
 
-### 后端
-- **框架基座**：[cartisan-boot](../cartisan-boot/)（DDD、Web、Security、Data、AI、Event、Test）
-- **消息队列**：Redis Streams → Kafka
-- **定时任务**：Spring Scheduler → XXL-Job
-- **对象存储**：cartisan-storage（阿里云 OSS / MinIO）
-- **支付**：cartisan-payment（微信支付 / 支付宝）
-- **缓存**：Redis
+### 对话能力
+- 多模型对话切换
+- 流式响应输出
+- 上下文记忆管理
+- 文件上传分析
 
-### 前端
-- **框架**：Next.js 15（App Router）
-- **UI 组件**：shadcn/ui + Tailwind CSS
-- **状态管理**：Zustand
-- **API 通信**：OpenAPI 自动生成的 TypeScript 客户端
-- **Monorepo**：pnpm workspace
+### 智能体
+- PPT 生成助手
+- 文档总结分析
+- 代码生成助手
+- 自定义智能体
+
+### 创作工具
+- AI 绘画（文生图）
+- AI 编程
+- AI 音视频生成（规划中）
+
+### 企业管理
+- 成员邀请管理
+- 角色权限配置
+- 用量统计报表
+- 配额控制设置
+
+### 费用管理
+- 虚拟币充值
+- 消耗明细查询
+- 模型汇率配置
+- 企业发票管理
+
+## 技术架构
+
+### 后端技术栈
+- Java 21 + Spring Boot 3.4
+- cartisan-boot 框架（DDD 六边形架构）
+- PostgreSQL + Redis
+- Redis Streams / Kafka 消息队列
+
+### 前端技术栈
+- Next.js 15（App Router）
+- TypeScript
+- shadcn/ui + Tailwind CSS
+- Zustand 状态管理
 
 ## 快速开始
 
 ### 环境要求
-- Java 21
-- Node.js 20+
-- pnpm
-- Docker（集成测试）
 
-### 安装依赖
+- **用户访问**：现代浏览器（Chrome、Firefox、Safari）
+- **开发环境**：见 [开发指南](docs/guides/development-guide.md)
+
+### 本地运行
+
 ```bash
-# 安装前端依赖
+# 克隆项目
+git clone <repository-url>
+cd aieducenter-platform
+
+# 安装依赖
 pnpm install
-```
 
-### 运行项目
-```bash
-# 启动前端应用（用户端）
+# 启动前端（用户端）
 pnpm dev:web
+# 访问 http://localhost:3000
 
-# 启动前端应用（管理后台）
+# 启动前端（管理后台）
 pnpm dev:admin
-
-# 启动后端（需要先配置 cartisan-boot）
-cd server && ./gradlew bootRun
+# 访问 http://localhost:3001
 ```
 
-## 项目结构
+## 产品截图
 
-```
-aieducenter-platform/
-├── server/          # Java 后端
-├── web/             # 用户端 + 企业管理（Next.js）
-├── admin/           # 平台运营后台（Next.js）
-├── packages/        # 前端共享代码
-│   ├── ui/          # 共享 UI 组件
-│   ├── api-client/  # OpenAPI 生成的客户端
-│   └── shared/      # 共享工具函数、类型
-└── docs/            # 项目文档
-```
-
-## 限界上下文
-
-| 上下文 | 核心职责 |
-|--------|---------|
-| **Account** | 用户注册、登录、个人信息、API Key 管理 |
-| **Tenant** | 租户/企业管理、成员管理、角色权限、成员配额 |
-| **AI Gateway** | 模型路由策略、请求调度、限流降级、调用日志 |
-| **Billing** | 虚拟币余额、充值/退款、消耗计费、汇率管理 |
-| **Conversation** | 会话列表、消息存储、上下文窗口管理 |
-| **Agent** | 智能体定义与配置、工具注册、执行引擎、多步编排 |
-| **Creative** | 生图、生音视频、AI 编程等非对话类 AI 能力 |
-| **Platform Admin** | 模型/Provider 管理、定价汇率、运营数据、审计 |
+> 待补充...
 
 ## 文档
 
-### 使用手册
-- [cartisan-boot 使用手册](docs/guides/cartisan-boot-使用手册.md) — 后端框架使用指南
-- [开发指南](docs/guides/development-guide.md) — 环境配置、工作流程、编码规范
+| 文档 | 说明 |
+|------|------|
+| [开发指南](docs/guides/development-guide.md) | 开发环境配置、功能开发流程 |
+| [cartisan-boot 使用手册](docs/guides/cartisan-boot-使用手册.md) | 后端框架使用指南 |
+| [项目设计](docs/海创元智研云平台设计.md) | 技术架构、业务模型设计 |
+| [架构决策](docs/decisions/DECISIONS.md) | 技术决策记录 |
+| [团队规则](docs/skills/SKILL.md) | 开发规范、踩坑经验 |
 
-### 设计文档
-- [项目设计](docs/海创元智研云平台设计.md) — 技术架构、业务模型、Epic 拆分
-- [架构决策](docs/decisions/DECISIONS.md) — 技术决策记录
-- [团队规则](docs/skills/SKILL.md) — 踩坑经验、铁律
-- [AI 协作 SOP](docs/sop/AI协作开发SOP.md) — 完整开发流程规范
-
-### Epic 规格
-- [Epic 001: 项目骨架](docs/specs/epic-001-project-skeleton/) — Monorepo、共享包、UI 组件库、API 客户端
-
-## 开发流程
-
-本项目遵循 **AI 协作开发 SOP**：
-
-- Phase 0：Epic 分解（只产出文档，不写代码）
-- Phase 1-3：需求 → 接口设计 → 实现方案（只产出文档）
-- Phase 4：先写测试（红）→ 再写实现（绿）
-- Phase 5：Review + 验证 + 归档
-
-**任务粒度**：单次实现 50-150 行代码。
-
-## 质量门禁
-
-- 遵循 `docs/skills/SKILL.md` 中的所有规则
-- 测试命名规范：`given_{条件}_when_{操作}_then_{预期结果}`
-- 使用 AssertJ 而非 JUnit 断言
-- Phase 5 审查时执行 PIT 变异测试（杀死率 ≥ 70%）
-
-## 许可证
+## 开源协议
 
 Copyright © 2025 海创元
