@@ -239,6 +239,33 @@
 
 ## ADR-018：前端使用 vitest + happy-dom 测试
 
+---
+
+## ADR-019：前端使用 Next.js rewrites 代理 API，避免 CORS
+
+- **日期**：2026-03-16
+- **决策**：前端通过 Next.js rewrites 代理 `/api/*` 请求到后端，而非直接跨域访问
+- **理由**：
+  - 开发期避免 CORS 问题：前端和后端同源，无需配置 CORS
+  - 生产环境灵活：可通过环境变量 `BACKEND_URL` 配置后端地址
+  - 安全性提升：后端不需要暴露给所有源，只接受来自同域的请求
+- **配置**：
+  ```ts
+  // next.config.ts
+  export async function rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080'
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ]
+  }
+  ```
+- **前端调用**：使用相对路径 `/api/health` 而非 `http://localhost:8080/api/health`
+- **替代方案**：后端配置 CORS（需要配置允许的源，生产环境复杂）
+- **相关 Feature**：F01-08
+
 - **日期**：2026-03-16
 - **决策**：前端单元测试使用 vitest 框架 + happy-dom 环境
 - **理由**：

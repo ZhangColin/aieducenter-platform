@@ -278,6 +278,25 @@ List<Conversation> findActiveByTenantId(@Param("tenantId") Long tenantId);
 
 ## Spring Boot / Web
 
+### 规则 WEB-000：ApiResponse.ok() 返回的 message 格式
+
+**问题**：测试中断言期望 `message = "success"`，但实际返回 `"Success"`（首字母大写）。
+
+**正确做法**：
+```java
+// ✅ 正确：断言首字母大写
+assertThat(response.message()).isEqualTo("Success");
+
+// ❌ 错误：期望全小写
+assertThat(response.message()).isEqualTo("success");
+```
+
+**记忆口诀**：ApiResponse.ok() 的 message 是 "Success"，首字母大写。
+
+**相关**：cartisan-boot 的 ApiResponse 实现
+
+---
+
 ### 规则 WEB-001：Actuator 与全局异常处理器的交互
 
 **场景**：访问未暴露的 Actuator 端点时，期望返回 404，但实际返回 500。
@@ -479,6 +498,42 @@ public Flux<String> chatStream(ChatRequest request) {
 ---
 
 ## 前端 / Monorepo
+
+### 规则 FRONT-000：前后端联调用 Next.js rewrites 代理，避免 CORS
+
+**问题**：前端直接访问后端（如 `http://localhost:8080`）会被浏览器 CORS 策略阻止。
+
+**正确做法**：在 Next.js 中配置 rewrites 代理 `/api/*` 请求到后端。
+```ts
+// next.config.ts
+export async function rewrites() {
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080'
+  return [
+    {
+      source: '/api/:path*',
+      destination: `${backendUrl}/api/:path*`,
+    },
+  ]
+}
+```
+
+**前端调用**：使用相对路径
+```ts
+// ✅ 正确：通过代理访问
+const response = await fetch('/api/health')
+
+// ❌ 错误：直接跨域访问（CORS 阻止）
+const response = await fetch('http://localhost:8080/api/health')
+```
+
+**生产环境**：通过环境变量配置后端地址
+```bash
+BACKEND_URL=https://api.example.com pnpm build
+```
+
+**记忆口诀**：前端调后端？rewrites 代理跑。
+
+---
 
 ### 规则 FRONT-001：Next.js 配置 transpilePackages 转译 workspace 包
 
