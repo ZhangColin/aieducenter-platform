@@ -4,12 +4,25 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema": "./src/api/schema.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "gen:api": "openapi-typescript ./openapi.json -o ./src/api/schema.ts",
+    "gen:api:live": "openapi-typescript http://localhost:8080/v3/api-docs -o ./src/api/schema.ts",
+    "sync:openapi": "bash ./scripts/sync-openapi.sh"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.12.2",
+    "@aieducenter/shared": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "openapi-typescript": "^7.4.5",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0",
+    "happy-dom": "^15.0.0"
   }
 }
