@@ -209,3 +209,41 @@
     - `web/tailwind.config.ts`：content 需包含 `./src` 和 `../../packages/ui/src`
     - `web/postcss.config.mjs`：必须是 `.mjs` 格式（Next.js 15 要求）
     - `darkMode` 配置用字符串 `'class'` 而非数组 `['class']`
+
+---
+
+## ADR-016：API 客户端 401 响应不自动重试
+
+- **日期**：2026-03-16
+- **决策**：401 响应时触发 token 刷新，但不自动重试原请求，由调用方处理
+- **理由**：
+  - 简化实现：自动重试需要处理幂等性、请求去重等复杂问题
+  - 调用方控制：调用方可根据请求类型决定是否重试
+  - 避免无限循环：防止 401 → 刷新 → 401 的循环
+- **相关 Feature**：F01-07
+- **替代方案**：自动重试（复杂度高，暂不实现）
+
+---
+
+## ADR-017：AuthStore 分离 setAccessToken 和 clearAccessToken
+
+- **日期**：2026-03-16
+- **决策**：AuthStore 提供两个方法：`setAccessToken(token: string)` 和 `clearAccessToken()`
+- **理由**：
+  - 意图明确：设置 token 和清除 token 是两个不同的语义
+  - 类型安全：setAccessToken 只接受非空字符串，避免 null 误用
+  - 便于未来扩展：clearAccessToken 可扩展清除更多状态（如用户信息）
+- **相关 Feature**：F01-07
+
+---
+
+## ADR-018：前端使用 vitest + happy-dom 测试
+
+- **日期**：2026-03-16
+- **决策**：前端单元测试使用 vitest 框架 + happy-dom 环境
+- **理由**：
+  - vitest 与 Vite 生态无缝集成，配置简单
+  - happy-dom 模拟浏览器环境（window、document），比 JSDOM 更快
+  - ESM 原生支持，无需额外配置
+- **相关 Feature**：F01-07
+- **配置**：vitest.config.ts 中设置 `environment: 'happy-dom'`

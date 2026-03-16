@@ -763,3 +763,128 @@ darkMode: 'class',  // 字符串，不是数组
 
 **记忆口诀**：shadcn/ui 组件？Tailwind CSS 锁 v3。
 
+
+---
+
+## 前端测试
+
+### 规则 FTEST-001：前端单元测试使用 vitest + happy-dom
+
+**环境配置**：
+```ts
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+  },
+})
+```
+
+**理由**：
+- vitest 与 Vite 生态无缝集成，配置简单
+- happy-dom 比 JSDOM 更快，API 更接近浏览器
+- ESM 原生支持
+
+**相关 Feature**：F01-07
+
+---
+
+### 规则 FTEST-002：测试中间件需要导出供测试访问
+
+**问题**：openapi-fetch 的中间件无法通过 api 实例直接访问。
+
+**正确做法**：
+```ts
+// 导出中间件供测试使用
+export const __middlewares__ = [authMiddleware, refreshMiddleware]
+
+// 测试中
+const authMiddleware = __middlewares__[0] as AuthMiddleware
+```
+
+**相关 Feature**：F01-07
+
+---
+
+### 规则 FTEST-003：动态 import 的 mock 需要创建外部函数
+
+**问题**：vi.mock 中直接 mock 函数会导致每次调用返回新实例。
+
+**正确做法**：
+```ts
+// 创建外部 mock 函数
+const mockRefreshAccessTokenOnce = vi.fn()
+
+// 模块使用外部函数
+vi.mock('../auth/refresh', () => ({
+  refreshAccessTokenOnce: () => mockRefreshAccessTokenOnce(),
+  REFRESH_ENDPOINT: '/api/v1/auth/refresh'
+}))
+
+// 测试中配置 mock
+mockRefreshAccessTokenOnce.mockResolvedValueOnce(false)
+```
+
+**相关 Feature**：F01-07
+
+---
+
+## 前端状态管理
+
+### 规则 STATE-001：Zustand store 分离 set 和 clear 方法
+
+**问题**：`setAccessToken(token: string | null)` 允许 null，但意图不清晰。
+
+**正确做法**：
+```ts
+export interface AuthState {
+  accessToken: string | null
+  setAccessToken: (token: string) => void    // 只接受非空
+  clearAccessToken: () => void              // 明确清除语义
+}
+```
+
+**理由**：
+- 意图明确：设置和清除是两个不同的语义
+- 类型安全：setAccessToken 只接受非空字符串
+- 便于扩展：clearAccessToken 可扩展清除更多状态
+
+**相关 Feature**：F01-07
+
+---
+
+## API 客户端
+
+### 规则 API-001：常量导出避免硬编码
+
+**问题**：端点路径在多处硬编码，修改时容易遗漏。
+
+**正确做法**：
+```ts
+// refresh.ts
+export const REFRESH_ENDPOINT = '/api/v1/auth/refresh'
+
+// client.ts
+import { REFRESH_ENDPOINT } from '../auth/refresh'
+```
+
+**相关 Feature**：F01-07
+
+---
+
+### 规则 API-002：catch 块应记录错误上下文
+
+**问题**：静默返回 false 导致生产环境无法调试。
+
+**正确做法**：
+```ts
+try {
+  // ...
+} catch (error) {
+  console.error('[refreshAccessTokenOnce] Token refresh failed:', error)
+  return false
+}
+```
+
+**相关 Feature**：F01-07
