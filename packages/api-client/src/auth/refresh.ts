@@ -5,6 +5,9 @@
  */
 import { useAuthStore } from '@aieducenter/shared/auth-store'
 
+/** 刷新端点路径，导出供 client.ts 使用 */
+export const REFRESH_ENDPOINT = '/api/v1/auth/refresh'
+
 let refreshPromise: Promise<boolean> | null = null
 
 /** 后端刷新接口响应格式 */
@@ -30,7 +33,7 @@ export async function refreshAccessTokenOnce(): Promise<boolean> {
 
   refreshPromise = (async () => {
     try {
-      const response = await fetch(`${API_URL}/api/v1/auth/refresh`, {
+      const response = await fetch(`${API_URL}${REFRESH_ENDPOINT}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +44,9 @@ export async function refreshAccessTokenOnce(): Promise<boolean> {
       const data = (await response.json()) as RefreshResponse
       useAuthStore.getState().setAccessToken(data.data.token)
       return true
-    } catch {
+    } catch (error) {
+      // 记录错误便于调试，同时保持返回值语义
+      console.error('[refreshAccessTokenOnce] Token refresh failed:', error)
       return false
     } finally {
       // 刷新完成后清空，允许下次刷新

@@ -25,14 +25,15 @@ const mockRefreshAccessTokenOnce = vi.fn()
 
 // 模拟 refresh 模块
 vi.mock('../auth/refresh', () => ({
-  refreshAccessTokenOnce: () => mockRefreshAccessTokenOnce()
+  refreshAccessTokenOnce: () => mockRefreshAccessTokenOnce(),
+  REFRESH_ENDPOINT: '/api/v1/auth/refresh'
 }))
 
 describe('API Client', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // 重置 auth store
-    useAuthStore.getState().setAccessToken(null)
+    // 重置 auth store - 使用 clearAccessToken
+    useAuthStore.getState().clearAccessToken()
     // 重置 refresh mock
     mockRefreshAccessTokenOnce.mockReset()
   })
@@ -54,7 +55,7 @@ describe('API Client', () => {
 
     it('given_no_access_token_when_making_request_then_no_authorization_header', async () => {
       // Arrange
-      useAuthStore.getState().setAccessToken(null)
+      useAuthStore.getState().clearAccessToken()
       const authMiddleware = __middlewares__[0] as AuthMiddleware
 
       // Act
