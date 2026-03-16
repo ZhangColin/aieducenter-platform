@@ -3,9 +3,26 @@
 import { useTheme } from '@aieducenter/ui'
 import { Button } from '@aieducenter/ui'
 import { Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <Button variant="outline" size="sm" className="gap-2" disabled>
+        <span className="h-4 w-4" />
+        <span>加载中...</span>
+      </Button>
+    )
+  }
+
   const isDark = theme === 'dark'
 
   return (
