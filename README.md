@@ -14,7 +14,7 @@
 ## 技术栈
 
 ### 后端
-- **框架基座**：cartisan-boot（DDD、Web、Security、Data、AI、Event、Test）
+- **框架基座**：[cartisan-boot](../cartisan-boot/)（DDD、Web、Security、Data、AI、Event、Test）
 - **消息队列**：Redis Streams → Kafka
 - **定时任务**：Spring Scheduler → XXL-Job
 - **对象存储**：cartisan-storage（阿里云 OSS / MinIO）
@@ -83,19 +83,29 @@ aieducenter-platform/
 
 ## 文档
 
-- [开发指南](docs/guide/development-guide.md) — 开发环境配置、工作流程、编码规范
+### 使用手册
+- [cartisan-boot 使用手册](docs/guides/cartisan-boot-使用手册.md) — 后端框架使用指南
+- [开发指南](docs/guides/development-guide.md) — 环境配置、工作流程、编码规范
+
+### 设计文档
 - [项目设计](docs/海创元智研云平台设计.md) — 技术架构、业务模型、Epic 拆分
 - [架构决策](docs/decisions/DECISIONS.md) — 技术决策记录
 - [团队规则](docs/skills/SKILL.md) — 踩坑经验、铁律
+- [AI 协作 SOP](docs/sop/AI协作开发SOP.md) — 完整开发流程规范
+
+### Epic 规格
+- [Epic 001: 项目骨架](docs/specs/epic-001-project-skeleton/) — Monorepo、共享包、UI 组件库、API 客户端
 
 ## 开发流程
 
-本项目遵循 [AI 协作开发 SOP](docs/sop/AI协作开发SOP.md)：
+本项目遵循 **AI 协作开发 SOP**：
 
 - Phase 0：Epic 分解（只产出文档，不写代码）
 - Phase 1-3：需求 → 接口设计 → 实现方案（只产出文档）
 - Phase 4：先写测试（红）→ 再写实现（绿）
 - Phase 5：Review + 验证 + 归档
+
+**任务粒度**：单次实现 50-150 行代码。
 
 ## 质量门禁
 
