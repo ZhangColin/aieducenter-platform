@@ -1,0 +1,21 @@
+# Admin 前端 Docker 镜像
+# 注意：构建产物由 build-frontend.sh 在本地生成，Docker 只负责打包
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 复制已构建好的 standalone 产物（由 build-frontend.sh 生成）
+# admin standalone 结构不同，没有 packages 目录
+COPY admin/.next/standalone/admin ./server
+COPY admin/.next/standalone/node_modules ./node_modules
+COPY admin/.next/standalone/package.json ./package.json
+COPY admin/.next/static ./server/.next/static
+
+EXPOSE 3001
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+WORKDIR /app/server
+CMD ["node", "server.js"]

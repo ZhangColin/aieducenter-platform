@@ -821,6 +821,72 @@ darkMode: 'class',  // 字符串，不是数组
 
 ---
 
+### 规则 FRONT-014：Next.js 15 + ESLint 10 需配置 .eslintrc.json
+
+**问题**：`next lint` 在没有 ESLint 配置时会进入交互式选择模式，导致脚本执行失败。
+
+**正确做法**：
+```json
+// web/.eslintrc.json 和 admin/.eslintrc.json
+{
+  "extends": ["next/core-web-vitals"]
+}
+```
+
+**安装依赖**：
+```bash
+# web 和 admin 分别执行
+pnpm add -D eslint eslint-config-next
+```
+
+**注意**：ESLint 10 配置格式有变化，部分 Next.js 15 选项不再支持（如 useEslintrc、extensions 等）。如果 lint 失败但不影响构建，可暂时跳过。
+
+**记忆口诀**：Next.js 跑 lint？先装 ESLint 再配 eslintrc。
+
+---
+
+## CI/CD / 部署
+
+### 规则 CI-001：ESLint 10 配置变化导致 next lint 失败
+
+**问题**：ESLint 10 移除了部分配置选项，导致 `next lint` 报错：
+```
+- Unknown options: useEslintrc, extensions, resolvePluginsRelativeTo, rulePaths, ignorePath, reportUnusedDisableDirectives
+- 'extensions' has been removed.
+- 'resolvePluginsRelativeTo' has been removed.
+```
+
+**临时方案**：在验证脚本中让 lint 失败只警告、不阻止流程：
+```bash
+# scripts/validate-frontend.sh
+echo "  → Lint 检查（失败仅警告）..."
+pnpm -r lint || echo "  ⚠️  Lint 检查失败，但继续执行"
+```
+
+**长期方案**：等待 Next.js 15 更新以支持 ESLint 10，或降级到 ESLint 9。
+
+**相关 Feature**：F01-09
+
+---
+
+### 规则 CI-002：Docker 构建需先发布 cartisan-boot 到本地 Maven
+
+**问题**：Dockerfile 构建时需要 cartisan-boot 依赖，但容器内无法访问宿主 workspace。
+
+**正确做法**：
+```dockerfile
+# 方案 A：在构建前先发布到本地 Maven
+RUN cd cartisan-boot && ./gradlew publishToMavenLocal
+
+# 方案 B：使用 volume 映射本地 Maven 仓库（未实施）
+```
+
+**注意**：部署脚本 `build-backend.sh` 已包含发布步骤。
+
+**相关 Feature**：F01-09
+
+---
+
 ## 前端测试
 
 ### 规则 FTEST-001：前端单元测试使用 vitest + happy-dom

@@ -21,6 +21,12 @@ dependencies {
     // Spring Boot Starter
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.flywaydb:flyway-core:10.18.0")
+    implementation("org.flywaydb:flyway-database-postgresql:10.18.0")
+
+    // PostgreSQL Driver
+    runtimeOnly("org.postgresql:postgresql:42.7.4")
 
     // cartisan-core 和 cartisan-web
     implementation("com.cartisan:cartisan-core:0.1.0-SNAPSHOT")

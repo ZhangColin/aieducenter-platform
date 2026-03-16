@@ -1,0 +1,79 @@
+# 生产环境 Docker Compose 配置
+# 使用方式:
+#   1. 复制 .env.prod.example 为 .env.prod 并填写配置
+#   2. docker-compose -f docker-compose.prod.yml up -d
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: aiedu-backend-prod
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    ports:
+      "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - aiedu-prod-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Web 前端
+  web:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile.web
+    container_name: aiedu-web-prod
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      BACKEND_URL: http://backend:8080
+      NODE_ENV: production
+    ports:
+      "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - aiedu-prod-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Admin 前端
+  admin:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile.admin
+    container_name: aiedu-admin-prod
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      BACKEND_URL: http://backend:8080
+      NODE_ENV: production
+    ports:
+      "${ADMIN_PORT:-3001}:3001"
+    depends_on:
+      - backend
+    networks:
+      - aiedu-prod-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  aiedu-prod-network:
+    driver: bridge

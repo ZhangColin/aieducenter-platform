@@ -1,0 +1,21 @@
+#!/bin/bash
+# Git pre-push hook
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR/.."
+
+cd "$PROJECT_ROOT"
+
+echo "🚀 推送前执行验证..."
+
+./scripts/validate.sh
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ 验证失败！推送已中止。"
+    echo "   请修复问题后重试。"
+    exit 1
+fi
+
+echo "✅ 验证通过，可以推送。"
+exit 0

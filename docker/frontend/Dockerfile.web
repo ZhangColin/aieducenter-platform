@@ -1,0 +1,22 @@
+# Web 前端 Docker 镜像
+# 注意：构建产物由 build-frontend.sh 在本地生成，Docker 只负责打包
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 复制已构建好的 standalone 产物（由 build-frontend.sh 生成）
+# server.js 在 web 子目录中
+COPY web/.next/standalone/web ./server
+COPY web/.next/standalone/node_modules ./node_modules
+COPY web/.next/standalone/package.json ./package.json
+COPY web/.next/standalone/packages ./packages
+COPY web/.next/static ./server/.next/static
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+WORKDIR /app/server
+CMD ["node", "server.js"]

@@ -57,6 +57,10 @@ out/
 .env*.local
 .env.production
 .env.development
+# .env.prod - 提交到 git，敏感信息用其他手段管理
+
+# Local configuration (not committed)
+server/src/main/resources/application-local.yml
 
 # Testing
 coverage/
@@ -81,3 +85,13 @@ test-results/
 *.swo
 *~
 .tmp/
+
+# Deploy directories
+.deploy-test/
+.deploy-prod/
+
+# Logs
+logs/
+
+# Backup files
+*.bak

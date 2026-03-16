@@ -1,0 +1,15 @@
+spring:
+  # 测试环境数据源配置（会被 docker-compose 环境变量覆盖）
+  datasource:
+    url: jdbc:postgresql://postgres:5432/aieducenter_test
+    username: aiedu_test
+    password: test123
+
+  # Redis 配置（会被 docker-compose 环境变量覆盖）
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+# 测试环境：显示 SQL 用于调试
+spring.jpa.show-sql: true
