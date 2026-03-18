@@ -31,6 +31,10 @@ dependencies {
     // cartisan-core 和 cartisan-web
     implementation("com.cartisan:cartisan-core:0.1.0-SNAPSHOT")
     implementation("com.cartisan:cartisan-web:0.1.0-SNAPSHOT")
+    implementation("com.cartisan:cartisan-data-jpa:0.1.0-SNAPSHOT")
+
+    // Spring Security Crypto (for BCrypt)
+    implementation("org.springframework.security:spring-security-crypto:6.3.0")
 
     // SpringDoc OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")

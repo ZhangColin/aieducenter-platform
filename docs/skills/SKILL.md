@@ -158,15 +158,12 @@ assertEquals(expected, actual);
 
 ---
 
-### 规则 TEST-002：测试方法命名应遵循 given-when-then 模式
+### 规则 TEST-002：测试方法命名使用 should_when 模式
 
 **模板**：
 ```java
 @Test
-void given_{条件}_when_{操作}_then_{预期结果}() {
-    // Given
-    ...
-
+void should_{预期结果}_when_{条件}() {
     // When
     ...
 
@@ -178,16 +175,18 @@ void given_{条件}_when_{操作}_then_{预期结果}() {
 **示例**：
 ```java
 @Test
-void givenInsufficientCoins_whenChat_thenThrowsInsufficientBalanceException() {
-    // Given
-    Tenant tenant = createTenantWithCoins(10);
-    ChatRequest request = new ChatRequest("GPT-4", List.of("message"));
-
+void shouldThrowInsufficientBalanceException_whenBalanceInsufficient() {
     // When & Then
-    assertThatThrownBy(() -> chatService.chat(tenant.getId(), request))
+    assertThatThrownBy(() -> chatService.chat(tenantId, request))
         .isInstanceOf(InsufficientBalanceException.class);
 }
 ```
+
+**命名规范**：
+- 必须使用 `should_when` 格式，不使用 `given_when_then`
+- `should` 后面描述预期结果
+- `when` 后面描述触发条件
+- 测试方法内部仍推荐使用 Given/When/Then 注释分块
 
 ---
 
@@ -1009,3 +1008,121 @@ try {
 ```
 
 **相关 Feature**：F01-07
+
+---
+
+### 规则 DDD-004：值对象校验使用 compact constructor
+
+**推荐做法**：使用 Java Record 的 compact constructor 在构造时完成校验。
+
+```java
+// ✅ 正确：compact constructor 自动拦截构造过程
+public record Username(String value) implements ValueObject<String> {
+    private static final Pattern PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]{2,19}$");
+
+    public Username {
+        Assertions.require(value != null && PATTERN.matcher(value).matches(),
+            UserError.USERNAME_INVALID);
+    }
+
+    public boolean sameValueAs(Username other) {
+        return other != null && this.value.equals(other.value);
+    }
+}
+```
+
+**理由**：
+- Record 天然不可变，符合值对象语义
+- compact constructor 语法简洁，校验逻辑集中
+- 无需编写显式构造函数
+- 实现 `ValueObject<T>` 接口提供 `sameValueAs()` 方法
+
+**相关 Feature**：F02-01
+
+---
+
+### 规则 DDD-005：密码加密使用 BCryptPasswordEncoder
+
+**推荐做法**：
+```java
+// ✅ 正确：使用 Spring Security 的 BCryptPasswordEncoder
+private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
+
+public User(String username, String plainPassword, String nickname, String avatar) {
+    this.username = new Username(username);
+    this.password = PASSWORD_ENCODER.encode(plainPassword);  // 自动加盐
+    // ...
+}
+
+public boolean matchesPassword(String plainPassword) {
+    return PASSWORD_ENCODER.matches(plainPassword, this.password);
+}
+```
+
+**理由**：
+- BCrypt 是行业标准，抗彩虹表攻击
+- 自动生成盐值，无需手动管理
+- strength=10 平衡安全性和性能（约 100ms）
+
+**注意**：密码字段不在数据库设 UNIQUE 约束，允许不同用户使用相同密码。
+
+**相关 Feature**：F02-01
+
+---
+
+### 规则 DDD-006：聚合根 ID 生成使用 @PrePersist
+
+**推荐做法**：
+```java
+@Entity
+public class User extends SoftDeletable implements AggregateRoot<User> {
+    @Column(name = "id", nullable = false, updatable = false)
+    private Long id;
+
+    @PrePersist
+    void prePersist() {
+        if (this.id == null) {
+            this.id = TsidGenerator.newInstance().generate();
+        }
+    }
+}
+```
+
+**理由**：
+- JPA 保存前自动触发，确保 ID 在持久化前生成
+- 避免在构造函数中生成 ID（创建时无需 ID）
+- 支持领域模型的"创建后才有 ID"语义
+
+**相关 Feature**：F02-01
+
+---
+
+### 规则 DATA-004：Repository 查询手动添加软删除条件
+
+**问题**：`@SQLRestriction` 只对自动生成的 SQL 生效，`@Query` 编写的 JPQL 不受影响。
+
+**正确做法**：
+```java
+// ✅ JPQL 查询手动添加 deleted = false
+@Query("SELECT u FROM User u WHERE u.username = :username AND u.deleted = false")
+Optional<User> findByUsername(@Param("username") String username);
+```
+
+**记忆口诀**：JPQL 查询手动加条件，@SQLRestriction 只管自动 SQL。
+
+**相关 Feature**：F02-01
+
+---
+
+## 踩坑记录 - F02-01
+
+### PIT-005 (2026-03-18)：集成测试依赖 Docker，CI 需配置
+
+**问题**：`SpringDataJpaUserRepositoryTest` 继承 `IntegrationTestBase`，依赖 Testcontainers + Docker。
+无 Docker 环境时测试失败。
+
+**解决方案**：
+- 本地开发：确保 Docker 运行
+- CI 环境：配置 Docker runner
+
+**相关 Feature**：F02-01

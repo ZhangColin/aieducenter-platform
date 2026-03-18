@@ -274,3 +274,100 @@
   - ESM 原生支持，无需额外配置
 - **相关 Feature**：F01-07
 - **配置**：vitest.config.ts 中设置 `environment: 'happy-dom'`
+
+---
+
+## ADR-020：User 聚合根使用 BCrypt 加密密码
+
+- **日期**：2026-03-18
+- **Epic**：Epic 002 - 用户与登录
+- **Feature**：F02-01
+- **决策**：
+  - 密码使用 BCrypt 算法加密存储，strength=10
+  - 提供 `matchesPassword(String plainPassword)` 方法验证密码
+  - 密码字段不在数据库设 UNIQUE 约束（允许不同用户使用相同密码）
+- **理由**：
+  - BCrypt 是行业标准的密码哈希算法，自动加盐，抗彩虹表攻击
+  - strength=10 平衡安全性和性能（约 100ms 验证时间）
+  - 不存储明文密码，避免数据泄露时密码暴露
+- **替代方案**：
+  - PBKDF2（Java 内置，但需要额外配置迭代次数）
+  - Argon2（更安全，但 Spring Security 默认不支持）
+  - SHA-256（不安全，缺乏盐值管理）
+- **相关文件**：`User.java:47`, `User.java:180-182`
+
+---
+
+## ADR-021：User 聚合根直接使用 JPA 注解，无需适配器
+
+- **日期**：2026-03-18
+- **Epic**：Epic 002 - 用户与登录
+- **Feature**：F02-01
+- **决策**：User 聚合根直接添加 `@Entity`、`@Table`、`@Column` 等 JPA 注解，不创建独立的 JpaUser 适配器类
+- **理由**：
+  - 简化架构：减少一层转换，代码更直观
+  - User 聚合根字段简单，无复杂嵌套，污染风险低
+  - cartisan-boot 的 SoftDeletable 已处理审计字段（createdAt/updatedAt）
+  - Spring Data JPA 可直接返回实体，无需手动转换
+- **替代方案**：JpaUser 适配器模式（解耦更彻底，但增加复杂度）
+- **风险**：如 User 聚合根变得复杂，未来可重构为适配器模式
+- **相关文件**：`User.java:43-68`
+
+---
+
+## ADR-022：三种登录凭证（用户名必填，邮箱/手机号可选）
+
+- **日期**：2026-03-18
+- **Epic**：Epic 002 - 用户与登录
+- **Feature**：F02-01
+- **决策**：
+  - `username`：必填，主登录凭证
+  - `email`：可选，辅助登录凭证
+  - `phoneNumber`：可选，辅助登录凭证
+  - 三者在数据库中 UNIQUE 约束，软删除后可复用
+- **理由**：
+  - 用户名必填：确保系统有唯一标识，便于用户间交互（如 @username）
+  - 邮箱/手机号可选：降低注册门槛，支持匿名/测试用户
+  - 支持多种登录方式：满足不同用户偏好
+- **替代方案**：
+  - 单一登录凭证（灵活性差）
+  - 邮箱必填（提高注册门槛，部分用户无邮箱）
+- **唯一性校验分层**：
+  - 格式校验：值对象构造函数（Domain 层）
+  - 唯一性校验：Repository.exists 方法（Infrastructure 层），由应用层调用
+- **相关文件**：`User.java:52-59`, `SpringDataJpaUserRepository.java:22-38`
+
+---
+
+## ADR-023：值对象使用 Record 实现自封装校验
+
+- **日期**：2026-03-18
+- **Epic**：Epic 002 - 用户与登录
+- **Feature**：F02-01
+- **决策**：Username、Email、PhoneNumber 使用 Java Record 实现值对象，在 compact constructor 中进行格式校验
+- **理由**：
+  - Record 天然不可变，符合值对象语义
+  - compact constructor 语法简洁，校验逻辑集中
+  - 实现 `ValueObject<T>` 接口，提供 `sameValueAs()` 方法
+  - 校验失败抛出 `DomainException`（通过 `Assertions.require`），领域语义明确
+- **替代方案**：
+  - 传统 class（代码冗长）
+  - Lombok @Value（需要额外依赖）
+- **相关文件**：`Username.java`, `Email.java`, `PhoneNumber.java`
+
+---
+
+## ADR-024：nickname 空值时默认使用 username
+
+- **日期**：2026-03-18
+- **Epic**：Epic 002 - 用户与登录
+- **Feature**：F02-01
+- **决策**：创建用户时，若 nickname 为 null/空字符串，默认设置为 username
+- **理由**：
+  - UI 显示需要有友好的名称，不能总是显示 "user_123"
+  - 减少用户输入步骤，提升注册体验
+  - 用户可后续修改为真实昵称
+- **影响**：
+  - 无法区分"用户显式设置 nickname=username"和"使用默认值"
+  - 如未来需要"清空昵称"功能，需修改此逻辑
+- **相关文件**：`User.java:82-87`
