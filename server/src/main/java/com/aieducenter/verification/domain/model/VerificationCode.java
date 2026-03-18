@@ -72,6 +72,35 @@ public class VerificationCode implements AggregateRoot<VerificationCode> {
     }
 
     /**
+     * 从 Redis 恢复验证码。
+     *
+     * @param id 唯一标识
+     * @param type 类型
+     * @param target 目标
+     * @param code 验证码
+     * @param expireAt 过期时间
+     * @param used 是否已使用
+     * @return 验证码聚合根
+     */
+    public static VerificationCode restore(
+            String id,
+            VerificationType type,
+            String target,
+            String code,
+            Instant expireAt,
+            boolean used) {
+
+        VerificationCode verificationCode = new VerificationCode();
+        verificationCode.id = id;
+        verificationCode.type = type;
+        verificationCode.target = target;
+        verificationCode.code = code;
+        verificationCode.expireAt = expireAt;
+        verificationCode.used = used;
+        return verificationCode;
+    }
+
+    /**
      * JPA 默认构造函数。
      */
     protected VerificationCode() {
