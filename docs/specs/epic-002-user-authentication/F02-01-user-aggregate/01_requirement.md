@@ -15,7 +15,7 @@
 ## 目标
 
 - 建立 User 聚合根，包含用户的核心属性和行为
-- 定义 Username、Email、PhoneNumber 值对象，封装格式校验逻辑
+- 使用 String 类型存储 username/email/phoneNumber，使用 hutool 进行格式校验
 - 定义 UserRepository 接口，规定用户持久化边界
 - 提供密码加密存储和验证能力
 - 覆盖完整的单元测试
@@ -26,12 +26,12 @@
 
 ### 包含（In Scope）
 
-- User 聚合根（领域模型）
-- Username、Email、PhoneNumber 值对象
+- User 聚合根（领域模型，含 JPA 注解）
 - UserRepository 接口定义
 - UserError 错误码枚举
-- 值对象和聚合根的单元测试
+- User 聚合根的单元测试
 - UserRepository 的集成测试
+- hutool 工具类用于验证
 
 ### 不包含（Out of Scope）
 
@@ -52,32 +52,32 @@ User 聚合根包含以下字段：
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `id` | `Long` | ✅ | TSID 生成 |
-| `username` | `Username` | ✅ | 登录凭证，唯一 |
-| `email` | `Optional<Email>` | ❌ | 可选登录凭证 |
-| `phoneNumber` | `Optional<PhoneNumber>` | ❌ | 可选登录凭证 |
+| `username` | `String` | ✅ | 登录凭证，唯一，3-20位字母开头 |
+| `email` | `String` | ❌ | 可选登录凭证，标准邮箱格式 |
+| `phoneNumber` | `String` | ❌ | 可选登录凭证，中国大陆手机号 |
 | `password` | `String` | ✅ | BCrypt hash |
 | `nickname` | `String` | ❌ | 显示名称，空则=username |
-| `avatar` | `Optional<String>` | ❌ | 头像 URL |
+| `avatar` | `String` | ❌ | 头像 URL |
 | `createdAt` | `LocalDateTime` | ✅ | 审计字段 |
 | `updatedAt` | `LocalDateTime` | ✅ | 审计字段 |
 
-### AC2: Username 值对象
+### AC2: Username 格式校验
 
 - 格式：3-20 位，字母开头，允许字母/数字/下划线
 - 正则：`^[a-zA-Z][a-zA-Z0-9_]{2,19}$`
-- 构造函数中校验格式，不符合抛 `UserError.USERNAME_INVALID`
+- 在 User 构造函数/更新方法中校验，不符合抛 `UserError.USERNAME_INVALID`
 
-### AC3: Email 值对象
+### AC3: Email 格式校验
 
 - 标准邮箱格式校验
-- 使用 Jakarta Validation 的 `@Email` 或 Apache Commons Validation
-- 构造函数中校验格式，不符合抛 `UserError.EMAIL_INVALID`
+- 使用 hutool 的 `Validator.isEmail()`
+- 在 User 构造函数/更新方法中校验，不符合抛 `UserError.EMAIL_INVALID`
 
-### AC4: PhoneNumber 值对象
+### AC4: PhoneNumber 格式校验
 
 - 中国大陆手机号格式：1 开头，第二位 3-9，后 9 位数字
-- 正则：`^1[3-9]\d{9}$`
-- 构造函数中校验格式，不符合抛 `UserError.PHONE_NUMBER_INVALID`
+- 使用 hutool 的 `Validator.isMobile()`
+- 在 User 构造函数/更新方法中校验，不符合抛 `UserError.PHONE_NUMBER_INVALID`
 
 ### AC5: 密码加密
 
@@ -108,6 +108,12 @@ boolean matchesPassword(String plainPassword)
 // 修改用户名（应用层需先校验唯一性）
 void updateUsername(String newUsername)
 
+// 修改邮箱（含格式校验）
+void updateEmail(String email)
+
+// 修改手机号（含格式校验）
+void updatePhoneNumber(String phoneNumber)
+
 // 修改个人信息
 void updateNickname(String nickname)
 void updateAvatar(String avatar)
@@ -120,10 +126,7 @@ void updatePassword(String oldPassword, String newPassword)
 
 | 测试类 | 覆盖场景 |
 |--------|----------|
-| `UsernameTest` | 格式正确、太短、数字开头、特殊字符、值相等 |
-| `EmailTest` | 格式正确、格式错误、值相等 |
-| `PhoneNumberTest` | 格式正确、非1开头、第二位非法、值相等 |
-| `UserTest` | 创建、nickname默认、密码匹配/不匹配、修改各字段 |
+| `UserTest` | 创建、username/email/phone格式验证、nickname默认、密码匹配/不匹配、修改各字段 |
 
 ### AC9: Repository 集成测试
 
@@ -144,8 +147,8 @@ void updatePassword(String oldPassword, String newPassword)
 ### 架构约束
 
 - 遵循 DDD 六边形架构
-- 领域层不依赖基础设施层
-- 格式校验在领域层（值对象构造函数）
+- User 聚合根同时作为领域模型和 JPA 实体（Spring Data JPA 风格）
+- 格式校验在 User 聚合根的构造函数和更新方法中（使用 hutool）
 - 唯一性校验在应用层（Repository exists 方法）
 
 ### 代码规范

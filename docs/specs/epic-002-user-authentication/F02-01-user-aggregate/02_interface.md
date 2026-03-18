@@ -11,13 +11,9 @@
 
 | 类/接口 | 职责 | 说明 |
 |---------|------|------|
-| `User` | 聚合根 | 封装用户状态和行为 |
-| `Username` | 值对象 | 用户名，格式校验 |
-| `Email` | 值对象 | 邮箱，格式校验 |
-| `PhoneNumber` | 值对象 | 手机号，格式校验 |
+| `User` | 聚合根 + JPA 实体 | 封装用户状态和行为，含 JPA 注解 |
 | `UserRepository` | 仓储接口 | 用户持久化抽象 |
 | `UserError` | 错误码枚举 | 用户相关错误定义 |
-| `JpaUser` | JPA 实体 | User 聚合根的 ORM 映射 |
 | `JpaUserRepository` | 仓储实现 | UserRepository 的 JPA 实现 |
 
 ### 依赖关系
@@ -25,10 +21,11 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    domain layer                         │
-│  ┌────────────┐  ┌──────────────────┐  ┌─────────────┐ │
-│  │ Username   │  │      User        │  │Email/Phone │ │
-│  │  (VO)      │  │  (AggregateRoot) │  │   (VO)      │ │
-│  └────────────┘  └────────┬─────────┘  └─────────────┘ │
+│                  ┌──────────────────┐                   │
+│                  │      User        │                   │
+│                  │ (AggregateRoot)  │                   │
+│                  │     + @Entity    │                   │
+│                  └────────┬─────────┘                   │
 │                           │                             │
 │                  ┌────────▼────────┐                    │
 │                  │ UserRepository  │                    │
@@ -45,108 +42,66 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
+> **设计说明**：User 聚合根直接使用 String 类型存储 username/email/phoneNumber，验证逻辑在构造函数和更新方法中使用 hutool 工具类完成。不需要单独的值对象类。
+
 ---
 
 ## 领域接口描述（伪代码）
 
-### 1. Username 值对象
+### 1. User 聚合根
 
 ```java
-// 值对象：用户名
-valueobject Username implements ValueObject<String> {
-    field: String value
-
-    // 前置条件：3-20 位，字母开头，允许字母/数字/下划线
-    // 正则：^[a-zA-Z][a-zA-Z0-9_]{2,19}$
-    constructor(String value) {
-        if (value == null) throw DomainException(UserError.USERNAME_INVALID)
-        if (!value.matches("^[a-zA-Z][a-zA-Z0-9_]{2,19}$")) {
-            throw DomainException(UserError.USERNAME_INVALID)
-        }
-        this.value = value
-    }
-
-    method sameValueAs(Username other): boolean
-}
-```
-
-### 2. Email 值对象
-
-```java
-// 值对象：邮箱
-valueobject Email implements ValueObject<String> {
-    field: String value
-
-    // 前置条件：标准邮箱格式
-    constructor(String value) {
-        if (value == null) throw DomainException(UserError.EMAIL_INVALID)
-        if (!isValidEmail(value)) throw DomainException(UserError.EMAIL_INVALID)
-        this.value = value
-    }
-
-    private isValidEmail(String value): boolean {
-        // 使用 Jakarta Validation 或 Apache Commons EmailValidator
-        return value.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
-    }
-
-    method sameValueAs(Email other): boolean
-}
-```
-
-### 3. PhoneNumber 值对象
-
-```java
-// 值对象：手机号
-valueobject PhoneNumber implements ValueObject<String> {
-    field: String value
-
-    // 前置条件：中国大陆手机号，1 开头，第二位 3-9
-    // 正则：^1[3-9]\d{9}$
-    constructor(String value) {
-        if (value == null) throw DomainException(UserError.PHONE_NUMBER_INVALID)
-        if (!value.matches("^1[3-9]\\d{9}$")) {
-            throw DomainException(UserError.PHONE_NUMBER_INVALID)
-        }
-        this.value = value
-    }
-
-    method sameValueAs(PhoneNumber other): boolean
-}
-```
-
-### 4. User 聚合根
-
-```java
-// 聚合根：用户
+// 聚合根：用户（同时作为 JPA 实体）
+@Entity
+@Table(name = "users")
 aggregate User extends SoftDeletable {
     // 字段
+    @Id
+    @Column(name = "id")
     field: Long id                      // TSID 生成
-    field: Username username            // 必填
-    field: Optional<Email> email        // 可选
-    field: Optional<PhoneNumber> phoneNumber  // 可选
+
+    @Column(name = "username", nullable = false, length = 20, unique = true)
+    field: String username              // 必填，3-20位字母开头
+
+    @Column(name = "email", length = 255, unique = true)
+    field: String email                 // 可选，标准邮箱格式
+
+    @Column(name = "phone_number", length = 20, unique = true)
+    field: String phoneNumber           // 可选，中国大陆手机号
+
+    @Column(name = "password", nullable = false, length = 255)
     field: String password              // BCrypt hash
+
+    @Column(name = "nickname", length = 50)
     field: String nickname              // 可选，空则=username
-    field: Optional<String> avatar      // 可选
+
+    @Column(name = "avatar", length = 512)
+    field: String avatar                // 可选
 
     // 依赖（注入构造函数）
     dependency: PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10)
 
     // 构造函数：创建新用户
     constructor(String username, String plainPassword, String nickname, String avatar) {
-        this.id = null  // 由 JPA @PrePersist 生成
-        this.username = new Username(username)
+        // 验证用户名格式：3-20 位，字母开头
+        if (!isValidUsername(username)) {
+            throw DomainException(UserError.USERNAME_INVALID)
+        }
+        this.username = username
 
         // 密码加密
         this.password = passwordEncoder.encode(plainPassword)
 
         // nickname 为空则设置为 username
-        this.nickname = (nickname == null || nickname.isBlank())
-            ? username
-            : nickname
+        this.nickname = (nickname == null || nickname.isBlank()) ? username : nickname
+        this.avatar = avatar
+        this.email = null
+        this.phoneNumber = null
+    }
 
-        this.avatar = Optional.ofNullable(avatar)
-        this.email = Optional.empty()
-        this.phoneNumber = Optional.empty()
+    // 私有验证方法：用户名格式
+    private isValidUsername(String value): boolean {
+        return value.matches("^[a-zA-Z][a-zA-Z0-9_]{2,19}$")
     }
 
     // 方法：验证密码
@@ -154,9 +109,28 @@ aggregate User extends SoftDeletable {
         return passwordEncoder.matches(plainPassword, this.password)
     }
 
-    // 方法：修改用户名（应用层需先校验唯一性）
+    // 方法：修改用户名（含格式验证）
     method updateUsername(String newUsername) {
-        this.username = new Username(newUsername)
+        if (!isValidUsername(newUsername)) {
+            throw DomainException(UserError.USERNAME_INVALID)
+        }
+        this.username = newUsername
+    }
+
+    // 方法：修改邮箱（含格式验证，使用 hutool）
+    method updateEmail(String email) {
+        if (email != null && !Validator.isEmail(email)) {
+            throw DomainException(UserError.EMAIL_INVALID)
+        }
+        this.email = email
+    }
+
+    // 方法：修改手机号（含格式验证，使用 hutool）
+    method updatePhoneNumber(String phoneNumber) {
+        if (phoneNumber != null && !Validator.isMobile(phoneNumber)) {
+            throw DomainException(UserError.PHONE_NUMBER_INVALID)
+        }
+        this.phoneNumber = phoneNumber
     }
 
     // 方法：修改昵称
@@ -168,7 +142,7 @@ aggregate User extends SoftDeletable {
 
     // 方法：修改头像
     method updateAvatar(String avatar) {
-        this.avatar = Optional.ofNullable(avatar)
+        this.avatar = avatar
     }
 
     // 方法：修改密码
@@ -179,16 +153,25 @@ aggregate User extends SoftDeletable {
         this.password = passwordEncoder.encode(newPassword)
     }
 
+    // JPA @PrePersist 生成 TSID
+    @PrePersist
+    method prePersist() {
+        if (this.id == null) {
+            this.id = TsidGenerator.newInstance().generate()
+        }
+    }
+
     // Getter
+    method getId(): Long
     method getUsername(): String
-    method getEmail(): Optional<String>
-    method getPhoneNumber(): Optional<String>
+    method getEmail(): String
+    method getPhoneNumber(): String
     method getNickname(): String
-    method getAvatar(): Optional<String>
+    method getAvatar(): String
 }
 ```
 
-### 5. UserRepository 接口
+### 2. UserRepository 接口
 
 ```java
 // 仓储接口：用户持久化
@@ -205,7 +188,7 @@ port UserRepository extends BaseRepository<User, Long> {
 }
 ```
 
-### 6. UserError 错误码
+### 3. UserError 错误码
 
 ```java
 // 错误码枚举
@@ -330,7 +313,8 @@ COMMENT ON COLUMN users.deleted IS '软删除标记';
 | 密码加密 | BCrypt | 行业标准，自动加盐，strength=10 |
 | JPA 继承 | SoftDeletable | 包含审计字段 + 软删除 |
 | ID 生成 | TSID | 时间排序、分布式唯一 |
-| 校验框架 | 自定义断言 | 使用 cartisan-core 的 Assertions |
+| 格式校验 | hutool Validator | 成熟工具库，支持邮箱/手机号等验证 |
+| 用户名校验 | 自定义正则 | 3-20位，字母开头 |
 
 ---
 
@@ -348,7 +332,7 @@ dependencies {
     // 新增
     implementation("com.cartisan:cartisan-data-jpa:0.1.0-SNAPSHOT")
     implementation("org.springframework.security:spring-security-crypto:6.3.0")
-    implementation("org.springframework.security:spring-security-crypto:6.3.0")
+    implementation("cn.hutool:hutool-core:5.8.+")  // 用于验证
 
     // 测试
     testImplementation("com.cartisan:cartisan-test:0.1.0-SNAPSHOT")
