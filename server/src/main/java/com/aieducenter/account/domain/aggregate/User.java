@@ -3,22 +3,15 @@ package com.aieducenter.account.domain.aggregate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import jakarta.persistence.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import com.aieducenter.account.domain.valueobject.Email;
-import com.aieducenter.account.domain.valueobject.PhoneNumber;
-import com.aieducenter.account.domain.valueobject.Username;
+import cn.hutool.core.lang.Validator;
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.domain.SoftDeletable;
 import com.aieducenter.account.domain.error.UserError;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
 
 /**
  * User 聚合根。
@@ -46,17 +39,25 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
 
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
 
+    /**
+     * 验证用户名格式：3-20 位，字母开头，允许字母/数字/下划线
+     */
+    private boolean isValidUsername(String value) {
+        return value.matches("^[a-zA-Z][a-zA-Z0-9_]{2,19}$");
+    }
+
+    @Id
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
     @Column(name = "username", nullable = false, length = 20, unique = true)
-    private Username username;
+    private String username;
 
     @Column(name = "email", length = 255, unique = true)
-    private Email email;
+    private String email;
 
     @Column(name = "phone_number", length = 20, unique = true)
-    private PhoneNumber phoneNumber;
+    private String phoneNumber;
 
     @Column(name = "password", nullable = false, length = 255)
     private String password;
@@ -76,7 +77,12 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
      * @param avatar 头像 URL（可选）
      */
     public User(String username, String plainPassword, String nickname, String avatar) {
-        this.username = new Username(username);
+        // 验证用户名格式
+        if (!isValidUsername(username)) {
+            throw new DomainException(UserError.USERNAME_INVALID);
+        }
+        this.username = username;
+
         this.password = PASSWORD_ENCODER.encode(plainPassword);
 
         // 昵称为空则设置为用户名
@@ -124,9 +130,9 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
                                String password, String nickname, String avatar) {
         User user = new User();
         user.id = id;
-        user.username = new Username(username);
-        user.email = email != null ? new Email(email) : null;
-        user.phoneNumber = phoneNumber != null ? new PhoneNumber(phoneNumber) : null;
+        user.username = username;
+        user.email = email;
+        user.phoneNumber = phoneNumber;
         user.password = password;
         user.nickname = nickname;
         user.avatar = avatar;
@@ -140,15 +146,15 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
     }
 
     public String getUsername() {
-        return username.value();
+        return username;
     }
 
     public Optional<String> getEmail() {
-        return Optional.ofNullable(email).map(Email::value);
+        return Optional.ofNullable(email);
     }
 
     public Optional<String> getPhoneNumber() {
-        return Optional.ofNullable(phoneNumber).map(PhoneNumber::value);
+        return Optional.ofNullable(phoneNumber);
     }
 
     public String getNickname() {
@@ -188,7 +194,36 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
      * @param newUsername 新用户名
      */
     public void updateUsername(String newUsername) {
-        this.username = new Username(newUsername);
+        if (!isValidUsername(newUsername)) {
+            throw new DomainException(UserError.USERNAME_INVALID);
+        }
+        this.username = newUsername;
+    }
+
+    /**
+     * 修改邮箱（含格式验证）。
+     *
+     * @param email 新邮箱（null 则清空）
+     * @throws DomainException 邮箱格式不正确时抛出
+     */
+    public void updateEmail(String email) {
+        if (email != null && !Validator.isEmail(email)) {
+            throw new DomainException(UserError.EMAIL_INVALID);
+        }
+        this.email = email;
+    }
+
+    /**
+     * 修改手机号（含格式验证）。
+     *
+     * @param phoneNumber 新手机号（null 则清空）
+     * @throws DomainException 手机号格式不正确时抛出
+     */
+    public void updatePhoneNumber(String phoneNumber) {
+        if (phoneNumber != null && !Validator.isMobile(phoneNumber)) {
+            throw new DomainException(UserError.PHONE_NUMBER_INVALID);
+        }
+        this.phoneNumber = phoneNumber;
     }
 
     /**

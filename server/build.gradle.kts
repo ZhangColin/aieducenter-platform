@@ -37,6 +37,9 @@ dependencies {
     // Spring Security Crypto (for BCrypt)
     implementation("org.springframework.security:spring-security-crypto:6.3.0")
 
+    // Hutool (for validation)
+    implementation("cn.hutool:hutool-core:5.8.29")
+
     // SpringDoc OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
