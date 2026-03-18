@@ -80,6 +80,7 @@ public class VerificationCode implements AggregateRoot<VerificationCode> {
      * @param code 验证码
      * @param expireAt 过期时间
      * @param used 是否已使用
+     * @param purpose 使用目的
      * @return 验证码聚合根
      */
     public static VerificationCode restore(
@@ -88,7 +89,8 @@ public class VerificationCode implements AggregateRoot<VerificationCode> {
             String target,
             String code,
             Instant expireAt,
-            boolean used) {
+            boolean used,
+            VerificationPurpose purpose) {
 
         VerificationCode verificationCode = new VerificationCode();
         verificationCode.id = id;
@@ -97,6 +99,7 @@ public class VerificationCode implements AggregateRoot<VerificationCode> {
         verificationCode.code = code;
         verificationCode.expireAt = expireAt;
         verificationCode.used = used;
+        verificationCode.purpose = purpose;
         verificationCode.createdAt = Instant.now();
         return verificationCode;
     }

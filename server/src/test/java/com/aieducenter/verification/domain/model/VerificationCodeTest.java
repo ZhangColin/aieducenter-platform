@@ -104,6 +104,22 @@ class VerificationCodeTest {
     }
 
     @Test
+    void given_verification_code_when_restore_then_purpose_is_preserved() {
+        // Given
+        String id = "test@example.com:REGISTER";
+        VerificationPurpose expectedPurpose = VerificationPurpose.REGISTER;
+
+        // When
+        VerificationCode restored = VerificationCode.restore(
+            id, VerificationType.EMAIL, "test@example.com", "123456",
+            Instant.now().plusSeconds(300), false, expectedPurpose
+        );
+
+        // Then
+        assertThat(restored.getPurpose()).isEqualTo(expectedPurpose);
+    }
+
+    @Test
     void given_id_matches_when_compare_identity_then_return_true() {
         // Given
         VerificationCode code1 = VerificationCode.create(

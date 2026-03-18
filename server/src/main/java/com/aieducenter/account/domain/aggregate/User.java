@@ -33,7 +33,7 @@ import com.aieducenter.account.domain.error.UserError;
  *
  * @since 0.1.0
  */
-@Entity(name = "user")
+@Entity
 @Table(name = "users")
 public class User extends SoftDeletable implements AggregateRoot<User> {
 

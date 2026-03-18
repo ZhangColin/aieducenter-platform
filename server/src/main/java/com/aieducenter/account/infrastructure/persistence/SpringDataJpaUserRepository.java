@@ -7,6 +7,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.aieducenter.account.domain.aggregate.User;
+import com.aieducenter.account.domain.repository.UserRepository;
+import com.cartisan.core.stereotype.Adapter;
+import com.cartisan.core.stereotype.PortType;
 import com.cartisan.data.jpa.repository.BaseRepository;
 
 /**
@@ -16,8 +19,9 @@ import com.cartisan.data.jpa.repository.BaseRepository;
  *
  * @since 0.1.0
  */
+@Adapter(PortType.REPOSITORY)
 @Repository
-interface SpringDataJpaUserRepository extends BaseRepository<User, Long> {
+public interface SpringDataJpaUserRepository extends BaseRepository<User, Long>, UserRepository {
 
     @Query("SELECT u FROM User u WHERE u.username = :username AND u.deleted = false")
     Optional<User> findByUsername(@Param("username") String username);

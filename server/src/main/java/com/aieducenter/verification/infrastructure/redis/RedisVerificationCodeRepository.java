@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
@@ -32,11 +32,9 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
     private static final Duration EMAIL_LIMIT_TTL = Duration.ofSeconds(60);  // 60秒
     private static final Duration IP_LIMIT_TTL = Duration.ofSeconds(3600);  // 1小时
 
-    private static final int IP_LIMIT_MAX = 10;
+    private final StringRedisTemplate redisTemplate;
 
-    private final RedisTemplate<String, Object> redisTemplate;
-
-    public RedisVerificationCodeRepository(RedisTemplate<String, Object> redisTemplate) {
+    public RedisVerificationCodeRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -83,7 +81,8 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
             target,
             code,
             Instant.ofEpochMilli(expireAt),
-            used
+            used,
+            purpose
         ));
     }
 
@@ -105,19 +104,6 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
             redisTemplate.expire(key, IP_LIMIT_TTL);
         }
         return count != null ? count : 1;
-    }
-
-    @Override
-    public void incrementEmailCount(String email, String purpose) {
-        // 此方法已废弃，由 tryAcquireEmailLock 内部处理
-        // 保留以兼容旧接口
-    }
-
-    @Override
-    public long incrementIpCount(String ip) {
-        // 此方法已废弃，由 checkAndIncrementIp 内部处理
-        // 保留以兼容旧接口
-        return 0;
     }
 
     /**
@@ -187,7 +173,7 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
         script.setScriptText(VERIFY_AND_MARK_SCRIPT);
         script.setResultType(Long.class);
 
-        Long result = redisTemplate.execute(script, java.util.List.of(key), inputCode, currentTime);
+        Long result = redisTemplate.execute(script, java.util.List.of(key), inputCode, String.valueOf(currentTime));
         return result != null && result == 1L;
     }
 
@@ -203,12 +189,4 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
         return IP_LIMIT_PREFIX + ip;
     }
 
-    /**
-     * 验证码数据（Redis 存储）。
-     */
-    private record VerificationCodeData(
-        String code,
-        Long expireAt,
-        boolean used
-    ) {}
 }

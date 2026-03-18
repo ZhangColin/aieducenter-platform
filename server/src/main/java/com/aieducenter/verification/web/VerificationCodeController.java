@@ -60,15 +60,29 @@ public class VerificationCodeController {
 
     /**
      * 获取客户端IP。
+     *
+     * <p>仅当请求来自受信任的反向代理（回环或私有 IP）时，才读取 X-Forwarded-For，
+     * 防止攻击者伪造头绕过 IP 限流。
      */
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty()) {
-            ip = request.getHeader("X-Real-IP");
+        String remoteAddr = request.getRemoteAddr();
+        if (isTrustedProxy(remoteAddr)) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isEmpty()) {
+                // 取第一个 IP（最原始的客户端 IP）
+                return forwarded.split(",")[0].trim();
+            }
         }
-        if (ip == null || ip.isEmpty()) {
-            ip = request.getRemoteAddr();
-        }
-        return ip != null ? ip : "127.0.0.1";
+        return remoteAddr != null ? remoteAddr : "127.0.0.1";
+    }
+
+    private boolean isTrustedProxy(String remoteAddr) {
+        if (remoteAddr == null) return false;
+        return remoteAddr.startsWith("127.")
+            || remoteAddr.startsWith("10.")
+            || remoteAddr.startsWith("192.168.")
+            || remoteAddr.startsWith("172.")
+            || remoteAddr.equals("0:0:0:0:0:0:0:1")
+            || remoteAddr.equals("::1");
     }
 }

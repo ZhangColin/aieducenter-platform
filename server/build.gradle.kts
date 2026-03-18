@@ -34,6 +34,9 @@ dependencies {
     implementation("com.cartisan:cartisan-web:0.1.0-SNAPSHOT")
     implementation("com.cartisan:cartisan-data-jpa:0.1.0-SNAPSHOT")
 
+    // cartisan-security (Sa-Token)
+    implementation("com.cartisan:cartisan-security:0.1.0-SNAPSHOT")
+
     // Spring Security Crypto (for BCrypt)
     implementation("org.springframework.security:spring-security-crypto:6.3.0")
 
@@ -44,12 +47,9 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
     testImplementation("com.cartisan:cartisan-test:0.1.0-SNAPSHOT")
-
-    // Testcontainers
-    testImplementation("org.testcontainers:testcontainers:1.20.1")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.1")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    jvmArgs("--enable-preview")
 }

@@ -9,14 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.account.domain.aggregate.User;
-import com.cartisan.test.base.IntegrationTestBase;
 
 /**
  * SpringDataJpaUserRepository 集成测试。
  */
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class SpringDataJpaUserRepositoryTest extends IntegrationTestBase {
+class SpringDataJpaUserRepositoryTest {
 
     @Autowired
     private SpringDataJpaUserRepository userRepository;

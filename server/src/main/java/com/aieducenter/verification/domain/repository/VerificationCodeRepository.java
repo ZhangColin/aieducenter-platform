@@ -57,19 +57,4 @@ public interface VerificationCodeRepository {
      */
     long checkAndIncrementIp(String ip);
 
-    /**
-     * 增加邮箱发送计数。
-     *
-     * @param email 邮箱
-     * @param purpose 目的
-     */
-    void incrementEmailCount(String email, String purpose);
-
-    /**
-     * 增加IP发送计数。
-     *
-     * @param ip IP地址
-     * @return 当前计数
-     */
-    long incrementIpCount(String ip);
 }

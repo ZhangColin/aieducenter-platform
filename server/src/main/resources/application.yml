@@ -11,7 +11,7 @@ spring:
 
   # Flyway 配置
   flyway:
-    enabled: false
+    enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
@@ -25,6 +25,31 @@ spring:
     hibernate:
       ddl-auto: validate  # 使用 Flyway 管理 schema
     show-sql: false
+
+# cartisan-security 配置
+cartisan:
+  security:
+    interceptor:
+      exclude-path-patterns:
+        - "/error"
+        - "/actuator/**"
+        - "/api/account/verification-code/**"
+        - "/api/account/verify-code"
+        - "/api/account/register/**"
+        - "/api/account/login"
+        - "/api/account/reset-password"
+        - "/api/health"
+        - "/swagger-ui/**"
+        - "/api-docs/**"
+
+# Sa-Token 配置
+sa-token:
+  token-name: satoken
+  timeout: 604800       # 7 天（秒）
+  active-timeout: -1    # 不启用动态续期
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
 
 # Actuator 配置
 management:

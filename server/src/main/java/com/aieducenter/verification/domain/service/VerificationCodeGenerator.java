@@ -2,6 +2,8 @@ package com.aieducenter.verification.domain.service;
 
 import java.security.SecureRandom;
 
+import org.springframework.stereotype.Component;
+
 import com.cartisan.core.stereotype.DomainService;
 
 /**
@@ -16,6 +18,7 @@ import com.cartisan.core.stereotype.DomainService;
  * @since 0.1.0
  */
 @DomainService
+@Component
 public class VerificationCodeGenerator {
 
     private static final int MIN_CODE = 100000;
