@@ -290,4 +290,63 @@ class UserTest {
         // Then
         assertThat(user.getPhoneNumber()).isEmpty();
     }
+
+    // ========== Email 验证 ==========
+
+    @Test
+    void shouldUpdateEmail_whenEmailValid() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+
+        // When
+        user.updateEmail("john@example.com");
+
+        // Then
+        assertThat(user.getEmail()).isPresent();
+        assertThat(user.getEmail().get()).isEqualTo("john@example.com");
+    }
+
+    @Test
+    void shouldClearEmail_whenEmailNull() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+        user.updateEmail("john@example.com");
+
+        // When
+        user.updateEmail(null);
+
+        // Then
+        assertThat(user.getEmail()).isEmpty();
+    }
+
+    @Test
+    void shouldThrow_whenEmailInvalid() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+
+        // When & Then - 缺少 @
+        assertThatThrownBy(() -> user.updateEmail("invalidemail"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.EMAIL_INVALID);
+
+        // When & Then - 缺少域名
+        assertThatThrownBy(() -> user.updateEmail("invalid@"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.EMAIL_INVALID);
+    }
+
+    @Test
+    void shouldUpdateEmail_whenEmailWithSubdomain() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+
+        // When
+        user.updateEmail("john@mail.example.com");
+
+        // Then
+        assertThat(user.getEmail()).isPresent();
+        assertThat(user.getEmail().get()).isEqualTo("john@mail.example.com");
+    }
 }
