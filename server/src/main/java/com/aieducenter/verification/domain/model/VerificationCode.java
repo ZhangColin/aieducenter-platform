@@ -97,6 +97,7 @@ public class VerificationCode implements AggregateRoot<VerificationCode> {
         verificationCode.code = code;
         verificationCode.expireAt = expireAt;
         verificationCode.used = used;
+        verificationCode.createdAt = Instant.now();
         return verificationCode;
     }
 

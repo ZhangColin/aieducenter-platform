@@ -41,6 +41,10 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
     testImplementation("com.cartisan:cartisan-test:0.1.0-SNAPSHOT")
+
+    // Testcontainers
+    testImplementation("org.testcontainers:testcontainers:1.20.1")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.1")
 }
 
 tasks.withType<Test> {

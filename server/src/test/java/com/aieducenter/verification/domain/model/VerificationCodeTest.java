@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.*;
 class VerificationCodeTest {
 
     @Test
-    void should_create_verification_code_successfully_when_input_valid() {
+    void given_valid_input_when_create_verification_code_then_success() {
         // Given
         String email = "test@example.com";
         String code = "123456";
@@ -34,7 +34,7 @@ class VerificationCodeTest {
     }
 
     @Test
-    void should_return_true_when_code_matches_and_not_expired_and_not_used() {
+    void given_code_matches_and_not_expired_and_not_used_when_validate_then_return_true() {
         // Given
         VerificationCode verificationCode = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER
@@ -48,7 +48,7 @@ class VerificationCodeTest {
     }
 
     @Test
-    void should_return_false_when_code_not_match() {
+    void given_code_not_match_when_validate_then_return_false() {
         // Given
         VerificationCode verificationCode = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER
@@ -62,7 +62,7 @@ class VerificationCodeTest {
     }
 
     @Test
-    void should_return_false_when_code_is_used() {
+    void given_code_is_used_when_validate_then_return_false() {
         // Given
         VerificationCode verificationCode = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER
@@ -77,7 +77,7 @@ class VerificationCodeTest {
     }
 
     @Test
-    void should_mark_as_used_successfully_when_code_not_used() {
+    void given_code_not_used_when_mark_as_used_then_success() {
         // Given
         VerificationCode verificationCode = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER
@@ -91,7 +91,7 @@ class VerificationCodeTest {
     }
 
     @Test
-    void should_throw_exception_when_mark_used_on_already_used_code() {
+    void given_code_already_used_when_mark_as_used_then_throw_exception() {
         // Given
         VerificationCode verificationCode = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER
@@ -104,7 +104,7 @@ class VerificationCodeTest {
     }
 
     @Test
-    void should_have_same_identity_when_id_matches() {
+    void given_id_matches_when_compare_identity_then_return_true() {
         // Given
         VerificationCode code1 = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER

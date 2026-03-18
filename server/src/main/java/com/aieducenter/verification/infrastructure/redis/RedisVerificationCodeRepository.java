@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
 import com.cartisan.core.stereotype.Adapter;
@@ -43,24 +44,29 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
     public void save(VerificationCode code) {
         String key = codeKey(code.getTarget(), code.getPurpose().name());
 
-        // 序列化为 JSON 存储
-        VerificationCodeData data = new VerificationCodeData(
-            code.getCode(),
-            code.getExpireAt().toEpochMilli(),
-            code.isUsed()
-        );
+        // 使用 Hash 存储以支持原子操作
+        java.util.Map<String, String> data = new java.util.HashMap<>();
+        data.put("code", code.getCode());
+        data.put("expireAt", String.valueOf(code.getExpireAt().toEpochMilli()));
+        data.put("used", String.valueOf(code.isUsed()));
 
-        redisTemplate.opsForValue().set(key, data, CODE_TTL);
+        redisTemplate.opsForHash().putAll(key, data);
+        redisTemplate.expire(key, CODE_TTL);
     }
 
     @Override
     public Optional<VerificationCode> findById(String id) {
         String key = CODE_KEY_PREFIX + id;
-        VerificationCodeData data = (VerificationCodeData) redisTemplate.opsForValue().get(key);
+        Object data = redisTemplate.opsForHash().get(key, "code");
 
         if (data == null) {
             return Optional.empty();
         }
+
+        // 从 Hash 读取所有字段
+        String code = (String) redisTemplate.opsForHash().get(key, "code");
+        String expireAtStr = (String) redisTemplate.opsForHash().get(key, "expireAt");
+        String usedStr = (String) redisTemplate.opsForHash().get(key, "used");
 
         // 从 ID 解析 target 和 purpose
         String[] parts = id.split(":", 2);
@@ -68,50 +74,121 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
         String purposeName = parts.length > 1 ? parts[1] : "REGISTER";
         VerificationPurpose purpose = VerificationPurpose.valueOf(purposeName);
 
+        long expireAt = expireAtStr != null ? Long.parseLong(expireAtStr) : 0L;
+        boolean used = Boolean.parseBoolean(usedStr);
+
         return Optional.of(VerificationCode.restore(
             id,
             VerificationType.EMAIL,
             target,
-            data.code(),
-            data.expireAt() != null ? Instant.ofEpochMilli(data.expireAt()) : null,
-            data.used()
+            code,
+            Instant.ofEpochMilli(expireAt),
+            used
         ));
     }
 
     @Override
-    public boolean isEmailRateLimited(String email, String purpose) {
+    public boolean tryAcquireEmailLock(String email, String purpose) {
         String key = emailLimitKey(email, purpose);
-        Boolean exists = redisTemplate.hasKey(key);
-        return Boolean.TRUE.equals(exists);
+        // 原子操作：仅当 key 不存在时设置，防止竞态条件
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(key, "1", EMAIL_LIMIT_TTL);
+        return Boolean.TRUE.equals(acquired);
     }
 
     @Override
-    public boolean isIpRateLimited(String ip) {
+    public long checkAndIncrementIp(String ip) {
         String key = ipLimitKey(ip);
-        Object countObj = redisTemplate.opsForValue().get(key);
-        if (countObj instanceof Long count) {
-            return count >= IP_LIMIT_MAX;
+        // 原子操作：increment 返回增加后的值
+        Long count = redisTemplate.opsForValue().increment(key);
+        if (count != null && count == 1) {
+            // 第一次设置时添加过期时间
+            redisTemplate.expire(key, IP_LIMIT_TTL);
         }
-        if (countObj instanceof Integer count) {
-            return count >= IP_LIMIT_MAX;
-        }
-        return false;
+        return count != null ? count : 1;
     }
 
     @Override
     public void incrementEmailCount(String email, String purpose) {
-        String key = emailLimitKey(email, purpose);
-        redisTemplate.opsForValue().set(key, 1, EMAIL_LIMIT_TTL);
+        // 此方法已废弃，由 tryAcquireEmailLock 内部处理
+        // 保留以兼容旧接口
     }
 
     @Override
     public long incrementIpCount(String ip) {
-        String key = ipLimitKey(ip);
-        Long count = redisTemplate.opsForValue().increment(key);
-        if (count != null && count == 1) {
-            redisTemplate.expire(key, IP_LIMIT_TTL);
-        }
-        return count != null ? count : 1;
+        // 此方法已废弃，由 checkAndIncrementIp 内部处理
+        // 保留以兼容旧接口
+        return 0;
+    }
+
+    /**
+     * Lua 脚本：原子操作验证码校验并标记为已使用。
+     *
+     * <p>返回 1 表示验证成功，0 表示验证失败。
+     */
+    private static final String VERIFY_AND_MARK_SCRIPT = """
+        local key = KEYS[1]
+        local inputCode = ARGV[1]
+        local currentTime = tonumber(ARGV[2])
+
+        local data = redis.call('HGETALL', key)
+        if #data == 0 then
+            return 0  -- 验证码不存在
+        end
+
+        -- data 是一个扁平数组 {field1, value1, field2, value2, ...}
+        -- 我们需要找到对应字段的值
+        local storedCode = nil
+        local expireAt = nil
+        local used = false
+
+        for i = 1, #data, 2 do
+            local field = data[i]
+            local value = data[i + 1]
+            if field == 'code' then
+                storedCode = value
+            elseif field == 'expireAt' then
+                expireAt = tonumber(value)
+            elseif field == 'used' then
+                used = (value == '1' or value == 'true')
+            end
+        end
+
+        -- 检查验证码是否存在
+        if not storedCode then
+            return 0  -- 验证码不存在
+        end
+
+        -- 检查是否已使用
+        if used then
+            return 0  -- 已使用
+        end
+
+        -- 检查是否过期
+        if expireAt and currentTime >= expireAt then
+            return 0  -- 已过期
+        end
+
+        -- 检查验证码是否匹配
+        if storedCode ~= inputCode then
+            return 0  -- 验证码错误
+        end
+
+        -- 验证通过，标记为已使用
+        redis.call('HSET', key, 'used', '1')
+        return 1  -- 验证成功
+        """;
+
+    @Override
+    public boolean verifyAndMarkAsUsed(String id, String inputCode) {
+        String key = CODE_KEY_PREFIX + id;
+        long currentTime = Instant.now().toEpochMilli();
+
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setScriptText(VERIFY_AND_MARK_SCRIPT);
+        script.setResultType(Long.class);
+
+        Long result = redisTemplate.execute(script, java.util.List.of(key), inputCode, currentTime);
+        return result != null && result == 1L;
     }
 
     private String codeKey(String target, String purpose) {

@@ -29,7 +29,7 @@ class VerificationCodeControllerTest {
     private VerificationCodeApplicationService service;
 
     @Test
-    void should_send_verification_code_successfully() throws Exception {
+    void given_valid_request_when_send_verification_code_then_return_success() throws Exception {
         // Given
         when(service.sendEmailVerificationCode(any(), eq("127.0.0.1")))
             .thenReturn(new SendCodeResponse(300, 60));
@@ -45,7 +45,7 @@ class VerificationCodeControllerTest {
     }
 
     @Test
-    void should_verify_code_successfully() throws Exception {
+    void given_valid_code_when_verify_code_then_return_verified() throws Exception {
         // Given
         when(service.verifyCode(any()))
             .thenReturn(new VerifyCodeResult(true, "验证码正确"));

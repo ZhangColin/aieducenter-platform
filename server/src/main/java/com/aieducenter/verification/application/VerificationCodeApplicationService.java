@@ -4,6 +4,7 @@ import com.aieducenter.verification.application.dto.SendCodeResponse;
 import com.aieducenter.verification.application.dto.SendEmailCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
+import com.aieducenter.verification.config.VerificationCodeProperties;
 import com.aieducenter.verification.domain.error.VerificationCodeError;
 import com.aieducenter.verification.domain.model.VerificationCode;
 import com.aieducenter.verification.domain.model.VerificationPurpose;
@@ -27,14 +28,17 @@ public class VerificationCodeApplicationService {
     private final VerificationCodeRepository repository;
     private final VerificationCodeGenerator generator;
     private final MessageSender messageSender;
+    private final VerificationCodeProperties properties;
 
     public VerificationCodeApplicationService(
             VerificationCodeRepository repository,
             VerificationCodeGenerator generator,
-            MessageSender messageSender) {
+            MessageSender messageSender,
+            VerificationCodeProperties properties) {
         this.repository = repository;
         this.generator = generator;
         this.messageSender = messageSender;
+        this.properties = properties;
     }
 
     /**
@@ -52,15 +56,16 @@ public class VerificationCodeApplicationService {
         // 2. 校验 purpose
         VerificationPurpose purpose = validatePurpose(command.purpose());
 
-        // 3. 检查邮箱限流
+        // 3. 原子操作：检查并获取邮箱限流锁
         Assertions.require(
-            !repository.isEmailRateLimited(command.email(), command.purpose()),
+            repository.tryAcquireEmailLock(command.email(), command.purpose()),
             VerificationCodeError.RATE_LIMIT_EMAIL
         );
 
-        // 4. 检查IP限流
+        // 4. 原子操作：检查并增加 IP 计数
+        long ipCount = repository.checkAndIncrementIp(ip);
         Assertions.require(
-            !repository.isIpRateLimited(ip),
+            ipCount <= properties.getIpMaxPerHour(),
             VerificationCodeError.RATE_LIMIT_IP
         );
 
@@ -78,14 +83,12 @@ public class VerificationCodeApplicationService {
         // 7. 保存到 Redis
         repository.save(verificationCode);
 
-        // 8. 更新限流计数
-        repository.incrementEmailCount(command.email(), command.purpose());
-        repository.incrementIpCount(ip);
-
-        // 9. 发送邮件
+        // 8. 发送邮件
         messageSender.send(command.email(), code, purpose);
 
-        return new SendCodeResponse(300, 60);
+        int expireSeconds = properties.getExpireMinutes() * 60;
+        long cooldownSeconds = properties.getEmailCooldownSeconds();
+        return new SendCodeResponse(expireSeconds, (int) cooldownSeconds);
     }
 
     /**
@@ -102,35 +105,41 @@ public class VerificationCodeApplicationService {
         // 2. 校验 purpose
         VerificationPurpose purpose = validatePurpose(command.purpose());
 
-        // 3. 从 Redis 获取验证码
+        // 3. 原子操作：验证并标记为已使用
         String id = command.email() + ":" + command.purpose();
-        var verificationCode = repository.findById(id)
-            .orElseThrow(() -> new DomainException(VerificationCodeError.CODE_INVALID));
+        boolean verified = repository.verifyAndMarkAsUsed(id, command.code());
 
-        // 4. 校验验证码
-        if (!verificationCode.isValid(command.code())) {
-            if (verificationCode.isUsed()) {
+        if (!verified) {
+            // 验证失败，尝试获取详细错误信息
+            var verificationCode = repository.findById(id);
+            if (verificationCode.isEmpty()) {
+                throw new DomainException(VerificationCodeError.CODE_INVALID);
+            }
+            var code = verificationCode.get();
+            if (code.isUsed()) {
                 throw new DomainException(VerificationCodeError.CODE_ALREADY_USED);
             }
-            // 检查是否过期
-            if (java.time.Instant.now().isAfter(verificationCode.getExpireAt())) {
+            if (java.time.Instant.now().isAfter(code.getExpireAt())) {
                 throw new DomainException(VerificationCodeError.CODE_EXPIRED);
             }
             throw new DomainException(VerificationCodeError.CODE_INVALID);
         }
-
-        // 5. 标记已使用
-        verificationCode.markAsUsed();
-        repository.save(verificationCode);
 
         return new VerifyCodeResult(true, "验证码正确");
     }
 
     /**
      * 校验邮箱格式。
+     *
+     * <p>使用简化但合理的邮箱验证规则：
+     * <ul>
+     *   <li>本地部分：字母、数字及 ._-%+ 字符</li>
+     *   <li>域名部分：至少一个点，TLD 至少 2 个字符</li>
+     *   <li>不允许连续的点或特殊字符开头/结尾</li>
+     * </ul>
      */
     private void validateEmailFormat(String email) {
-        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+        if (email == null || !email.matches("^[a-zA-Z0-9]([a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$")) {
             throw new DomainException(VerificationCodeError.EMAIL_INVALID);
         }
     }

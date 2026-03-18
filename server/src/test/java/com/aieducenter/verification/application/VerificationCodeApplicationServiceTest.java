@@ -14,6 +14,7 @@ import com.aieducenter.verification.application.dto.SendEmailCodeCommand;
 import com.aieducenter.verification.application.dto.SendCodeResponse;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
+import com.aieducenter.verification.config.VerificationCodeProperties;
 import com.aieducenter.verification.domain.error.VerificationCodeError;
 import com.aieducenter.verification.domain.model.VerificationCode;
 import com.aieducenter.verification.domain.model.VerificationPurpose;
@@ -35,16 +36,23 @@ class VerificationCodeApplicationServiceTest {
     @Mock
     private MessageSender messageSender;
 
+    @Mock
+    private VerificationCodeProperties properties;
+
     @InjectMocks
     private VerificationCodeApplicationService service;
 
     @Test
-    void should_send_verification_code_successfully() {
+    void given_valid_email_and_no_rate_limit_when_send_verification_code_then_success() {
         // Given
+        when(properties.getExpireMinutes()).thenReturn(5);
+        when(properties.getEmailCooldownSeconds()).thenReturn(60L);
+        when(properties.getIpMaxPerHour()).thenReturn(10);
+
         SendEmailCodeCommand command = new SendEmailCodeCommand("test@example.com", "REGISTER");
         when(generator.generate()).thenReturn("123456");
-        when(repository.isEmailRateLimited("test@example.com", "REGISTER")).thenReturn(false);
-        when(repository.isIpRateLimited("127.0.0.1")).thenReturn(false);
+        when(repository.tryAcquireEmailLock("test@example.com", "REGISTER")).thenReturn(true);
+        when(repository.checkAndIncrementIp("127.0.0.1")).thenReturn(1L);
 
         // When
         SendCodeResponse response = service.sendEmailVerificationCode(command, "127.0.0.1");
@@ -54,13 +62,13 @@ class VerificationCodeApplicationServiceTest {
         assertThat(response.resentAfterSeconds()).isEqualTo(60);
         verify(generator).generate();
         verify(repository).save(any(VerificationCode.class));
-        verify(repository).incrementEmailCount("test@example.com", "REGISTER");
-        verify(repository).incrementIpCount("127.0.0.1");
+        verify(repository).tryAcquireEmailLock("test@example.com", "REGISTER");
+        verify(repository).checkAndIncrementIp("127.0.0.1");
         verify(messageSender).send("test@example.com", "123456", VerificationPurpose.REGISTER);
     }
 
     @Test
-    void should_throw_exception_when_email_invalid() {
+    void given_invalid_email_format_when_send_verification_code_then_throw_exception() {
         // Given
         SendEmailCodeCommand command = new SendEmailCodeCommand("invalid-email", "REGISTER");
 
@@ -71,10 +79,11 @@ class VerificationCodeApplicationServiceTest {
     }
 
     @Test
-    void should_throw_exception_when_email_rate_limited() {
+    void given_email_rate_limited_when_send_verification_code_then_throw_exception() {
         // Given
+        when(repository.tryAcquireEmailLock("test@example.com", "REGISTER")).thenReturn(false);
+
         SendEmailCodeCommand command = new SendEmailCodeCommand("test@example.com", "REGISTER");
-        when(repository.isEmailRateLimited("test@example.com", "REGISTER")).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> service.sendEmailVerificationCode(command, "127.0.0.1"))
@@ -83,11 +92,13 @@ class VerificationCodeApplicationServiceTest {
     }
 
     @Test
-    void should_throw_exception_when_ip_rate_limited() {
+    void given_ip_rate_limited_when_send_verification_code_then_throw_exception() {
         // Given
+        when(properties.getIpMaxPerHour()).thenReturn(10);
+        when(repository.tryAcquireEmailLock("test@example.com", "REGISTER")).thenReturn(true);
+        when(repository.checkAndIncrementIp("127.0.0.1")).thenReturn(11L);
+
         SendEmailCodeCommand command = new SendEmailCodeCommand("test@example.com", "REGISTER");
-        when(repository.isEmailRateLimited("test@example.com", "REGISTER")).thenReturn(false);
-        when(repository.isIpRateLimited("127.0.0.1")).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> service.sendEmailVerificationCode(command, "127.0.0.1"))
@@ -96,28 +107,26 @@ class VerificationCodeApplicationServiceTest {
     }
 
     @Test
-    void should_verify_code_successfully() {
+    void given_valid_code_when_verify_code_then_success_and_mark_used() {
         // Given
         VerifyCodeCommand command = new VerifyCodeCommand("test@example.com", "123456", "REGISTER");
-        VerificationCode code = VerificationCode.create(
-            VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER);
-        when(repository.findById("test@example.com:REGISTER"))
-            .thenReturn(java.util.Optional.of(code));
+        when(repository.verifyAndMarkAsUsed("test@example.com:REGISTER", "123456")).thenReturn(true);
 
         // When
         VerifyCodeResult result = service.verifyCode(command);
 
         // Then
         assertThat(result.verified()).isTrue();
-        assertThat(code.isUsed()).isTrue();
+        verify(repository).verifyAndMarkAsUsed("test@example.com:REGISTER", "123456");
     }
 
     @Test
-    void should_return_false_when_code_not_match() {
+    void given_invalid_code_when_verify_code_then_throw_exception() {
         // Given
         VerifyCodeCommand command = new VerifyCodeCommand("test@example.com", "999999", "REGISTER");
         VerificationCode code = VerificationCode.create(
             VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER);
+        when(repository.verifyAndMarkAsUsed("test@example.com:REGISTER", "999999")).thenReturn(false);
         when(repository.findById("test@example.com:REGISTER"))
             .thenReturn(java.util.Optional.of(code));
 
@@ -127,9 +136,10 @@ class VerificationCodeApplicationServiceTest {
     }
 
     @Test
-    void should_throw_exception_when_code_not_found() {
+    void given_code_not_found_when_verify_code_then_throw_invalid_exception() {
         // Given
         VerifyCodeCommand command = new VerifyCodeCommand("test@example.com", "123456", "REGISTER");
+        when(repository.verifyAndMarkAsUsed("test@example.com:REGISTER", "123456")).thenReturn(false);
         when(repository.findById("test@example.com:REGISTER"))
             .thenReturn(java.util.Optional.empty());
 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 class VerificationCodeGeneratorTest {
 
     @Test
-    void should_generate_6_digit_code() {
+    void given_generator_when_generate_code_then_return_6_digit() {
         // Given
         VerificationCodeGenerator generator = new VerificationCodeGenerator();
 
@@ -20,7 +20,7 @@ class VerificationCodeGeneratorTest {
     }
 
     @Test
-    void should_generate_different_codes_when_called_multiple_times() {
+    void given_generator_when_generate_multiple_times_then_return_different_codes() {
         // Given
         VerificationCodeGenerator generator = new VerificationCodeGenerator();
 
@@ -33,7 +33,7 @@ class VerificationCodeGeneratorTest {
     }
 
     @Test
-    void should_generate_code_between_100000_and_999999() {
+    void given_generator_when_generate_code_then_between_100000_and_999999() {
         // Given
         VerificationCodeGenerator generator = new VerificationCodeGenerator();
 
