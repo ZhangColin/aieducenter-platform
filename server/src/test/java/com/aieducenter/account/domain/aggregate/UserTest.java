@@ -6,9 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 
 import com.aieducenter.account.domain.error.UserError;
-import com.aieducenter.account.domain.valueobject.Email;
-import com.aieducenter.account.domain.valueobject.PhoneNumber;
-import com.aieducenter.account.domain.valueobject.Username;
 import com.cartisan.core.exception.DomainException;
 
 /**
