@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.0"
     id("io.spring.dependency-management") version "1.1.6"
+    id("info.solidsoft.pitest") version "1.15.0"
 }
 
 group = "com.aieducenter"
@@ -52,4 +53,25 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     jvmArgs("--enable-preview")
+}
+
+pitest {
+    junit5PluginVersion = "1.2.1"
+    targetClasses = setOf(
+        "com.aieducenter.verification.domain.*",
+        "com.aieducenter.verification.application.*",
+        "com.aieducenter.verification.web.*",
+        "com.aieducenter.verification.infrastructure.*"
+    )
+    targetTests = setOf(
+        "com.aieducenter.verification.*",
+        "com.aieducenter.account.config.Authentication*"
+    )
+    mutators = setOf("DEFAULTS")
+    outputFormats = setOf("HTML", "XML")
+    mutationThreshold = 70
+    jvmArgs = listOf("--enable-preview")
+    threads = 2
+    timeoutFactor = BigDecimal("2.0")
+    timeoutConstInMillis = 10000
 }

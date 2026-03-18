@@ -132,4 +132,49 @@ class VerificationCodeTest {
         // When & Then
         assertThat(code1.sameIdentityAs(code2)).isTrue();
     }
+
+    @Test
+    void given_null_code_when_create_then_throw_exception() {
+        assertThatThrownBy(() -> VerificationCode.create(
+                VerificationType.EMAIL, "test@example.com", null, VerificationPurpose.REGISTER))
+            .isInstanceOf(DomainException.class);
+    }
+
+    @Test
+    void given_expired_code_when_validate_then_return_false() {
+        // Given
+        VerificationCode verificationCode = VerificationCode.restore(
+            "test@example.com:REGISTER", VerificationType.EMAIL,
+            "test@example.com", "123456",
+            Instant.now().minusSeconds(1), false, VerificationPurpose.REGISTER
+        );
+
+        // When & Then
+        assertThat(verificationCode.isValid("123456")).isFalse();
+    }
+
+    @Test
+    void given_null_other_when_compare_identity_then_return_false() {
+        // Given
+        VerificationCode code = VerificationCode.create(
+            VerificationType.EMAIL, "test@example.com", "123456", VerificationPurpose.REGISTER
+        );
+
+        // When & Then
+        assertThat(code.sameIdentityAs(null)).isFalse();
+    }
+
+    @Test
+    void given_different_target_when_compare_identity_then_return_false() {
+        // Given
+        VerificationCode code1 = VerificationCode.create(
+            VerificationType.EMAIL, "a@example.com", "123456", VerificationPurpose.REGISTER
+        );
+        VerificationCode code2 = VerificationCode.create(
+            VerificationType.EMAIL, "b@example.com", "123456", VerificationPurpose.REGISTER
+        );
+
+        // When & Then
+        assertThat(code1.sameIdentityAs(code2)).isFalse();
+    }
 }

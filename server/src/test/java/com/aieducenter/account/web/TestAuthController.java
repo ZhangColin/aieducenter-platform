@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,5 +57,12 @@ public class TestAuthController {
         result.put("userId", userId.orElse(null));
         result.put("isPresent", userId.isPresent());
         return ApiResponse.ok(result);
+    }
+
+    @PostMapping("/logout")
+    @RequireAuth
+    public ApiResponse<Void> logout() {
+        StpUtil.logout();
+        return ApiResponse.ok(null);
     }
 }

@@ -2,12 +2,10 @@ package com.aieducenter.verification.domain.service;
 
 import java.security.SecureRandom;
 
-import org.springframework.stereotype.Component;
-
 import com.cartisan.core.stereotype.DomainService;
 
 /**
- * 验证码生成器。
+ * 验证码生成领域服务。
  *
  * <h3>规则</h3>
  * <ul>
@@ -18,14 +16,13 @@ import com.cartisan.core.stereotype.DomainService;
  * @since 0.1.0
  */
 @DomainService
-@Component
-public class VerificationCodeGenerator {
+public class VerificationCodeGenerationService {
 
     private static final int MIN_CODE = 100000;
     private static final int MAX_CODE = 999999;
     private final SecureRandom random;
 
-    public VerificationCodeGenerator() {
+    public VerificationCodeGenerationService() {
         this.random = new SecureRandom();
     }
 

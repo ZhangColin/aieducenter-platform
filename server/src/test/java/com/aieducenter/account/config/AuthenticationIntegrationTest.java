@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cn.dev33.satoken.stp.StpUtil;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,7 +21,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * <p>验证 @RequireAuth、@CurrentUser 注解行为及 401/200 响应。</p>
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+    properties = {
+        "cartisan.security.interceptor.path-patterns[0]=/api/**",
+        "cartisan.security.interceptor.path-patterns[1]=/admin/**",
+        "cartisan.security.interceptor.path-patterns[2]=/test/**"
+    }
+)
 @AutoConfigureMockMvc
 class AuthenticationIntegrationTest {
 
@@ -46,7 +54,7 @@ class AuthenticationIntegrationTest {
         String token = login(100L);
         try {
             mvc.perform(get("/test/auth/require-auth")
-                    .header("satoken", token))
+                    .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("authenticated"));
         } finally {
@@ -66,7 +74,7 @@ class AuthenticationIntegrationTest {
         String token = login(42L);
         try {
             mvc.perform(get("/test/auth/current-user-id")
-                    .header("satoken", token))
+                    .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.userId").value(42));
         } finally {
@@ -79,6 +87,18 @@ class AuthenticationIntegrationTest {
         mvc.perform(get("/test/auth/current-user-id-optional"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isPresent").value(false));
+    }
+
+    @Test
+    void given_valid_token_when_logout_then_token_invalid() throws Exception {
+        String token = login(99L);
+        mvc.perform(post("/test/auth/logout")
+                .header("Authorization", token))
+            .andExpect(status().isOk());
+
+        mvc.perform(get("/test/auth/require-auth")
+                .header("Authorization", token))
+            .andExpect(status().isUnauthorized());
     }
 
     private String login(Long userId) throws Exception {

@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-class VerificationCodeGeneratorTest {
+class VerificationCodeGenerationServiceTest {
 
     @Test
     void given_generator_when_generate_code_then_return_6_digit() {
         // Given
-        VerificationCodeGenerator generator = new VerificationCodeGenerator();
+        VerificationCodeGenerationService generator = new VerificationCodeGenerationService();
 
         // When
         String code = generator.generate();
@@ -22,7 +22,7 @@ class VerificationCodeGeneratorTest {
     @Test
     void given_generator_when_generate_multiple_times_then_return_different_codes() {
         // Given
-        VerificationCodeGenerator generator = new VerificationCodeGenerator();
+        VerificationCodeGenerationService generator = new VerificationCodeGenerationService();
 
         // When
         String code1 = generator.generate();
@@ -35,7 +35,7 @@ class VerificationCodeGeneratorTest {
     @Test
     void given_generator_when_generate_code_then_between_100000_and_999999() {
         // Given
-        VerificationCodeGenerator generator = new VerificationCodeGenerator();
+        VerificationCodeGenerationService generator = new VerificationCodeGenerationService();
 
         // When
         String code = generator.generate();

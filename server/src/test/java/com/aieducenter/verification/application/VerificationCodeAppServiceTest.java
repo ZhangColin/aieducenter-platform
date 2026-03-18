@@ -20,18 +20,18 @@ import com.aieducenter.verification.domain.model.VerificationCode;
 import com.aieducenter.verification.domain.model.VerificationPurpose;
 import com.aieducenter.verification.domain.model.VerificationType;
 import com.aieducenter.verification.domain.repository.VerificationCodeRepository;
-import com.aieducenter.verification.domain.service.VerificationCodeGenerator;
+import com.aieducenter.verification.domain.service.VerificationCodeGenerationService;
 import com.aieducenter.verification.domain.port.MessageSender;
 import com.cartisan.core.exception.DomainException;
 
 @ExtendWith(MockitoExtension.class)
-class VerificationCodeApplicationServiceTest {
+class VerificationCodeAppServiceTest {
 
     @Mock
     private VerificationCodeRepository repository;
 
     @Mock
-    private VerificationCodeGenerator generator;
+    private VerificationCodeGenerationService generator;
 
     @Mock
     private MessageSender messageSender;
@@ -40,7 +40,7 @@ class VerificationCodeApplicationServiceTest {
     private VerificationCodeProperties properties;
 
     @InjectMocks
-    private VerificationCodeApplicationService service;
+    private VerificationCodeAppService service;
 
     @Test
     void given_valid_email_and_no_rate_limit_when_send_verification_code_then_success() {
@@ -147,5 +147,67 @@ class VerificationCodeApplicationServiceTest {
         assertThatThrownBy(() -> service.verifyCode(command))
             .isInstanceOf(DomainException.class)
             .hasMessageContaining(VerificationCodeError.CODE_INVALID.message());
+    }
+
+    @Test
+    void given_ip_count_at_limit_when_send_verification_code_then_success() {
+        // Given — count == limit (<=, not <)
+        when(properties.getExpireMinutes()).thenReturn(5);
+        when(properties.getEmailCooldownSeconds()).thenReturn(60L);
+        when(properties.getIpMaxPerHour()).thenReturn(10);
+        when(repository.tryAcquireEmailLock("test@example.com", "REGISTER")).thenReturn(true);
+        when(repository.checkAndIncrementIp("127.0.0.1")).thenReturn(10L);
+        when(generator.generate()).thenReturn("123456");
+
+        SendEmailCodeCommand command = new SendEmailCodeCommand("test@example.com", "REGISTER");
+
+        // When & Then — exactly at limit should succeed
+        assertThatCode(() -> service.sendEmailVerificationCode(command, "127.0.0.1"))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    void given_invalid_email_when_verify_code_then_throw_exception() {
+        // Given
+        VerifyCodeCommand command = new VerifyCodeCommand("invalid-email", "123456", "REGISTER");
+
+        // When & Then
+        assertThatThrownBy(() -> service.verifyCode(command))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(VerificationCodeError.EMAIL_INVALID.message());
+    }
+
+    @Test
+    void given_code_already_used_when_verify_code_then_throw_code_already_used_exception() {
+        // Given
+        VerifyCodeCommand command = new VerifyCodeCommand("test@example.com", "123456", "REGISTER");
+        when(repository.verifyAndMarkAsUsed("test@example.com:REGISTER", "123456")).thenReturn(false);
+        VerificationCode usedCode = VerificationCode.restore(
+            "test@example.com:REGISTER", VerificationType.EMAIL, "test@example.com",
+            "123456", java.time.Instant.now().plusSeconds(300), true, VerificationPurpose.REGISTER
+        );
+        when(repository.findById("test@example.com:REGISTER")).thenReturn(java.util.Optional.of(usedCode));
+
+        // When & Then
+        assertThatThrownBy(() -> service.verifyCode(command))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(VerificationCodeError.CODE_ALREADY_USED.message());
+    }
+
+    @Test
+    void given_code_expired_when_verify_code_then_throw_code_expired_exception() {
+        // Given
+        VerifyCodeCommand command = new VerifyCodeCommand("test@example.com", "123456", "REGISTER");
+        when(repository.verifyAndMarkAsUsed("test@example.com:REGISTER", "123456")).thenReturn(false);
+        VerificationCode expiredCode = VerificationCode.restore(
+            "test@example.com:REGISTER", VerificationType.EMAIL, "test@example.com",
+            "123456", java.time.Instant.now().minusSeconds(1), false, VerificationPurpose.REGISTER
+        );
+        when(repository.findById("test@example.com:REGISTER")).thenReturn(java.util.Optional.of(expiredCode));
+
+        // When & Then
+        assertThatThrownBy(() -> service.verifyCode(command))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(VerificationCodeError.CODE_EXPIRED.message());
     }
 }

@@ -10,7 +10,7 @@ import com.aieducenter.verification.domain.model.VerificationCode;
 import com.aieducenter.verification.domain.model.VerificationPurpose;
 import com.aieducenter.verification.domain.model.VerificationType;
 import com.aieducenter.verification.domain.repository.VerificationCodeRepository;
-import com.aieducenter.verification.domain.service.VerificationCodeGenerator;
+import com.aieducenter.verification.domain.service.VerificationCodeGenerationService;
 import com.aieducenter.verification.domain.port.MessageSender;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
@@ -23,16 +23,16 @@ import org.springframework.stereotype.Service;
  * @since 0.1.0
  */
 @Service
-public class VerificationCodeApplicationService {
+public class VerificationCodeAppService {
 
     private final VerificationCodeRepository repository;
-    private final VerificationCodeGenerator generator;
+    private final VerificationCodeGenerationService generator;
     private final MessageSender messageSender;
     private final VerificationCodeProperties properties;
 
-    public VerificationCodeApplicationService(
+    public VerificationCodeAppService(
             VerificationCodeRepository repository,
-            VerificationCodeGenerator generator,
+            VerificationCodeGenerationService generator,
             MessageSender messageSender,
             VerificationCodeProperties properties) {
         this.repository = repository;

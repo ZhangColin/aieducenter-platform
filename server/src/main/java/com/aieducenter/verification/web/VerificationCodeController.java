@@ -1,6 +1,6 @@
 package com.aieducenter.verification.web;
 
-import com.aieducenter.verification.application.VerificationCodeApplicationService;
+import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.SendCodeResponse;
 import com.aieducenter.verification.application.dto.SendEmailCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/account")
 public class VerificationCodeController {
 
-    private final VerificationCodeApplicationService service;
+    private final VerificationCodeAppService service;
 
-    public VerificationCodeController(VerificationCodeApplicationService service) {
+    public VerificationCodeController(VerificationCodeAppService service) {
         this.service = service;
     }
 
@@ -78,11 +78,24 @@ public class VerificationCodeController {
 
     private boolean isTrustedProxy(String remoteAddr) {
         if (remoteAddr == null) return false;
-        return remoteAddr.startsWith("127.")
-            || remoteAddr.startsWith("10.")
-            || remoteAddr.startsWith("192.168.")
-            || remoteAddr.startsWith("172.")
-            || remoteAddr.equals("0:0:0:0:0:0:0:1")
-            || remoteAddr.equals("::1");
+        if (remoteAddr.startsWith("127.")
+                || remoteAddr.startsWith("10.")
+                || remoteAddr.startsWith("192.168.")
+                || remoteAddr.equals("0:0:0:0:0:0:0:1")
+                || remoteAddr.equals("::1")) {
+            return true;
+        }
+        // 172.16.0.0/12: 172.16.x.x – 172.31.x.x
+        if (remoteAddr.startsWith("172.")) {
+            String[] parts = remoteAddr.split("\\.", 3);
+            if (parts.length >= 2) {
+                try {
+                    int second = Integer.parseInt(parts[1]);
+                    return second >= 16 && second <= 31;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return false;
     }
 }
