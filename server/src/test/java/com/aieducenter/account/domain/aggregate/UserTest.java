@@ -53,6 +53,72 @@ class UserTest {
         assertThat(user.getNickname()).isEqualTo("john_doe");
     }
 
+    // ========== 用户名格式验证 ==========
+
+    @Test
+    void shouldCreateUser_whenUsernameValid() {
+        // When & Then - 字母开头
+        assertThat(new User("abc", "password123", null, null).getUsername()).isEqualTo("abc");
+
+        // When & Then - 字母开头，包含数字和下划线
+        assertThat(new User("user_123", "password123", null, null).getUsername()).isEqualTo("user_123");
+
+        // When & Then - 最大长度 20
+        String maxUsername = "a" + "_".repeat(18) + "b";
+        assertThat(new User(maxUsername, "password123", null, null).getUsername()).hasSize(20);
+    }
+
+    @Test
+    void shouldThrow_whenUsernameStartsWithNumber() {
+        // When & Then
+        assertThatThrownBy(() -> new User("123invalid", "password123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.USERNAME_INVALID);
+    }
+
+    @Test
+    void shouldThrow_whenUsernameStartsWithUnderscore() {
+        // When & Then
+        assertThatThrownBy(() -> new User("_invalid", "password123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.USERNAME_INVALID);
+    }
+
+    @Test
+    void shouldThrow_whenUsernameTooShort() {
+        // When & Then - 2 字符
+        assertThatThrownBy(() -> new User("ab", "password123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.USERNAME_INVALID);
+
+        // When & Then - 1 字符
+        assertThatThrownBy(() -> new User("a", "password123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.USERNAME_INVALID);
+    }
+
+    @Test
+    void shouldThrow_whenUsernameTooLong() {
+        // When & Then - 21 字符
+        assertThatThrownBy(() -> new User("a".repeat(21), "password123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.USERNAME_INVALID);
+    }
+
+    @Test
+    void shouldThrow_whenUsernameContainsInvalidChars() {
+        // When & Then - 包含特殊字符
+        assertThatThrownBy(() -> new User("user@name", "password123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.USERNAME_INVALID);
+    }
+
     // ========== 密码验证 ==========
 
     @Test
