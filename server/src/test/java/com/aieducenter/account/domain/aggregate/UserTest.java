@@ -349,4 +349,76 @@ class UserTest {
         assertThat(user.getEmail()).isPresent();
         assertThat(user.getEmail().get()).isEqualTo("john@mail.example.com");
     }
+
+    // ========== PhoneNumber 验证 ==========
+
+    @Test
+    void shouldUpdatePhoneNumber_whenPhoneValid() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+
+        // When
+        user.updatePhoneNumber("13812345678");
+
+        // Then
+        assertThat(user.getPhoneNumber()).isPresent();
+        assertThat(user.getPhoneNumber().get()).isEqualTo("13812345678");
+    }
+
+    @Test
+    void shouldClearPhoneNumber_whenPhoneNull() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+        user.updatePhoneNumber("13812345678");
+
+        // When
+        user.updatePhoneNumber(null);
+
+        // Then
+        assertThat(user.getPhoneNumber()).isEmpty();
+    }
+
+    @Test
+    void shouldThrow_whenPhoneNumberInvalid() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+
+        // When & Then - 不是 1 开头
+        assertThatThrownBy(() -> user.updatePhoneNumber("23812345678"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PHONE_NUMBER_INVALID);
+
+        // When & Then - 第二位不是 3-9
+        assertThatThrownBy(() -> user.updatePhoneNumber("10812345678"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PHONE_NUMBER_INVALID);
+
+        // When & Then - 少于 11 位
+        assertThatThrownBy(() -> user.updatePhoneNumber("1381234567"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PHONE_NUMBER_INVALID);
+
+        // When & Then - 多于 11 位
+        assertThatThrownBy(() -> user.updatePhoneNumber("138123456789"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PHONE_NUMBER_INVALID);
+    }
+
+    @Test
+    void shouldUpdatePhoneNumber_whenPhoneWithValidSecondDigit() {
+        // Given
+        User user = new User("john_doe", "password123", null, null);
+
+        // When - 第二位是 3
+        user.updatePhoneNumber("13123456789");
+        assertThat(user.getPhoneNumber().get()).isEqualTo("13123456789");
+
+        // When - 第二位是 9
+        user.updatePhoneNumber("19123456789");
+        assertThat(user.getPhoneNumber().get()).isEqualTo("19123456789");
+    }
 }
