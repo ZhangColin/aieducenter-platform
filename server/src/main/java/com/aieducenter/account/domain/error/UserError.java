@@ -11,6 +11,7 @@ import com.cartisan.core.exception.CodeMessage;
  *   <li>唯一性错误 (409): USERNAME_ALREADY_EXISTS, EMAIL_ALREADY_EXISTS, PHONE_NUMBER_ALREADY_EXISTS</li>
  *   <li>密码错误 (400): PASSWORD_INCORRECT, PASSWORD_WEAK, PASSWORD_SAME_AS_OLD</li>
  *   <li>资源不存在 (404): USER_NOT_FOUND</li>
+ *   <li>登录错误 (401): ACCOUNT_NOT_FOUND, LOGIN_PASSWORD_INCORRECT</li>
  * </ul>
  *
  * @since 0.1.0
@@ -82,6 +83,7 @@ public enum UserError implements CodeMessage {
 
     /**
      * 账号不存在。
+     * <p>返回 401 而非 404 是为了防止用户枚举攻击</p>
      */
     ACCOUNT_NOT_FOUND(401, "USER_011", "账号不存在"),
 
