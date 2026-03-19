@@ -3,6 +3,7 @@ package com.aieducenter.verification.web;
 import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.SendCodeResponse;
 import com.aieducenter.verification.application.dto.SendEmailCodeCommand;
+import com.aieducenter.verification.application.dto.SendSmsCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
 import com.cartisan.web.response.ApiResponse;
@@ -43,6 +44,23 @@ public class VerificationCodeController {
 
         String ip = getClientIp(request);
         SendCodeResponse response = service.sendEmailVerificationCode(command, ip);
+        return ApiResponse.ok(response);
+    }
+
+    /**
+     * 发送短信验证码。
+     *
+     * @param command 命令
+     * @param request HTTP请求
+     * @return 响应
+     */
+    @PostMapping("/verification-code/sms")
+    public ApiResponse<SendCodeResponse> sendSmsVerificationCode(
+            @RequestBody SendSmsCodeCommand command,
+            HttpServletRequest request) {
+
+        String ip = getClientIp(request);
+        SendCodeResponse response = service.sendSmsVerificationCode(command, ip);
         return ApiResponse.ok(response);
     }
 
