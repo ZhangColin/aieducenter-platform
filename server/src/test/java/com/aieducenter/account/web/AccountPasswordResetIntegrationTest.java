@@ -161,18 +161,17 @@ class AccountPasswordResetIntegrationTest {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void registerUser(String username, String password, String email, String phone) throws Exception {
-        String emailField = email != null ? ",\n                \"email\": \"" + email + "\"" : "";
-        String phoneField = phone != null ? ",\n                \"phone\": \"" + phone + "\"" : "";
-        String body = """
-            {
-                "username": "%s",
-                "password": "%s"%s%s
-            }
-            """.formatted(username, password, emailField, phoneField);
+        StringBuilder body = new StringBuilder();
+        body.append("{");
+        body.append("\"username\":\"").append(username).append("\",");
+        body.append("\"password\":\"").append(password).append("\"");
+        if (email != null) body.append(",\"email\":\"").append(email).append("\"");
+        if (phone != null) body.append(",\"phone\":\"").append(phone).append("\"");
+        body.append("}");
 
         mvc.perform(post("/api/account/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body.toString()))
             .andExpect(status().isOk());
     }
 }
