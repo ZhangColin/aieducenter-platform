@@ -450,4 +450,28 @@ class UserTest {
         user.updatePhoneNumber("19123456789");
         assertThat(user.getPhoneNumber().get()).isEqualTo("19123456789");
     }
+
+    // ========== registerByEmail ==========
+
+    @Test
+    void shouldRegisterByEmail_whenAllFieldsValid() {
+        // When
+        User user = User.registerByEmail("john_doe", "john@example.com", "password123", "John Doe");
+
+        // Then
+        assertThat(user.getUsername()).isEqualTo("john_doe");
+        assertThat(user.getEmail()).isPresent();
+        assertThat(user.getEmail().get()).isEqualTo("john@example.com");
+        assertThat(user.getNickname()).isEqualTo("John Doe");
+    }
+
+    @Test
+    void shouldRegisterByEmail_whenNicknameNull_usesUsername() {
+        // When
+        User user = User.registerByEmail("john_doe", "john@example.com", "password123", null);
+
+        // Then
+        assertThat(user.getNickname()).isEqualTo("john_doe");
+        assertThat(user.getEmail()).isPresent();
+    }
 }

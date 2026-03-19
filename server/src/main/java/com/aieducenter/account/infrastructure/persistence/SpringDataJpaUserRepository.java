@@ -40,4 +40,7 @@ public interface SpringDataJpaUserRepository extends BaseRepository<User, Long>,
 
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.phoneNumber = :phoneNumber AND u.deleted = false")
     boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+
+    @Override
+    User save(User user);
 }

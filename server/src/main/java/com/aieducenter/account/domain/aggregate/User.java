@@ -146,6 +146,12 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
         return user;
     }
 
+    public static User registerByEmail(String username, String email, String plainPassword, String nickname) {
+        User user = new User(username, plainPassword, nickname, null);
+        user.updateEmail(email);
+        return user;
+    }
+
     // ========== Getter ==========
 
     public Long getId() {
