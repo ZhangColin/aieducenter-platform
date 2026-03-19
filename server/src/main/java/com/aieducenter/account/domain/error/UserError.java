@@ -76,7 +76,19 @@ public enum UserError implements CodeMessage {
     /**
      * 用户不存在。
      */
-    USER_NOT_FOUND(404, "USER_010", "用户不存在");
+    USER_NOT_FOUND(404, "USER_010", "用户不存在"),
+
+    // ========== 登录错误 (401) ==========
+
+    /**
+     * 账号不存在。
+     */
+    ACCOUNT_NOT_FOUND(401, "USER_011", "账号不存在"),
+
+    /**
+     * 账号或密码错误。
+     */
+    LOGIN_PASSWORD_INCORRECT(401, "USER_012", "账号或密码错误");
 
     private final int httpStatus;
     private final String code;

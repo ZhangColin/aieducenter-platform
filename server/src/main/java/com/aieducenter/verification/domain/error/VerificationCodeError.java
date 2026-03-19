@@ -17,6 +17,11 @@ public enum VerificationCodeError implements CodeMessage {
     EMAIL_INVALID("VERIFICATION_EMAIL_INVALID", "邮箱格式不正确", 400),
 
     /**
+     * 手机号格式不正确。
+     */
+    PHONE_INVALID("VERIFICATION_PHONE_INVALID", "手机号格式不正确", 400),
+
+    /**
      * 验证码错误。
      */
     CODE_INVALID("VERIFICATION_CODE_INVALID", "验证码错误", 400),
@@ -42,6 +47,11 @@ public enum VerificationCodeError implements CodeMessage {
      * 邮箱限流。
      */
     RATE_LIMIT_EMAIL("VERIFICATION_RATE_LIMIT_EMAIL", "请60秒后再试", 429),
+
+    /**
+     * 手机号限流。
+     */
+    RATE_LIMIT_PHONE("VERIFICATION_RATE_LIMIT_PHONE", "请60秒后再试", 429),
 
     /**
      * IP限流。

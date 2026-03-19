@@ -14,5 +14,10 @@ public enum VerificationPurpose {
     /**
      * 密码重置。
      */
-    RESET_PASSWORD
+    RESET_PASSWORD,
+
+    /**
+     * 用户登录。
+     */
+    LOGIN
 }
