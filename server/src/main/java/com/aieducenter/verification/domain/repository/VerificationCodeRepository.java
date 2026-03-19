@@ -50,6 +50,15 @@ public interface VerificationCodeRepository {
     boolean tryAcquireEmailLock(String email, String purpose);
 
     /**
+     * 尝试获取手机限流锁（原子操作）。
+     *
+     * @param phone 手机号
+     * @param purpose 目的
+     * @return 是否成功获取锁（false 表示在限流期内）
+     */
+    boolean tryAcquirePhoneLock(String phone, String purpose);
+
+    /**
      * 检查并增加 IP 计数（原子操作）。
      *
      * @param ip IP地址

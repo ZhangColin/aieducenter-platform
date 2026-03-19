@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.cartisan.core.stereotype.Adapter;
 import com.cartisan.core.stereotype.PortType;
+import com.aieducenter.verification.config.VerificationCodeProperties;
 import com.aieducenter.verification.domain.model.VerificationCode;
 import com.aieducenter.verification.domain.model.VerificationPurpose;
 import com.aieducenter.verification.domain.model.VerificationType;
@@ -26,16 +27,18 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
 
     private static final String CODE_KEY_PREFIX = "verification:";
     private static final String EMAIL_LIMIT_PREFIX = "limit:email:";
+    private static final String PHONE_LIMIT_PREFIX = "limit:phone:";
     private static final String IP_LIMIT_PREFIX = "limit:ip:";
 
     private static final Duration CODE_TTL = Duration.ofSeconds(300);  // 5分钟
-    private static final Duration EMAIL_LIMIT_TTL = Duration.ofSeconds(60);  // 60秒
     private static final Duration IP_LIMIT_TTL = Duration.ofSeconds(3600);  // 1小时
 
     private final StringRedisTemplate redisTemplate;
+    private final VerificationCodeProperties properties;
 
-    public RedisVerificationCodeRepository(StringRedisTemplate redisTemplate) {
+    public RedisVerificationCodeRepository(StringRedisTemplate redisTemplate, VerificationCodeProperties properties) {
         this.redisTemplate = redisTemplate;
+        this.properties = properties;
     }
 
     @Override
@@ -92,7 +95,15 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
     public boolean tryAcquireEmailLock(String email, String purpose) {
         String key = emailLimitKey(email, purpose);
         // 原子操作：仅当 key 不存在时设置，防止竞态条件
-        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(key, "1", EMAIL_LIMIT_TTL);
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofSeconds(properties.getEmailCooldownSeconds()));
+        return Boolean.TRUE.equals(acquired);
+    }
+
+    @Override
+    public boolean tryAcquirePhoneLock(String phone, String purpose) {
+        String key = phoneLimitKey(phone, purpose);
+        // 原子操作：仅当 key 不存在时设置，防止竞态条件
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofSeconds(properties.getPhoneCooldownSeconds()));
         return Boolean.TRUE.equals(acquired);
     }
 
@@ -185,6 +196,10 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
 
     private String emailLimitKey(String email, String purpose) {
         return EMAIL_LIMIT_PREFIX + email + ":" + purpose;
+    }
+
+    private String phoneLimitKey(String phone, String purpose) {
+        return PHONE_LIMIT_PREFIX + phone + ":" + purpose;
     }
 
     private String ipLimitKey(String ip) {

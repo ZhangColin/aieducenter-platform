@@ -25,6 +25,11 @@ public class VerificationCodeProperties {
     private long emailCooldownSeconds = 60;
 
     /**
+     * 手机限流：同一手机发送间隔（秒）。
+     */
+    private long phoneCooldownSeconds = 60;
+
+    /**
      * IP 限流：每小时最大发送次数。
      */
     private int ipMaxPerHour = 10;
@@ -48,6 +53,14 @@ public class VerificationCodeProperties {
 
     public void setEmailCooldownSeconds(long emailCooldownSeconds) {
         this.emailCooldownSeconds = emailCooldownSeconds;
+    }
+
+    public long getPhoneCooldownSeconds() {
+        return phoneCooldownSeconds;
+    }
+
+    public void setPhoneCooldownSeconds(long phoneCooldownSeconds) {
+        this.phoneCooldownSeconds = phoneCooldownSeconds;
     }
 
     public int getIpMaxPerHour() {
