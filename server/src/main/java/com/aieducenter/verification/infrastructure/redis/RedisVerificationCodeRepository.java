@@ -47,6 +47,7 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
         data.put("code", code.getCode());
         data.put("expireAt", String.valueOf(code.getExpireAt().toEpochMilli()));
         data.put("used", String.valueOf(code.isUsed()));
+        data.put("type", code.getType().name());
 
         redisTemplate.opsForHash().putAll(key, data);
         redisTemplate.expire(key, CODE_TTL);
@@ -74,10 +75,11 @@ public class RedisVerificationCodeRepository implements VerificationCodeReposito
 
         long expireAt = expireAtStr != null ? Long.parseLong(expireAtStr) : 0L;
         boolean used = Boolean.parseBoolean(usedStr);
+        VerificationType type = VerificationType.valueOf((String) redisTemplate.opsForHash().get(key, "type"));
 
         return Optional.of(VerificationCode.restore(
             id,
-            VerificationType.EMAIL,
+            type,
             target,
             code,
             Instant.ofEpochMilli(expireAt),
