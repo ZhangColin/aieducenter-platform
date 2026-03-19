@@ -17,9 +17,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
   // Wait for persist hydration
   useEffect(() => {
     if (!hydrated) {
-      useAuthStore.persist.onFinishHydration(() => {
+      const unsubscribe = useAuthStore.persist.onFinishHydration(() => {
         setHydrated(true)
       })
+      return unsubscribe
     }
   }, [hydrated])
 
@@ -38,6 +39,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
 
     // token exists but not authenticated - fetch profile
+    let cancelled = false
+
     const fetchProfile = async () => {
       try {
         const response = await fetch('/api/account/profile', {
@@ -49,7 +52,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
           return
         }
 
+        if (!response.ok) {
+          throw new Error(`Unexpected response: ${response.status}`)
+        }
+
         const data = await response.json()
+        if (cancelled) return
         const { login } = useAuthStore.getState()
         login(token, {
           userId: data.data.userId,
@@ -58,6 +66,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
         })
         setReady(true)
       } catch {
+        if (cancelled) return
         const { logout } = useAuthStore.getState()
         logout()
         router.replace('/login')
@@ -65,6 +74,9 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
 
     fetchProfile()
+    return () => {
+      cancelled = true
+    }
   }, [hydrated, token, isAuthenticated, router])
 
   if (!hydrated || !ready) {

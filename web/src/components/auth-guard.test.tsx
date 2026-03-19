@@ -208,6 +208,7 @@ describe('AuthGuard', () => {
     // authErrorMiddleware already handles 401 — component must NOT call logout again
     expect(mockLogout).not.toHaveBeenCalled()
     expect(mockReplace).not.toHaveBeenCalled()
+    expect(screen.queryByText('Protected Content')).toBeNull()
 
     vi.unstubAllGlobals()
   })
