@@ -25,7 +25,7 @@ import com.aieducenter.tenant.infrastructure.persistence.SpringDataJpaTenantRepo
 /**
  * 通用注册流程集成测试。
  *
- * <p>验证注册成功、重复邮箱、密码强度不足三个场景。</p>
+ * <p>验证注册成功、用户名重复、密码强度不足三个场景。</p>
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -55,7 +55,6 @@ class AccountRegistrationIntegrationTest {
         String requestBody = """
             {
                 "username": "newuser123",
-                "email": "newuser@example.com",
                 "password": "password123",
                 "nickname": "New User"
             }
@@ -69,20 +68,19 @@ class AccountRegistrationIntegrationTest {
             .andExpect(jsonPath("$.data.token").isNotEmpty());
 
         // Then — verify DB state
-        assertThat(userRepository.existsByEmail("newuser@example.com")).isTrue();
-        assertThat(tenantRepository.count()).isGreaterThan(0);
+        assertThat(userRepository.existsByUsername("newuser123")).isTrue();
+        assertThat(tenantRepository.count()).isEqualTo(1L);
     }
 
     @Test
     @Transactional
-    void given_existing_email_when_register_then_return_409() throws Exception {
-        User existingUser = User.register("existing_user", "password123", null, "dup@example.com", null);
+    void given_duplicate_username_when_register_then_return_409() throws Exception {
+        User existingUser = User.register("testuser123", "password123", null, null, null);
         userRepository.save(existingUser);
 
         String requestBody = """
             {
-                "username": "another_user",
-                "email": "dup@example.com",
+                "username": "testuser123",
                 "password": "password123",
                 "nickname": "Another"
             }
@@ -101,7 +99,6 @@ class AccountRegistrationIntegrationTest {
         String requestBody = """
             {
                 "username": "weakuser1",
-                "email": "weakuser@example.com",
                 "password": "weakpass",
                 "nickname": "Weak User"
             }
