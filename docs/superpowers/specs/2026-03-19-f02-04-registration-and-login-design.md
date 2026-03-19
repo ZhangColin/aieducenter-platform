@@ -156,7 +156,7 @@
 8. return RegisterResult(token)
 ```
 
-### 密码登录流程（AccountLoginAppService.loginByPassword）
+### 密码登录流程（AccountLoginAppService.loginByPassword，无 @Transactional）
 
 ```
 1. findByUsername(account)
@@ -172,7 +172,7 @@
 4. return LoginResult(token)
 ```
 
-### 短信验证码登录流程（AccountLoginAppService.loginBySms）
+### 短信验证码登录流程（AccountLoginAppService.loginBySms，无 @Transactional）
 
 ```
 1. verificationCodeAppService.verifyPhoneCode(
@@ -233,12 +233,17 @@ public static User register(String username, String plainPassword,
 
 **删除：** `User.registerByEmail()` 工厂方法
 
-### UserError 新增
+### UserError 变更
+
+`PHONE_NUMBER_ALREADY_EXISTS`（USER_006, 409）已存在，无需新增。
+
+新增一个枚举值：
 
 ```java
-PHONE_NUMBER_ALREADY_EXISTS   // 手机号已被使用（409）
-ACCOUNT_NOT_FOUND             // 账号不存在（401）
+ACCOUNT_NOT_FOUND(401, "USER_011", "账号不存在")
 ```
+
+> **注意**：现有 `USER_NOT_FOUND`（USER_010, 404）用于资源查询场景（如按 ID 查用户）。登录场景使用独立的 `ACCOUNT_NOT_FOUND`（401），语义为"登录凭证无法匹配任何账号"，返回 401 而非 404，避免泄露账号是否存在。
 
 ### VerificationPurpose 新增
 
@@ -259,7 +264,33 @@ RATE_LIMIT_PHONE    // 手机号发送频率超限（60秒内）
 boolean tryAcquirePhoneLock(String phone, String purpose);
 ```
 
-语义与 `tryAcquireEmailLock` 相同：原子操作，60秒内同一手机号+purpose 只能获取一次锁。
+语义与 `tryAcquireEmailLock` 相同：原子操作，60秒内同一手机号+purpose 只能获取一次锁。Redis key 使用独立前缀 `limit:phone:{phone}:{purpose}`。
+
+### RedisVerificationCodeRepository 变更（修复 type 硬编码）
+
+`findById` 当前在还原 `VerificationCode` 时硬编码 `VerificationType.EMAIL`（第80行）。SMS 验证码走错误明细路径时会返回类型错误的对象。
+
+修复：在 `save()` 时将 `type` 字段写入 Redis hash，在 `findById()` 时读取并还原，不再硬编码。
+
+```java
+// save() 新增一行
+data.put("type", code.getType().name());
+
+// findById() 替换硬编码
+VerificationType type = VerificationType.valueOf(
+    (String) redisTemplate.opsForHash().get(key, "type"));
+```
+
+### VerificationCodeProperties 新增
+
+新增手机号限流配置字段（默认 60 秒，与邮箱相同）：
+
+```java
+private long phoneCooldownSeconds = 60;
+// getter/setter: getPhoneCooldownSeconds / setPhoneCooldownSeconds
+```
+
+`sendSmsVerificationCode` 返回 `SendCodeResponse` 时使用 `properties.getPhoneCooldownSeconds()` 作为 cooldown 参数，`RedisVerificationCodeRepository.tryAcquirePhoneLock` 使用该值作为 TTL。
 
 ---
 
@@ -322,6 +353,10 @@ com.aieducenter.verification
 │   ├── model/VerificationPurpose.java       // 新增 LOGIN
 │   ├── error/VerificationCodeError.java     // 新增 PHONE_INVALID、RATE_LIMIT_PHONE
 │   └── repository/VerificationCodeRepository.java  // 新增 tryAcquirePhoneLock
+├── config
+│   └── VerificationCodeProperties.java      // 新增 phoneCooldownSeconds
+├── infrastructure/redis
+│   └── RedisVerificationCodeRepository.java // 修复 findById type 硬编码 + 新增 tryAcquirePhoneLock
 └── web/
     └── VerificationCodeController.java      // 新增 /verification-code/sms
 ```
