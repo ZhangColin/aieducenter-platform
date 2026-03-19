@@ -48,7 +48,7 @@ public class AccountRegistrationAppService {
             throw new DomainException(UserError.EMAIL_ALREADY_EXISTS);
         }
 
-        User user = User.registerByEmail(command.username(), command.email(), command.password(), command.nickname());
+        User user = User.register(command.username(), command.password(), command.nickname(), command.email(), null);
         userRepository.save(user);
 
         var tokenInfo = authenticationService.login(user.getId());

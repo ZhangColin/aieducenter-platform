@@ -86,7 +86,7 @@ class AccountRegistrationIntegrationTest {
         // Given — a user with that email already exists
         when(verificationCodeAppService.verifyCode(any())).thenReturn(new VerifyCodeResult(true, "ok"));
 
-        User existingUser = User.registerByEmail("existing_user", "dup@example.com", "password123", null);
+        User existingUser = User.register("existing_user", "password123", null, "dup@example.com", null);
         userRepository.save(existingUser);
 
         String requestBody = """

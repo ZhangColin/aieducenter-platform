@@ -146,9 +146,26 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
         return user;
     }
 
-    public static User registerByEmail(String username, String email, String plainPassword, String nickname) {
+    /**
+     * 注册新用户。
+     *
+     * @param username 用户名（必填）
+     * @param plainPassword 明文密码，将验证密码强度并使用 BCrypt 加密
+     * @param nickname 昵称（可选），如果为 null 或空字符串则默认使用用户名
+     * @param email 邮箱（可选），如果为 null 或空字符串则不设置；
+     *              如果格式无效则抛出 {@link com.aieducenter.account.domain.error.UserError#EMAIL_INVALID}
+     * @param phone 手机号（可选），如果为 null 或空字符串则不设置；
+     *              如果格式无效则抛出 {@link com.aieducenter.account.domain.error.UserError#PHONE_NUMBER_INVALID}
+     * @return 新创建的 User 实例
+     */
+    public static User register(String username, String plainPassword, String nickname, String email, String phone) {
         User user = new User(username, plainPassword, nickname, null);
-        user.updateEmail(email);
+        if (email != null && !email.isBlank()) {
+            user.updateEmail(email);
+        }
+        if (phone != null && !phone.isBlank()) {
+            user.updatePhoneNumber(phone);
+        }
         return user;
     }
 

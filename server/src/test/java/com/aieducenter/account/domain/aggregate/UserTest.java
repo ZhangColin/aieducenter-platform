@@ -451,27 +451,64 @@ class UserTest {
         assertThat(user.getPhoneNumber().get()).isEqualTo("19123456789");
     }
 
-    // ========== registerByEmail ==========
+    // ========== register ==========
 
     @Test
-    void shouldRegisterByEmail_whenAllFieldsValid() {
+    void given_username_and_password_only_when_register_then_success() {
         // When
-        User user = User.registerByEmail("john_doe", "john@example.com", "password123", "John Doe");
+        User user = User.register("john_doe", "password123", null, null, null);
 
         // Then
         assertThat(user.getUsername()).isEqualTo("john_doe");
-        assertThat(user.getEmail()).isPresent();
-        assertThat(user.getEmail().get()).isEqualTo("john@example.com");
-        assertThat(user.getNickname()).isEqualTo("John Doe");
+        assertThat(user.getEmail()).isEmpty();
+        assertThat(user.getPhoneNumber()).isEmpty();
     }
 
     @Test
-    void shouldRegisterByEmail_whenNicknameNull_usesUsername() {
+    void given_email_provided_when_register_then_email_set() {
         // When
-        User user = User.registerByEmail("john_doe", "john@example.com", "password123", null);
+        User user = User.register("john_doe", "password123", "John Doe", "john@example.com", null);
 
         // Then
-        assertThat(user.getNickname()).isEqualTo("john_doe");
         assertThat(user.getEmail()).isPresent();
+        assertThat(user.getEmail().get()).isEqualTo("john@example.com");
+    }
+
+    @Test
+    void given_phone_provided_when_register_then_phone_set() {
+        // When
+        User user = User.register("john_doe", "password123", "John Doe", null, "13812345678");
+
+        // Then
+        assertThat(user.getPhoneNumber()).isPresent();
+        assertThat(user.getPhoneNumber().get()).isEqualTo("13812345678");
+    }
+
+    @Test
+    void given_invalid_email_when_register_then_throw_email_invalid() {
+        // When & Then
+        assertThatThrownBy(() -> User.register("john_doe", "password123", null, "notanemail", null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.EMAIL_INVALID);
+    }
+
+    @Test
+    void given_invalid_phone_when_register_then_throw_phone_number_invalid() {
+        // When & Then
+        assertThatThrownBy(() -> User.register("john_doe", "password123", null, null, "123"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PHONE_NUMBER_INVALID);
+    }
+
+    @Test
+    void given_blank_email_and_phone_when_register_then_fields_not_set() {
+        // When
+        User user = User.register("testuser", "password123", null, "", "");
+
+        // Then
+        assertThat(user.getEmail()).isEmpty();
+        assertThat(user.getPhoneNumber()).isEmpty();
     }
 }
