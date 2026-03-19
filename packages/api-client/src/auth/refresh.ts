@@ -23,7 +23,7 @@ interface RefreshResponse {
  *
  * @returns 刷新是否成功
  */
-export async function refreshAccessTokenOnce(): Promise<boolean> {
+export function refreshAccessTokenOnce(): Promise<boolean> {
   // 如果已有刷新进行中，返回相同的 promise
   if (refreshPromise) {
     return refreshPromise
@@ -35,4 +35,11 @@ export async function refreshAccessTokenOnce(): Promise<boolean> {
   })()
 
   return refreshPromise
+}
+
+/**
+ * 重置刷新状态（仅用于测试）
+ */
+export function __resetRefreshPromise__(): void {
+  refreshPromise = null
 }
