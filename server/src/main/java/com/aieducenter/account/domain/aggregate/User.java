@@ -291,4 +291,15 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
         validatePasswordStrength(newPassword);
         this.password = PASSWORD_ENCODER.encode(newPassword);
     }
+
+    /**
+     * 重置密码（无需旧密码，管理员或找回密码场景使用）。
+     *
+     * @param plainPassword 新明文密码
+     * @throws DomainException 密码强度不足时抛出
+     */
+    public void resetPassword(String plainPassword) {
+        validatePasswordStrength(plainPassword);
+        this.password = PASSWORD_ENCODER.encode(plainPassword);
+    }
 }

@@ -511,4 +511,33 @@ class UserTest {
         assertThat(user.getEmail()).isEmpty();
         assertThat(user.getPhoneNumber()).isEmpty();
     }
+
+    // ========== 重置密码 ==========
+
+    @Test
+    void given_valid_new_password_when_reset_password_then_password_updated() {
+        // Given
+        User user = User.restore(1L, "john_doe", null, null, "encodedOldPassword", "John Doe", null);
+
+        // When
+        user.resetPassword("NewPass123");
+
+        // Then
+        assertThat(user.getPassword()).isNotEqualTo("NewPass123");
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder =
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(10);
+        assertThat(passwordEncoder.matches("NewPass123", user.getPassword())).isTrue();
+    }
+
+    @Test
+    void given_weak_password_when_reset_password_then_throw_password_weak() {
+        // Given
+        User user = User.restore(1L, "john_doe", null, null, "encodedOldPassword", "John Doe", null);
+
+        // When & Then
+        assertThatThrownBy(() -> user.resetPassword("weak"))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PASSWORD_WEAK);
+    }
 }
