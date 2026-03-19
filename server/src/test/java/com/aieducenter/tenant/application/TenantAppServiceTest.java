@@ -10,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.aieducenter.account.domain.event.UserRegisteredEvent;
+import com.aieducenter.tenant.application.event.UserRegisteredEventListener;
 import com.aieducenter.tenant.domain.aggregate.Tenant;
 import com.aieducenter.tenant.domain.model.TenantType;
 import com.aieducenter.tenant.domain.repository.TenantRepository;
@@ -35,5 +37,43 @@ class TenantAppServiceTest {
         assertThat(saved.getName()).isEqualTo("John's Space");
         assertThat(saved.getType()).isEqualTo(TenantType.PERSONAL);
         assertThat(saved.getOwnerId()).isEqualTo(123L);
+    }
+
+    @Test
+    void given_nicknameNotBlank_when_onUserRegistered_then_useNicknameAsTenantName() {
+        // Given
+        TenantRepository mockRepo = org.mockito.Mockito.mock(TenantRepository.class);
+        TenantAppService service = new TenantAppService(mockRepo);
+        UserRegisteredEventListener listener = new UserRegisteredEventListener(service);
+        UserRegisteredEvent event = new UserRegisteredEvent(
+                1L, "john_doe", "john@example.com", "John Doe", java.time.Instant.now());
+
+        // When
+        listener.onUserRegistered(event);
+
+        // Then
+        ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
+        verify(mockRepo).save(captor.capture());
+        assertThat(captor.getValue().getName()).isEqualTo("John Doe");
+        assertThat(captor.getValue().getOwnerId()).isEqualTo(1L);
+    }
+
+    @Test
+    void given_nicknameBlank_when_onUserRegistered_then_useUsernameAsTenantName() {
+        // Given
+        TenantRepository mockRepo = org.mockito.Mockito.mock(TenantRepository.class);
+        TenantAppService service = new TenantAppService(mockRepo);
+        UserRegisteredEventListener listener = new UserRegisteredEventListener(service);
+        UserRegisteredEvent event = new UserRegisteredEvent(
+                2L, "jane_doe", "jane@example.com", null, java.time.Instant.now());
+
+        // When
+        listener.onUserRegistered(event);
+
+        // Then
+        ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
+        verify(mockRepo).save(captor.capture());
+        assertThat(captor.getValue().getName()).isEqualTo("jane_doe");
+        assertThat(captor.getValue().getOwnerId()).isEqualTo(2L);
     }
 }
