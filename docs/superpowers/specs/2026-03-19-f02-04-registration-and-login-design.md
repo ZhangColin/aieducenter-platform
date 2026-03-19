@@ -83,7 +83,7 @@
 | 场景 | HTTP Status | 错误码 |
 |------|-------------|--------|
 | 账号不存在 | 401 | UserError.ACCOUNT_NOT_FOUND |
-| 密码错误 | 401 | UserError.PASSWORD_INCORRECT |
+| 密码错误 | 401 | UserError.LOGIN_PASSWORD_INCORRECT |
 
 ---
 
@@ -165,7 +165,7 @@
    → 全部为空 → 抛 UserError.ACCOUNT_NOT_FOUND（401）
 
 2. user.matchesPassword(password)
-   → false → 抛 UserError.PASSWORD_INCORRECT（401）
+   → false → 抛 UserError.LOGIN_PASSWORD_INCORRECT（401）
 
 3. authenticationService.login(user.getId()) → TokenInfo → 取 token
 
@@ -237,13 +237,16 @@ public static User register(String username, String plainPassword,
 
 `PHONE_NUMBER_ALREADY_EXISTS`（USER_006, 409）已存在，无需新增。
 
-新增一个枚举值：
+新增两个枚举值：
 
 ```java
 ACCOUNT_NOT_FOUND(401, "USER_011", "账号不存在")
+LOGIN_PASSWORD_INCORRECT(401, "USER_012", "账号或密码错误")
 ```
 
-> **注意**：现有 `USER_NOT_FOUND`（USER_010, 404）用于资源查询场景（如按 ID 查用户）。登录场景使用独立的 `ACCOUNT_NOT_FOUND`（401），语义为"登录凭证无法匹配任何账号"，返回 401 而非 404，避免泄露账号是否存在。
+> **说明**：
+> - `USER_NOT_FOUND`（USER_010, 404）用于资源查询场景（如按 ID 查用户）；`ACCOUNT_NOT_FOUND`（401）用于登录，避免泄露账号是否存在。
+> - 现有 `PASSWORD_INCORRECT`（USER_007, 400）用于修改密码等场景，HTTP 状态为 400。登录场景需要返回 401，新增 `LOGIN_PASSWORD_INCORRECT`（USER_012, 401）与之区分，密码登录流程使用该新错误码。
 
 ### VerificationPurpose 新增
 
@@ -359,6 +362,8 @@ com.aieducenter.verification
 │   └── RedisVerificationCodeRepository.java // 修复 findById type 硬编码 + 新增 tryAcquirePhoneLock
 └── web/
     └── VerificationCodeController.java      // 新增 /verification-code/sms
+                                             // base mapping 保持 @RequestMapping("/api/account")
+                                             // 最终路径：POST /api/account/verification-code/sms
 ```
 
 ---
