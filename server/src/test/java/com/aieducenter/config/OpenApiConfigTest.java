@@ -5,6 +5,9 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+
+import com.cartisan.security.authentication.AuthenticationService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class OpenApiConfigTest {
+
+    @MockBean
+    private AuthenticationService authenticationService;
 
     @Autowired
     private OpenAPI openAPI;
