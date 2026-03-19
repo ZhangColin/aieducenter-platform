@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aieducenter.account.application.AccountRegistrationAppService;
-import com.aieducenter.account.application.dto.RegisterByEmailCommand;
+import com.aieducenter.account.application.dto.RegisterCommand;
 import com.aieducenter.account.application.dto.RegisterResult;
 import com.cartisan.web.response.ApiResponse;
 
@@ -22,8 +22,8 @@ public class AccountController {
         this.registrationAppService = registrationAppService;
     }
 
-    @PostMapping("/register/email")
-    public ApiResponse<RegisterResult> registerByEmail(@Valid @RequestBody RegisterByEmailCommand command) {
-        return ApiResponse.ok(registrationAppService.registerByEmail(command));
+    @PostMapping("/register")
+    public ApiResponse<RegisterResult> register(@Valid @RequestBody RegisterCommand command) {
+        return ApiResponse.ok(registrationAppService.register(command));
     }
 }

@@ -1,8 +1,6 @@
 package com.aieducenter.account.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,15 +16,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.account.config.SaTokenTestConfig;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.repository.UserRepository;
 import com.aieducenter.tenant.infrastructure.persistence.SpringDataJpaTenantRepository;
-import com.aieducenter.verification.application.VerificationCodeAppService;
-import com.aieducenter.verification.application.dto.VerifyCodeResult;
 
 /**
- * 邮箱注册流程集成测试。
+ * 通用注册流程集成测试。
  *
  * <p>验证注册成功、重复邮箱、密码强度不足三个场景。</p>
  */
@@ -54,22 +51,18 @@ class AccountRegistrationIntegrationTest {
 
     @Test
     @Transactional
-    void given_valid_registration_when_register_by_email_then_return_token_and_create_user_and_tenant() throws Exception {
-        // Given — verifyCode returns success (mock)
-        when(verificationCodeAppService.verifyCode(any())).thenReturn(new VerifyCodeResult(true, "ok"));
-
+    void given_valid_registration_when_register_then_return_token_and_create_user_and_tenant() throws Exception {
         String requestBody = """
             {
                 "username": "newuser123",
                 "email": "newuser@example.com",
                 "password": "password123",
-                "nickname": "New User",
-                "verificationCode": "123456"
+                "nickname": "New User"
             }
             """;
 
         // When
-        mvc.perform(post("/api/account/register/email")
+        mvc.perform(post("/api/account/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
             .andExpect(status().isOk())
@@ -82,10 +75,7 @@ class AccountRegistrationIntegrationTest {
 
     @Test
     @Transactional
-    void given_existing_email_when_register_by_email_then_return_409() throws Exception {
-        // Given — a user with that email already exists
-        when(verificationCodeAppService.verifyCode(any())).thenReturn(new VerifyCodeResult(true, "ok"));
-
+    void given_existing_email_when_register_then_return_409() throws Exception {
         User existingUser = User.register("existing_user", "password123", null, "dup@example.com", null);
         userRepository.save(existingUser);
 
@@ -94,13 +84,12 @@ class AccountRegistrationIntegrationTest {
                 "username": "another_user",
                 "email": "dup@example.com",
                 "password": "password123",
-                "nickname": "Another",
-                "verificationCode": "123456"
+                "nickname": "Another"
             }
             """;
 
         // When / Then
-        mvc.perform(post("/api/account/register/email")
+        mvc.perform(post("/api/account/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
             .andExpect(status().isConflict());
@@ -108,22 +97,18 @@ class AccountRegistrationIntegrationTest {
 
     @Test
     @Transactional
-    void given_weak_password_when_register_by_email_then_return_400() throws Exception {
-        // Given — verifyCode returns success (mock)
-        when(verificationCodeAppService.verifyCode(any())).thenReturn(new VerifyCodeResult(true, "ok"));
-
+    void given_weak_password_when_register_then_return_400() throws Exception {
         String requestBody = """
             {
                 "username": "weakuser1",
                 "email": "weakuser@example.com",
                 "password": "weakpass",
-                "nickname": "Weak User",
-                "verificationCode": "123456"
+                "nickname": "Weak User"
             }
             """;
 
         // When / Then
-        mvc.perform(post("/api/account/register/email")
+        mvc.perform(post("/api/account/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
             .andExpect(status().isBadRequest());
