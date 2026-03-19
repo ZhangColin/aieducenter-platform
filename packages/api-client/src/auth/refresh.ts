@@ -3,9 +3,9 @@
  *
  * 提供串行化的 token 刷新功能，防止并发 401 时多次刷新
  */
-import { useAuthStore } from '@aieducenter/shared/auth-store'
+// TODO: F02-14 实现时，用 authStore.login(newToken, currentUser) 替换此处逻辑
 
-/** 刷新端点路径，导出供 client.ts 使用 */
+/** 刷新端点路径，导出供后续使用 */
 export const REFRESH_ENDPOINT = '/api/v1/auth/refresh'
 
 let refreshPromise: Promise<boolean> | null = null
@@ -29,29 +29,9 @@ export async function refreshAccessTokenOnce(): Promise<boolean> {
     return refreshPromise
   }
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
-
   refreshPromise = (async () => {
-    try {
-      const response = await fetch(`${API_URL}${REFRESH_ENDPOINT}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      if (!response.ok) return false
-
-      const data = (await response.json()) as RefreshResponse
-      useAuthStore.getState().setAccessToken(data.data.token)
-      return true
-    } catch (error) {
-      // 记录错误便于调试，同时保持返回值语义
-      console.error('[refreshAccessTokenOnce] Token refresh failed:', error)
-      return false
-    } finally {
-      // 刷新完成后清空，允许下次刷新
-      refreshPromise = null
-    }
+    // TODO: F02-14 实现时，用 authStore.login(newToken, currentUser) 替换此处逻辑
+    return false
   })()
 
   return refreshPromise

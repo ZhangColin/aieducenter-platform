@@ -1,19 +1,18 @@
 /**
  * API 客户端
  *
- * 基于 openapi-fetch，提供 token 注入和自动刷新功能
+ * 基于 openapi-fetch，提供 token 注入和错误处理功能
  */
 import createClient from 'openapi-fetch'
 import type { paths } from './schema'
 import { useAuthStore } from '@aieducenter/shared/auth-store'
-import { REFRESH_ENDPOINT } from '../auth/refresh'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 // 中间件 1: 注入 access token
 const authMiddleware = {
   async onRequest({ request }: { request: Request }) {
-    const token = useAuthStore.getState().accessToken
+    const token = useAuthStore.getState().token
     if (token) {
       request.headers.set('Authorization', `Bearer ${token}`)
     }
@@ -21,14 +20,13 @@ const authMiddleware = {
   },
 }
 
-// 中间件 2: 统一响应处理，401 时刷新 token
-const refreshMiddleware = {
+// 中间件 2: 处理认证错误，401 时清空会话并重定向
+const authErrorMiddleware = {
   async onResponse({ response }: { response: Response }) {
-    if (response.status === 401 && !response.url.includes(REFRESH_ENDPOINT)) {
-      const { refreshAccessTokenOnce } = await import('../auth/refresh')
-      const refreshed = await refreshAccessTokenOnce()
-      if (!refreshed && typeof window !== 'undefined') {
-        window.location.href = '/login?reason=token_expired'
+    if (response.status === 401) {
+      if (typeof window !== 'undefined') {
+        useAuthStore.getState().logout()
+        window.location.href = '/login?reason=session_expired'
       }
     }
     return response
@@ -36,7 +34,7 @@ const refreshMiddleware = {
 }
 
 // 导出中间件供测试使用
-export const __middlewares__ = [authMiddleware, refreshMiddleware]
+export const __middlewares__ = [authMiddleware, authErrorMiddleware]
 
 // 创建基础客户端
 export const api = createClient<paths>({
@@ -45,4 +43,4 @@ export const api = createClient<paths>({
 })
 
 api.use(authMiddleware)
-api.use(refreshMiddleware)
+api.use(authErrorMiddleware)
