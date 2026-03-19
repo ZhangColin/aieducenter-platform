@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#308ce8",
+                        "background-light": "#ffffff",
+                        "secondary-bg": "#F8FAFC",
+                        "border-subtle": "#E2E8F0",
+                        "text-main": "#1E293B",
+                        "text-secondary": "#64748B",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "8px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: #1E293B;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Transitions for Sidebar Collapse */
+        #history-sidebar {
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        #history-sidebar.collapsed {
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            border-right: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light antialiased overflow-hidden">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex h-16 items-center justify-between border-b border-border-subtle px-6 bg-white shrink-0 z-20">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">hub</span>
+</div>
+<h2 class="text-text-main text-lg font-bold tracking-tight">海创元智研云平台</h2>
+</div>
+<nav class="hidden md:flex flex-1 justify-center gap-8">
+<a class="text-primary text-sm font-semibold border-b-2 border-primary h-16 flex items-center" href="#">AI模型能力</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">AI教研员智能体</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">扩展工具箱</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">教案学案区</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">全科AI素养提升区</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 text-text-secondary hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">light_mode</span>
+</button>
+<div class="h-8 w-[1px] bg-border-subtle mx-1"></div>
+<div class="flex items-center gap-2 cursor-pointer group">
+<div class="size-9 rounded-full bg-slate-200 overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+<img alt="User avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFE_iWAEPsDUS0SHjz3dnXCRSPdSd8Whg3UiX5Fvd7ZTJvzoGxVowP4_0zPxl7L4m-cxokSi6mhLZXjxlvvE4qmYHhO5YndO1mfLCJXHXH20bJO088Ty8dWUmtqZGhu-0FoeMgAqAd5UbtrJP3o2kK8zytMeMa7hxAYeMczP6LQR8S4s3cm-URnKmGGUfk7E2fVmXTWwjlsIaD0-FEBjIkTlE7uOrVSBUY-DUVZVEjBYM2pskxOX7GcEx7y_pz6xw7VZOhTLTHJHU"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden relative">
+<!-- Left Column 1: Tools Sidebar -->
+<aside class="w-20 flex flex-col items-center py-6 gap-6 border-r border-border-subtle bg-secondary-bg shrink-0">
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">chat_bubble</span>
+</div>
+<span class="text-[10px] font-bold text-primary">文字对话</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white text-text-secondary group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">image</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary group-hover:text-primary">文生图</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white text-text-secondary group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">terminal</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary group-hover:text-primary">AI 编程</span>
+</div>
+</aside>
+<!-- Left Column 2: History List (Collapsed by default for more space) -->
+<aside class="w-0 opacity-0 collapsed flex flex-col border-r border-border-subtle bg-secondary-bg shrink-0 relative" id="history-sidebar">
+<div class="p-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">search</span>
+<input class="w-full bg-white border border-border-subtle rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-text-secondary/50 outline-none" placeholder="搜索会话历史" type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-6 scrollbar-hide">
+<div>
+<h3 class="px-3 text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">今天</h3>
+<div class="space-y-1">
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white shadow-sm border border-border-subtle cursor-pointer group">
+<span class="material-symbols-outlined text-primary text-xl">chat</span>
+<span class="text-sm font-medium text-text-main truncate flex-1">数据仪表盘 HTML</span>
+<span class="material-symbols-outlined text-sm text-text-secondary opacity-0 group-hover:opacity-100">more_horiz</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-border-subtle">
+<button class="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-border-subtle rounded-lg text-text-secondary hover:text-primary hover:border-primary transition-all text-sm font-medium">
+<span class="material-symbols-outlined text-lg">add</span>
+                    新建对话
+                </button>
+</div>
+</aside>
+<!-- Right Column 3: Chat Interface -->
+<section class="flex-1 flex flex-col bg-white relative">
+<!-- Toggle Button for Sidebar -->
+<button class="absolute left-0 top-1/2 -translate-y-1/2 size-6 bg-white border border-border-subtle rounded-r-full flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary shadow-sm z-10 transition-all group" onclick="document.getElementById('history-sidebar').classList.toggle('collapsed')">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+<!-- Chat Header -->
+<header class="h-14 flex items-center justify-between px-6 border-b border-border-subtle shrink-0">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-green-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">GPT</div>
+<span class="font-bold text-text-main">GPT-4o</span>
+<span class="material-symbols-outlined text-text-secondary text-base">expand_more</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 text-text-secondary text-sm hover:text-primary">
+<span class="material-symbols-outlined text-lg">share</span>
+                        分享
+                    </button>
+<button class="flex items-center gap-1 text-text-secondary text-sm hover:text-primary">
+<span class="material-symbols-outlined text-lg">settings</span>
+                        配置
+                    </button>
+</div>
+</header>
+<!-- Message Display -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+<!-- User Message -->
+<div class="flex justify-end gap-4 max-w-4xl mx-auto">
+<div class="flex flex-col items-end gap-2 max-w-[85%]">
+<div class="bg-primary text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-md shadow-primary/10 text-sm leading-relaxed">
+                            帮我写一个简洁的数据监控仪表盘 HTML 代码，包含三个统计卡片和一个图表占位。
+                        </div>
+<span class="text-[10px] text-text-secondary">10:20</span>
+</div>
+<div class="size-9 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5moMAnh7TTtCTOI1_4y09FMdlnwQK9qcAQJWz9qC_1v6_PNMn1VpydU8Doi1r-dPm01mXCgALhwfw89uIETEgSQP61pZC-Eba_vpiTvcn8SmB66XCzRs-rL-kRjbU_I_DvfBR8o0yQFCo8dRu-9LaNXhMKswA9BBpzf-P3lUNHrwwTSL-3BOZKukTJ0bMsnu-mpmhNZJ__D9oY0i1Jf0i37bcd7mQFkbM5n004luYDg7bLTWJraIxGrQsmDN4oUxuC90QV0rtRxw"/>
+</div>
+</div>
+<!-- AI Message -->
+<div class="flex justify-start gap-4 max-w-4xl mx-auto">
+<div class="size-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div class="flex flex-col items-start gap-2 flex-1 max-w-[92%]">
+<div class="w-full bg-secondary-bg text-text-main px-6 py-5 rounded-2xl rounded-tl-none border border-border-subtle shadow-sm text-sm leading-relaxed">
+<p class="mb-4">好的，为您生成了一个基于 Tailwind CSS 的数据监控仪表盘代码。您可以在右侧实时查看预览效果：</p>
+<!-- HTML Code Block -->
+<div class="markdown-container rounded-lg overflow-hidden border border-border-subtle bg-slate-900 mb-4">
+<div class="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+<span class="text-xs text-slate-400 font-mono">HTML</span>
+<div class="flex items-center gap-2">
+<button class="text-slate-400 hover:text-white transition-colors" title="Copy"><span class="material-symbols-outlined text-sm">content_copy</span></button>
+</div>
+</div>
+<div class="p-4 font-mono text-[13px] leading-relaxed text-slate-300">
+<pre class="whitespace-pre-wrap break-words">&lt;div class="p-6 bg-slate-50 min-h-screen"&gt;
+  &lt;div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"&gt;
+    &lt;div class="p-4 bg-white rounded-lg shadow-sm"&gt;
+      &lt;p class="text-sm text-slate-500"&gt;总收入&lt;/p&gt;
+      &lt;h3 class="text-2xl font-bold"&gt;¥12,840&lt;/h3&gt;
+    &lt;/div&gt;
+    &lt;div class="p-4 bg-white rounded-lg shadow-sm"&gt;
+      &lt;p class="text-sm text-slate-500"&gt;活跃用户&lt;/p&gt;
+      &lt;h3 class="text-2xl font-bold"&gt;1,240&lt;/h3&gt;
+    &lt;/div&gt;
+    &lt;div class="p-4 bg-white rounded-lg shadow-sm"&gt;
+      &lt;p class="text-sm text-slate-500"&gt;转化率&lt;/p&gt;
+      &lt;h3 class="text-2xl font-bold"&gt;2.4%&lt;/h3&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="bg-white p-6 rounded-lg shadow-sm h-64 flex items-center justify-center border-2 border-dashed border-slate-200"&gt;
+    &lt;span class="text-slate-400"&gt;图表组件区域&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+</div>
+</div>
+</div>
+<!-- Action Icons -->
+<div class="flex gap-2 mt-2 ml-1">
+<button class="p-1.5 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors"><span class="material-symbols-outlined text-lg">content_copy</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors"><span class="material-symbols-outlined text-lg">thumb_up</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors"><span class="material-symbols-outlined text-lg">refresh</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-6 shrink-0 bg-white border-t border-border-subtle">
+<div class="max-w-4xl mx-auto">
+<div class="relative bg-white border border-border-subtle rounded-xl shadow-sm focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5 transition-all">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-text-main p-4 pb-14 resize-none text-sm placeholder:text-text-secondary/50" placeholder="继续提问..." rows="1"></textarea>
+<div class="absolute bottom-3 left-3 flex gap-2">
+<button class="p-2 text-text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">attach_file</span></button>
+<button class="p-2 text-text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">image</span></button>
+</div>
+<div class="absolute bottom-3 right-3">
+<button class="size-10 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- HTML Preview Panel (Occupies 50%) -->
+<aside class="w-[50%] bg-white border-l border-border-subtle flex flex-col z-20" id="preview-panel">
+<!-- Preview Header -->
+<header class="h-14 border-b border-border-subtle px-6 flex items-center justify-between shrink-0 bg-white">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">preview</span>
+<h3 class="font-bold text-text-main">实时预览</h3>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex bg-secondary-bg border border-border-subtle rounded-lg p-0.5">
+<button class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-white hover:text-primary hover:shadow-sm rounded-md transition-all">
+<span class="material-symbols-outlined text-[16px]">download</span> 下载 HTML
+                        </button>
+<button class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-white hover:text-primary hover:shadow-sm rounded-md transition-all">
+<span class="material-symbols-outlined text-[16px]">link</span> 复制链接
+                        </button>
+<button class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-text-secondary bg-white text-primary shadow-sm rounded-md transition-all">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span> 新窗口打开
+                        </button>
+</div>
+<div class="w-[1px] h-4 bg-border-subtle mx-2"></div>
+<button class="p-2 text-text-secondary hover:bg-slate-100 rounded-lg transition-colors" title="全屏">
+<span class="material-symbols-outlined text-[20px]">fullscreen</span>
+</button>
+<button class="p-2 text-text-secondary hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors" title="关闭">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</header>
+<!-- Preview Body (Iframe Simulation) -->
+<div class="flex-1 bg-slate-200/50 p-6 overflow-hidden">
+<div class="w-full h-full bg-white rounded-lg shadow-sm border border-border-subtle overflow-auto">
+<!-- Simulated Content from Code -->
+<div class="p-8 bg-slate-50 min-h-full">
+<div class="max-w-4xl mx-auto">
+<div class="flex justify-between items-center mb-8">
+<h1 class="text-xl font-bold text-slate-800">业务数据看板</h1>
+<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">更新于: 刚刚</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="p-6 bg-white rounded-xl shadow-sm border border-slate-100">
+<div class="flex items-center gap-3 mb-2">
+<div class="size-8 rounded-lg bg-blue-50 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">payments</span>
+</div>
+<p class="text-sm font-medium text-slate-500">总收入</p>
+</div>
+<h3 class="text-2xl font-bold text-slate-900">¥12,840</h3>
+<p class="text-xs text-green-500 mt-2 flex items-center">
+<span class="material-symbols-outlined text-xs">trending_up</span> +12.5%
+                                    </p>
+</div>
+<div class="p-6 bg-white rounded-xl shadow-sm border border-slate-100">
+<div class="flex items-center gap-3 mb-2">
+<div class="size-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined text-xl">person</span>
+</div>
+<p class="text-sm font-medium text-slate-500">活跃用户</p>
+</div>
+<h3 class="text-2xl font-bold text-slate-900">1,240</h3>
+<p class="text-xs text-green-500 mt-2 flex items-center">
+<span class="material-symbols-outlined text-xs">trending_up</span> +5.2%
+                                    </p>
+</div>
+<div class="p-6 bg-white rounded-xl shadow-sm border border-slate-100">
+<div class="flex items-center gap-3 mb-2">
+<div class="size-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+<span class="material-symbols-outlined text-xl">leaderboard</span>
+</div>
+<p class="text-sm font-medium text-slate-500">转化率</p>
+</div>
+<h3 class="text-2xl font-bold text-slate-900">2.4%</h3>
+<p class="text-xs text-slate-400 mt-2 flex items-center">
+<span class="material-symbols-outlined text-xs">horizontal_rule</span> 持平
+                                    </p>
+</div>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-sm border border-slate-100 h-64 flex flex-col items-center justify-center gap-3 border-2 border-dashed border-slate-200">
+<span class="material-symbols-outlined text-4xl text-slate-300">analytics</span>
+<span class="text-slate-400 text-sm">可视化图表组件加载中...</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#308ce8",
+                        "background-light": "#ffffff",
+                        "background-dark": "#0F172A",
+                        "secondary-bg": "#F8FAFC",
+                        "border-subtle": "#E2E8F0",
+                        "slate-main": "#1E293B",
+                        "slate-secondary": "#64748B"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "8px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .image-grid-item:hover .overlay {
+            opacity: 1;
+        }
+        /* Custom styles for the modal */
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-main dark:text-[#F1F5F9] antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex h-16 items-center justify-between border-b border-slate-200 dark:border-[#334155] px-6 bg-white dark:bg-[#0F172A] shrink-0 z-20">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">hub</span>
+</div>
+<h2 class="text-slate-900 dark:text-[#F1F5F9] text-lg font-bold tracking-tight">海创元智研云平台</h2>
+</div>
+<nav class="hidden md:flex flex-1 justify-center gap-8">
+<a class="text-slate-600 dark:text-[#94A3B8] text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">AI模型能力</a>
+<a class="text-slate-600 dark:text-[#94A3B8] text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">AI教研员智能体</a>
+<a class="text-slate-600 dark:text-[#94A3B8] text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">扩展工具箱</a>
+<a class="text-slate-600 dark:text-[#94A3B8] text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">教案学案区</a>
+<a class="text-slate-600 dark:text-[#94A3B8] text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">全科AI素养提升区</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 dark:text-[#94A3B8] hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 dark:bg-[#334155] mx-1"></div>
+<div class="flex items-center gap-2 cursor-pointer group">
+<div class="size-9 rounded-full bg-slate-200 dark:bg-[#1E293B] overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+<img alt="用户头像" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFE_iWAEPsDUS0SHjz3dnXCRSPdSd8Whg3UiX5Fvd7ZTJvzoGxVowP4_0zPxl7L4m-cxokSi6mhLZXjxlvvE4qmYHhO5YndO1mfLCJXHXH20bJO088Ty8dWUmtqZGhu-0FoeMgAqAd5UbtrJP3o2kK8zytMeMa7hxAYeMczP6LQR8S4s3cm-URnKmGGUfk7E2fVmXTWwjlsIaD0-FEBjIkTlE7uOrVSBUY-DUVZVEjBYM2pskxOX7GcEx7y_pz6xw7VZOhTLTHJHU"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area: Three Columns -->
+<main class="flex flex-1 overflow-hidden">
+<!-- Left Column 1: Tools Sidebar -->
+<aside class="w-20 flex flex-col items-center py-6 gap-6 border-r border-border-subtle dark:border-[#334155] bg-secondary-bg dark:bg-[#1E293B] shrink-0">
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">chat_bubble</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-[#94A3B8] group-hover:text-primary">文字对话</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">image</span>
+</div>
+<span class="text-[10px] font-bold text-primary">文生图</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">audiotrack</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-[#94A3B8] group-hover:text-primary">文生音频</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">movie</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-[#94A3B8] group-hover:text-primary">文生视频</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">terminal</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-[#94A3B8] group-hover:text-primary">AI 编程</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-white dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent group-hover:border-primary/20">
+<span class="material-symbols-outlined">draw</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-[#94A3B8] group-hover:text-primary">AI 画 SVG</span>
+</div>
+</aside>
+<!-- Left Column 2: History List -->
+<aside class="w-72 flex flex-col border-r border-border-subtle dark:border-[#334155] bg-secondary-bg dark:bg-[#0F172A] shrink-0">
+<div class="p-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#94A3B8] text-sm">search</span>
+<input class="w-full bg-white dark:bg-[#1E293B] border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400 dark:placeholder:text-[#94A3B8] text-slate-700 dark:text-[#F1F5F9]" placeholder="搜索会话历史" type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-6 scrollbar-hide">
+<div>
+<h3 class="px-3 text-xs font-bold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider mb-2">今天</h3>
+<div class="space-y-1">
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white dark:bg-[#1E293B] shadow-sm border border-slate-100 dark:border-[#334155] cursor-pointer group">
+<span class="material-symbols-outlined text-primary text-xl">palette</span>
+<span class="text-sm font-medium text-slate-700 dark:text-[#F1F5F9] truncate flex-1">赛博朋克城市景观</span>
+<span class="material-symbols-outlined text-sm text-slate-300 dark:text-[#94A3B8] opacity-0 group-hover:opacity-100">more_horiz</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-200/80 dark:hover:bg-[#1E293B] cursor-pointer group transition-colors">
+<span class="material-symbols-outlined text-slate-400 dark:text-[#94A3B8] text-xl">palette</span>
+<span class="text-sm text-slate-600 dark:text-[#94A3B8] truncate flex-1">古风插画设计</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-slate-200 dark:border-[#334155]">
+<button class="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-lg text-slate-500 dark:text-[#94A3B8] hover:text-primary hover:border-primary transition-all text-sm font-medium">
+<span class="material-symbols-outlined text-lg">add</span>
+                        新建生图对话
+                    </button>
+</div>
+</aside>
+<!-- Right Column 3: AI Image Interface -->
+<section class="flex-1 flex flex-col bg-white dark:bg-[#0F172A] relative">
+<!-- Chat Header -->
+<header class="h-14 flex items-center justify-between px-6 border-b border-slate-100 dark:border-[#334155] shrink-0">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-primary rounded-full flex items-center justify-center text-[10px] text-white font-bold">SD</div>
+<span class="font-bold text-slate-800 dark:text-[#F1F5F9]">Stable Diffusion 3.5</span>
+<span class="material-symbols-outlined text-slate-400 dark:text-[#94A3B8] text-base">expand_more</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 text-slate-500 dark:text-[#94A3B8] text-sm hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">history</span>
+                            画廊
+                        </button>
+<button class="flex items-center gap-1 text-slate-500 dark:text-[#94A3B8] text-sm hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">settings</span>
+                            参数
+                        </button>
+</div>
+</header>
+<!-- Message Display -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+<!-- User Message -->
+<div class="flex justify-end gap-4 max-w-5xl mx-auto">
+<div class="flex flex-col items-end gap-2 max-w-[85%]">
+<div class="bg-primary text-white px-5 py-3 rounded-lg rounded-tr-none shadow-md shadow-primary/10 text-sm leading-relaxed">
+                                帮我画几张具有未来科技感的中国古典建筑。要求：在悬浮的岛屿上，有发光的霓虹线条，雨夜氛围，4k 高清，插画风格。
+                            </div>
+<span class="text-[10px] text-slate-400 dark:text-[#94A3B8]">14:45</span>
+</div>
+<div class="size-9 rounded-full bg-slate-100 dark:bg-[#1E293B] flex-shrink-0 overflow-hidden">
+<img alt="用户" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5moMAnh7TTtCTOI1_4y09FMdlnwQK9qcAQJWz9qC_1v6_PNMn1VpydU8Doi1r-dPm01mXCgALhwfw89uIETEgSQP61pZC-Eba_vpiTvcn8SmB66XCzRs-rL-kRjbU_I_DvfBR8o0yQFCo8dRu-9LaNXhMKswA9BBpzf-P3lUNHrwwTSL-3BOZKukTJ0bMsnu-mpmhNZJ__D9oY0i1Jf0i37bcd7mQFkbM5n004luYDg7bLTWJraIxGrQsmDN4oUxuC90QV0rtRxw"/>
+</div>
+</div>
+<!-- AI Message: Image Results Grid -->
+<div class="flex justify-start gap-4 max-w-5xl mx-auto">
+<div class="size-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div class="flex flex-col items-start gap-3 flex-1 max-w-[92%]">
+<div class="w-full bg-secondary-bg dark:bg-[#1E293B] text-slate-700 dark:text-[#F1F5F9] px-6 py-5 rounded-lg rounded-tl-none border border-slate-100 dark:border-[#334155] shadow-sm">
+<p class="mb-4 text-sm">为您生成了 4 张融合了“赛博朋克”与“古典中式”风格的插画作品：</p>
+<!-- Image Grid -->
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-200 dark:bg-[#0F172A] cursor-zoom-in image-grid-item">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgB-78mYeKcDWQ15BzE32NbkpK9ip478mpNXccZj2hBKVQfKimhpNe8Sir49zKP22cRGXjz6qVzYiMSgd2R0UM6n86y4FJb_Av_M5QqAOd1rn3eGaD4ppWm29JKTowLrKLgeF8UwR8vgsuynGoYCtXGAn-RwnW8HnQjr9qun5sLrt1yC058aszb8EM2_D9ZinQQt7Jk9TG3TmCftUhA_AiRcwxZAt5wNBXS3mE1oJwX3cFQ10fXYy8rv8qEcQY6wgs4_ob8l0dl8o"/>
+<div class="overlay absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity gap-3">
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">download</span></button>
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
+</div>
+</div>
+<div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-200 dark:bg-[#0F172A] cursor-zoom-in image-grid-item">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXqHtzhSZhU8iQLSrA_LrKGCh1dk6kMP8-fCY84K_-4bsMmFBgiFM5rxdw99E9-tMZP7rWOqZAbI9jK5mhMYm2o8pSE0KbND69dOEpx6zxugbr7zCUS1ty6caN_xD8sSphmGkusD_kOy7WWVrZYlO5yTe6LYoAypzjfgzG__js0bxHRHQj7ezcRaNgYrRSF0g1kJfaN6aoxvN90UPMUt1gkxiOa4sjADHUU0NVqfLEmeGQVyUmXwxEed2TSfWgvjMu0ndvSJ_lte8"/>
+<div class="overlay absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity gap-3">
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">download</span></button>
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
+</div>
+</div>
+<div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-200 dark:bg-[#0F172A] cursor-zoom-in image-grid-item">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2VNjI8spguEa48ltl6kyUXQqZ1NbNDSOr4cidUhVRBVd1lgbp5MKq1wCPeJjsZigPHxacjvrqZdtY9Q7RzEloeAj3xdIxYmuvhm6DUbqTN-GVEmgcI5XD68MerQtj4LQTaMNzkj12NcuA8C--lzrDFOqEpvAZQMueboBIgHp1IRHsGMPk07v_QjKZLE2XXTpQ3Ppby1V7XSvpDrQA2CKh0DsBQXKxWGRcQXW28lsCmBCs-WF3caLKRK68CesiGYkqMwieo7eiql8"/>
+<div class="overlay absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity gap-3">
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">download</span></button>
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
+</div>
+</div>
+<div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-200 dark:bg-[#0F172A] cursor-zoom-in image-grid-item">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6HmShnMSkcCvNbVKTsHT9TUbWftq8W4ssmFJC1k-D3xPEubSgQ5EaJnD537y7ceWNGx3sRMiGY0CsQyJgpUyGHzcaHgKOcCheiJKdLOWURMH1f3VgXxEaHvIgpV5UhQcVmFeWVAOrKtIQi1ndBGkQTVjGsQnawBnNxnrObB0CIDYNccQoKqM-e5tEaQ6jBsnoEbXIEmpmaK80-aebYxKl9EZ-3MbPjc7b2llh3mGDfAFA77YGRp4mS9xVB9j05Ok_-OxDMFy0JlI"/>
+<div class="overlay absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center transition-opacity gap-3">
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">download</span></button>
+<button class="size-8 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-[#334155]">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] text-xs rounded">比例 1:1</span>
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] text-xs rounded">风格: 插画</span>
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-[#0F172A] text-slate-500 dark:text-[#94A3B8] text-xs rounded">种子: 4291837</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg text-slate-400 dark:text-[#94A3B8] transition-colors">
+<span class="material-symbols-outlined text-lg">save</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg text-slate-400 dark:text-[#94A3B8] transition-colors">
+<span class="material-symbols-outlined text-lg">share</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg text-slate-400 dark:text-[#94A3B8] transition-colors">
+<span class="material-symbols-outlined text-lg">refresh</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Input Area with Control Panel -->
+<div class="p-6 shrink-0 bg-white dark:bg-[#0F172A] border-t border-slate-100 dark:border-[#334155]">
+<div class="max-w-5xl mx-auto space-y-4">
+<!-- Control Panel (Compact) -->
+<div class="flex items-center gap-4 py-2 px-4 bg-secondary-bg dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-lg">
+<div class="flex items-center gap-2 border-r border-slate-200 dark:border-[#334155] pr-4">
+<span class="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">比例</span>
+<div class="flex gap-1">
+<button class="px-2 py-1 bg-white dark:bg-[#0F172A] border border-primary text-primary text-[10px] rounded leading-none">1:1</button>
+<button class="px-2 py-1 bg-white dark:bg-[#0F172A] border border-transparent text-slate-500 dark:text-[#94A3B8] text-[10px] rounded leading-none hover:border-slate-300 dark:hover:border-slate-600 transition-all">16:9</button>
+<button class="px-2 py-1 bg-white dark:bg-[#0F172A] border border-transparent text-slate-500 dark:text-[#94A3B8] text-[10px] rounded leading-none hover:border-slate-300 dark:hover:border-slate-600 transition-all">3:4</button>
+</div>
+</div>
+<div class="flex items-center gap-2 border-r border-slate-200 dark:border-[#334155] pr-4">
+<span class="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">数量</span>
+<div class="flex gap-1">
+<button class="size-6 bg-white dark:bg-[#0F172A] border border-transparent text-slate-500 dark:text-[#94A3B8] text-[10px] rounded flex items-center justify-center hover:border-slate-300 dark:hover:border-slate-600 transition-all">1</button>
+<button class="size-6 bg-white dark:bg-[#0F172A] border border-primary text-primary text-[10px] rounded flex items-center justify-center">4</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">风格</span>
+<button class="flex items-center gap-2 px-3 py-1 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] rounded text-[10px] text-slate-600 dark:text-[#F1F5F9] hover:border-primary transition-colors">
+<span class="font-medium">插画风格</span>
+<span class="material-symbols-outlined text-xs">tune</span>
+</button>
+</div>
+</div>
+<!-- Main Input Box -->
+<div class="relative bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#334155] rounded-lg shadow-lg shadow-slate-200/40 dark:shadow-none focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5 transition-all">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-slate-700 dark:text-[#F1F5F9] p-4 pb-14 resize-none text-sm placeholder:text-slate-400 dark:placeholder:text-[#94A3B8]" placeholder="描述您想生成的画面内容..." rows="3"></textarea>
+<div class="absolute bottom-3 left-3 flex gap-2">
+<button class="p-2 text-slate-400 dark:text-[#94A3B8] hover:text-primary transition-colors" title="上传图片">
+<span class="material-symbols-outlined">image</span>
+</button>
+<button class="p-2 text-slate-400 dark:text-[#94A3B8] hover:text-primary transition-colors" title="画笔编辑">
+<span class="material-symbols-outlined">brush</span>
+</button>
+<button class="p-2 text-slate-400 dark:text-[#94A3B8] hover:text-primary transition-colors" title="附加文件">
+<span class="material-symbols-outlined">attachment</span>
+</button>
+</div>
+<div class="absolute bottom-3 right-3 flex items-center gap-3">
+<span class="text-[10px] text-slate-400 dark:text-[#94A3B8] hidden sm:inline">0 / 2000</span>
+<button class="size-10 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined">magic_button</span>
+</button>
+</div>
+</div>
+<p class="text-center text-[10px] text-slate-400 dark:text-[#94A3B8]">
+                            AI 生成的内容可能不准确，请审慎参考。
+                        </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Style Selection Modal Overlay -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center modal-overlay">
+<!-- Modal Container -->
+<div class="bg-white dark:bg-[#1E293B] w-full max-w-2xl mx-4 rounded-lg shadow-2xl overflow-hidden flex flex-col border dark:border-[#334155]">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-slate-100 dark:border-[#334155] flex items-center justify-between">
+<h3 class="text-lg font-bold text-slate-800 dark:text-[#F1F5F9]">选择生成风格</h3>
+<button class="text-slate-400 dark:text-[#94A3B8] hover:text-slate-600 dark:hover:text-[#F1F5F9] transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Content: Scrollable Style Grid -->
+<div class="p-6 overflow-y-auto max-h-[60vh] scrollbar-hide">
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+<!-- Style Card 1: 写实主义 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="写实主义" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">写实主义</p>
+</div>
+<!-- Style Card 2: 3D 渲染 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-primary ring-2 ring-primary/20 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="3D 渲染" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+<div class="absolute inset-0 flex items-center justify-center bg-primary/20">
+<div class="size-6 bg-primary rounded-full flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+</div>
+</div>
+<p class="mt-2 text-xs text-center font-bold text-primary">3D 渲染</p>
+</div>
+<!-- Style Card 3: 二次动画 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="二次动画" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">二次动画</p>
+</div>
+<!-- Style Card 4: 油画风格 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="油画风格" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">油画风格</p>
+</div>
+<!-- Style Card 5: 赛博朋克 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="赛博朋克" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">赛博朋克</p>
+</div>
+<!-- Style Card 6: 水墨画 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="水墨画" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">水墨画</p>
+</div>
+<!-- Style Card 7: 极简主义 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="极简主义" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">极简主义</p>
+</div>
+<!-- Style Card 8: 蒸汽波 -->
+<div class="group cursor-pointer">
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all relative bg-slate-100 dark:bg-[#0F172A]">
+<img alt="蒸汽波" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRhP6-z8X3P8zV8S0f9X6L5z9mX0q1w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m"/>
+</div>
+<p class="mt-2 text-xs text-center font-medium text-slate-600 dark:text-[#94A3B8]">蒸汽波</p>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-6 border-t border-slate-100 dark:border-[#334155] flex justify-end gap-3">
+<button class="px-6 py-2 border border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#94A3B8] rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-[#334155] transition-colors">取消</button>
+<button class="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">确认选择</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

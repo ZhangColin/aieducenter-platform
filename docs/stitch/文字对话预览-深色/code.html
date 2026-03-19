@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#308ce8",
+                        "background-dark": "#0F172A",
+                        "secondary-bg": "#1E293B",
+                        "border-subtle": "#334155",
+                        "text-main": "#F1F5F9",
+                        "text-secondary": "#94A3B8",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "8px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: #F1F5F9;
+            background-color: #0F172A;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .preview-content h1 { @apply text-3xl font-bold mb-6 text-text-main; }
+        .preview-content h2 { @apply text-2xl font-bold mt-8 mb-4 text-text-main border-b border-border-subtle pb-2; }
+        .preview-content h3 { @apply text-xl font-bold mt-6 mb-3 text-text-main; }
+        .preview-content p { @apply text-text-secondary leading-relaxed mb-4; }
+        .preview-content .formula { @apply py-4 my-4 bg-secondary-bg rounded-lg text-center font-serif text-lg overflow-x-auto text-text-main border border-border-subtle; }
+        
+        #history-sidebar {
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        #history-sidebar.collapsed {
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            border-right: none;
+        }
+    </style>
+</head>
+<body class="bg-background-dark antialiased overflow-hidden">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex h-16 items-center justify-between border-b border-border-subtle px-6 bg-secondary-bg shrink-0 z-20">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">hub</span>
+</div>
+<h2 class="text-text-main text-lg font-bold tracking-tight">海创元智研云平台</h2>
+</div>
+<nav class="hidden md:flex flex-1 justify-center gap-8">
+<a class="text-primary text-sm font-semibold border-b-2 border-primary h-16 flex items-center" href="#">AI模型能力</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">AI教研员智能体</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">扩展工具箱</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">教案学案区</a>
+<a class="text-text-secondary text-sm font-medium hover:text-primary transition-colors h-16 flex items-center" href="#">全科AI素养提升区</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 text-text-secondary hover:bg-slate-700 rounded-lg transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="h-8 w-[1px] bg-border-subtle mx-1"></div>
+<div class="flex items-center gap-2 cursor-pointer group">
+<div class="size-9 rounded-full bg-slate-700 overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+<img alt="User avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFE_iWAEPsDUS0SHjz3dnXCRSPdSd8Whg3UiX5Fvd7ZTJvzoGxVowP4_0zPxl7L4m-cxokSi6mhLZXjxlvvE4qmYHhO5YndO1mfLCJXHXH20bJO088Ty8dWUmtqZGhu-0FoeMgAqAd5UbtrJP3o2kK8zytMeMa7hxAYeMczP6LQR8S4s3cm-URnKmGGUfk7E2fVmXTWwjlsIaD0-FEBjIkTlE7uOrVSBUY-DUVZVEjBYM2pskxOX7GcEx7y_pz6xw7VZOhTLTHJHU"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden relative">
+<!-- Left Column 1: Tools Sidebar -->
+<aside class="w-20 flex flex-col items-center py-6 gap-6 border-r border-border-subtle bg-secondary-bg shrink-0">
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">chat_bubble</span>
+</div>
+<span class="text-[10px] font-bold text-primary">文字对话</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-background-dark text-text-secondary group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-border-subtle group-hover:border-primary/20">
+<span class="material-symbols-outlined">image</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary group-hover:text-primary">文生图</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-background-dark text-text-secondary group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-border-subtle group-hover:border-primary/20">
+<span class="material-symbols-outlined">audiotrack</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary group-hover:text-primary">文生音频</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-background-dark text-text-secondary group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-border-subtle group-hover:border-primary/20">
+<span class="material-symbols-outlined">movie</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary group-hover:text-primary">文生视频</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="size-12 rounded-xl bg-background-dark text-text-secondary group-hover:text-primary group-hover:bg-primary/10 flex items-center justify-center transition-all border border-border-subtle group-hover:border-primary/20">
+<span class="material-symbols-outlined">terminal</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary group-hover:text-primary">AI 编程</span>
+</div>
+</aside>
+<!-- Left Column 2: History List -->
+<aside class="w-72 flex flex-col border-r border-border-subtle bg-secondary-bg shrink-0 relative" id="history-sidebar">
+<div class="p-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">search</span>
+<input class="w-full bg-background-dark border border-border-subtle rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-text-secondary/50 outline-none text-text-main" placeholder="搜索会话历史" type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-6 scrollbar-hide">
+<div>
+<h3 class="px-3 text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">今天</h3>
+<div class="space-y-1">
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background-dark shadow-sm border border-border-subtle cursor-pointer group">
+<span class="material-symbols-outlined text-primary text-xl">chat</span>
+<span class="text-sm font-medium text-text-main truncate flex-1">信息熵与交叉熵详解</span>
+<span class="material-symbols-outlined text-sm text-text-secondary opacity-0 group-hover:opacity-100">more_horiz</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700/50 cursor-pointer group transition-colors">
+<span class="material-symbols-outlined text-text-secondary text-xl">chat</span>
+<span class="text-sm text-text-secondary truncate flex-1">老钟匠与消失的钟声</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-border-subtle">
+<button class="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-border-subtle rounded-lg text-text-secondary hover:text-primary hover:border-primary transition-all text-sm font-medium">
+<span class="material-symbols-outlined text-lg">add</span>
+                    新建对话
+                </button>
+</div>
+<!-- Toggle Button -->
+<button class="absolute -right-3 top-1/2 -translate-y-1/2 size-6 bg-secondary-bg border border-border-subtle rounded-full flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary shadow-sm z-10 transition-transform group" onclick="document.getElementById('history-sidebar').classList.toggle('collapsed')">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+</aside>
+<!-- Right Column 3: Chat Interface -->
+<section class="flex-1 flex flex-col bg-background-dark relative">
+<!-- Chat Header -->
+<header class="h-14 flex items-center justify-between px-6 border-b border-border-subtle shrink-0 bg-background-dark">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-green-600 rounded-full flex items-center justify-center text-[10px] text-white font-bold">GPT</div>
+<span class="font-bold text-text-main">GPT-4o</span>
+<span class="material-symbols-outlined text-text-secondary text-base">expand_more</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 text-text-secondary text-sm hover:text-primary">
+<span class="material-symbols-outlined text-lg">share</span>
+                        分享
+                    </button>
+<button class="flex items-center gap-1 text-text-secondary text-sm hover:text-primary">
+<span class="material-symbols-outlined text-lg">settings</span>
+                        配置
+                    </button>
+</div>
+</header>
+<!-- Message Display -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+<!-- User Message -->
+<div class="flex justify-end gap-4 max-w-4xl mx-auto">
+<div class="flex flex-col items-end gap-2 max-w-[85%]">
+<div class="bg-primary text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-md shadow-primary/10 text-sm leading-relaxed">
+                            请详细解释一下信息论中的核心概念：信息熵与交叉熵，并给出一个完整的 Markdown 示例代码。
+                        </div>
+<span class="text-[10px] text-text-secondary">14:45</span>
+</div>
+<div class="size-9 rounded-full bg-slate-700 flex-shrink-0">
+<img alt="User" class="rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5moMAnh7TTtCTOI1_4y09FMdlnwQK9qcAQJWz9qC_1v6_PNMn1VpydU8Doi1r-dPm01mXCgALhwfw89uIETEgSQP61pZC-Eba_vpiTvcn8SmB66XCzRs-rL-kRjbU_I_DvfBR8o0yQFCo8dRu-9LaNXhMKswA9BBpzf-P3lUNHrwwTSL-3BOZKukTJ0bMsnu-mpmhNZJ__D9oY0i1Jf0i37bcd7mQFkbM5n004luYDg7bLTWJraIxGrQsmDN4oUxuC90QV0rtRxw"/>
+</div>
+</div>
+<!-- AI Message -->
+<div class="flex justify-start gap-4 max-w-4xl mx-auto">
+<div class="size-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div class="flex flex-col items-start gap-2 flex-1 max-w-[92%]">
+<div class="w-full bg-secondary-bg text-text-main px-6 py-5 rounded-2xl rounded-tl-none border border-border-subtle shadow-sm text-sm leading-relaxed">
+<h3 class="text-lg font-bold mb-4 text-text-main">信息熵与交叉熵：深度解析</h3>
+<p class="mb-4">信息论是现代通信和机器学习的基石。以下是详细的技术总结及 Markdown 源码示例：</p>
+<!-- Markdown Source Block -->
+<div class="markdown-container rounded-lg overflow-hidden border border-border-subtle bg-background-dark mb-4">
+<div class="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+<span class="text-xs text-slate-400 font-mono">MARKDOWN</span>
+<div class="flex items-center gap-2">
+<button class="text-slate-400 hover:text-white transition-colors" title="Preview"><span class="material-symbols-outlined text-sm">visibility</span></button>
+<button class="text-slate-400 hover:text-white transition-colors" title="Copy"><span class="material-symbols-outlined text-sm">content_copy</span></button>
+</div>
+</div>
+<div class="p-4 font-mono text-[13px] leading-relaxed text-slate-300">
+<pre class="whitespace-pre-wrap break-words"># 信息熵与交叉熵：信息论中的核心概念
+
+## 1. 信息熵 (Information Entropy)
+用于量化随机变量的不确定性。
+
+$$ H(X) = -\sum_{x \in \mathcal{X}} P(x) \log_2 P(x) $$
+
+- **非负性**: $H(X) \geq 0$
+- **确定性**: 当 $P(x)=1$ 时，$H(X)=0$
+
+## 2. 交叉熵 (Cross Entropy)
+衡量两个概率分布 $P$ 和 $Q$ 之间的差异。
+
+$$ H(P, Q) = -\sum_{x \in \mathcal{X}} P(x) \log_2 Q(x) $$</pre>
+</div>
+</div>
+</div>
+<!-- Action Icons -->
+<div class="flex gap-2 mt-2 ml-1">
+<button class="p-1.5 hover:bg-slate-800 rounded-lg text-text-secondary transition-colors"><span class="material-symbols-outlined text-lg">content_copy</span></button>
+<button class="p-1.5 hover:bg-slate-800 rounded-lg text-text-secondary transition-colors"><span class="material-symbols-outlined text-lg">thumb_up</span></button>
+<button class="p-1.5 hover:bg-slate-800 rounded-lg text-text-secondary transition-colors"><span class="material-symbols-outlined text-lg">refresh</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-6 shrink-0 bg-background-dark border-t border-border-subtle">
+<div class="max-w-4xl mx-auto">
+<div class="relative bg-secondary-bg border border-border-subtle rounded-xl shadow-sm focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-text-main p-4 pb-14 resize-none text-sm placeholder:text-text-secondary/50" placeholder="输入您的问题，Shift + Enter 换行" rows="3"></textarea>
+<div class="absolute bottom-3 left-3 flex gap-2">
+<button class="p-2 text-text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">attach_file</span></button>
+<button class="p-2 text-text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">image</span></button>
+</div>
+<div class="absolute bottom-3 right-3">
+<button class="size-10 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Preview Panel (50% width) -->
+<aside class="w-[50%] bg-background-dark border-l border-border-subtle flex flex-col z-20" id="preview-panel">
+<header class="h-14 border-b border-border-subtle px-6 flex items-center justify-between shrink-0 bg-secondary-bg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">description</span>
+<h3 class="font-bold text-text-main">Markdown 内容预览</h3>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex bg-background-dark border border-border-subtle rounded-lg p-0.5">
+<button class="flex items-center gap-1 px-3 py-1 text-xs font-medium text-text-secondary hover:bg-secondary-bg hover:text-primary hover:shadow-sm rounded-md transition-all">
+<span class="material-symbols-outlined text-[16px]">download</span> Word
+                        </button>
+<button class="flex items-center gap-1 px-3 py-1 text-xs font-medium text-text-secondary hover:bg-secondary-bg hover:text-primary hover:shadow-sm rounded-md transition-all">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span> PDF
+                        </button>
+<button class="flex items-center gap-1 px-3 py-1 text-xs font-medium bg-primary text-white shadow-sm rounded-md transition-all">
+<span class="material-symbols-outlined text-[16px]">markdown</span> Markdown
+                        </button>
+</div>
+<div class="w-[1px] h-4 bg-border-subtle mx-2"></div>
+<button class="p-2 text-text-secondary hover:bg-slate-700 rounded-lg transition-colors" title="全屏">
+<span class="material-symbols-outlined text-[20px]">fullscreen</span>
+</button>
+<button class="p-2 text-text-secondary hover:bg-red-900/30 hover:text-red-400 rounded-lg transition-colors" title="关闭">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-12 scrollbar-hide bg-background-dark">
+<div class="max-w-3xl mx-auto preview-content">
+<h1>信息熵与交叉熵：信息论中的核心概念</h1>
+<h2>1. 信息熵 (Information Entropy)</h2>
+<p>信息熵由克劳德·香农于1948年提出，用于量化随机变量的不确定性。对于一个离散随机变量 $X$，其概率分布为 $P(x)$，信息熵定义为：</p>
+<div class="formula">
+                        H(X) = -\sum_{x \in \mathcal{X}} P(x) \log_2 P(x)
+                    </div>
+<p>其中 $\mathcal{X}$ 是 $X$ 的取值空间。当使用自然对数时，单位为<strong>纳特 (nats)</strong>；使用以2为底的对数时，单位为<strong>比特 (bits)</strong>。</p>
+<h3>1.1 性质</h3>
+<ul class="list-disc ml-6 space-y-2 text-text-secondary mb-6">
+<li><strong>非负性</strong>: $H(X) \geq 0$</li>
+<li><strong>确定性</strong>: 当某个 $P(x)=1$ 时，$H(X)=0$</li>
+<li><strong>上界</strong>: 对于有 $n$ 个取值的均匀分布，熵取最大值 $\log_2 n$</li>
+</ul>
+<h2>2. 交叉熵 (Cross Entropy)</h2>
+<p>交叉熵衡量两个概率分布 $P$ 和 $Q$ 之间的差异。对于同一个随机变量，真实分布为 $P$，预测分布为 $Q$，交叉熵定义为：</p>
+<div class="formula">
+                        H(P, Q) = -\sum_{x \in \mathcal{X}} P(x) \log_2 Q(x)
+                    </div>
+<h3>2.1 与 KL 散度的关系</h3>
+<p>交叉熵可以分解为信息熵与 KL 散度之和：</p>
+<div class="formula">
+                        H(P, Q) = H(P) + D_{KL}(P \parallel Q)
+                    </div>
+<p>在机器学习中，由于真实分布 $P$ 的熵 $H(P)$ 是常数，因此最小化交叉熵等价于最小化预测分布与真实分布之间的 KL 散度。</p>
+</div>
+</div>
+</aside>
+</main>
+</div>
+</body></html>

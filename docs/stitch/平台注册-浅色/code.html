@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#308ce8",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex items-center justify-center p-4">
+<div class="max-w-[1000px] w-full bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+<!-- Left Side: Branding & Info -->
+<div class="w-full md:w-1/2 bg-primary/5 p-10 flex flex-col justify-between border-r border-slate-100 dark:border-slate-800">
+<div>
+<div class="flex items-center gap-3 mb-12">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">rocket_launch</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold tracking-tight">海创元智研云平台</h2>
+</div>
+<div class="space-y-6">
+<h1 class="text-slate-900 dark:text-slate-100 text-4xl font-bold leading-tight">连接智慧<br/>驱动科研创新</h1>
+<p class="text-slate-600 dark:text-slate-400 text-lg">构建一站式数智化科研协作平台，助力科研效率提升。通过先进的AI算法与云计算技术，连接全球科研资源。</p>
+</div>
+</div>
+<div class="mt-8">
+<div class="aspect-video rounded-lg bg-cover bg-center shadow-md" data-alt="Abstract scientific visualization with blue gradients and data points" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCSaQIHIuEIs5sBP80XfbMuYkyZM9M3LxEKIrrEKup1-0gIRef6X3id_9evE0-hdd0gFJak3zxXVPjzXxcZcpPqxu1h-I15fOrZDgY3Msuaw1UIjtufCd25Xvl4UA8rlC6G09w7ZLwSuteRHb7O-eJx3AVTnYrRAAuNZ5cNA9qjcp4T1Cy2E_GjtJUS03YlyMaS3K4HuLMt5CJST4FOwPy7zPL1mzyMe-Y5Hl3sOyVzPbMJWn-A-8qsWTBBMnc5rOX-7bq7HOZhQ1s');"></div>
+</div>
+</div>
+<!-- Right Side: Registration Form -->
+<div class="w-full md:w-1/2 p-10 flex flex-col justify-center bg-white dark:bg-slate-900">
+<div class="max-w-md mx-auto w-full">
+<div class="mb-8">
+<h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">创建您的账号</h3>
+<p class="text-slate-500 dark:text-slate-400">请填写以下信息完成注册</p>
+</div>
+<form class="space-y-5">
+<!-- Mobile/Email -->
+<div class="space-y-1.5">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">手机号/邮箱</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="请输入手机号或邮箱" type="text"/>
+</div>
+</div>
+<!-- SMS Code -->
+<div class="space-y-1.5">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">验证码</label>
+<div class="flex gap-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">verified_user</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="请输入验证码" type="text"/>
+</div>
+<button class="px-4 py-3 rounded-lg border border-primary text-primary font-medium hover:bg-primary/5 transition-colors whitespace-nowrap min-w-[100px]" type="button">获取验证码</button>
+</div>
+</div>
+<!-- Password -->
+<div class="space-y-1.5">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">设置密码</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="8-20位字符，包含字母及数字" type="password"/>
+</div>
+</div>
+<!-- Confirm Password -->
+<div class="space-y-1.5">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">确认密码</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock_reset</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="请再次输入密码" type="password"/>
+</div>
+</div>
+<!-- Compliance -->
+<div class="flex items-start gap-2 pt-2">
+<input class="mt-1 rounded border-slate-300 text-primary focus:ring-primary h-4 w-4" id="terms" type="checkbox"/>
+<label class="text-sm text-slate-500 dark:text-slate-400 leading-tight" for="terms">
+                            我已阅读并同意 <a class="text-primary hover:underline" href="#">《用户服务协议》</a> 和 <a class="text-primary hover:underline" href="#">《隐私政策》</a>
+</label>
+</div>
+<!-- Actions -->
+<div class="pt-4">
+<button class="w-full bg-primary text-white py-3.5 rounded-lg font-bold text-lg hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all transform active:scale-[0.98]" type="submit">
+                            立即注册
+                        </button>
+</div>
+<div class="text-center pt-4">
+<p class="text-slate-500 dark:text-slate-400 text-sm">
+                            已有账号？ <a class="text-primary font-semibold hover:underline" href="#">立即登录</a>
+</p>
+</div>
+</form>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#308ce8",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col">
+<div class="flex-grow flex items-center justify-center p-4 sm:p-8">
+<div class="max-w-[1200px] w-full grid lg:grid-cols-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden min-h-[700px]">
+<!-- Left Side: Hero/Branding -->
+<div class="hidden lg:flex flex-col justify-between p-12 bg-primary/5 relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-12">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-3xl">hub</span>
+</div>
+<h1 class="text-2xl font-bold text-slate-900 dark:text-white">海创元智研云平台</h1>
+</div>
+<div class="space-y-6">
+<h2 class="text-4xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                            连接智慧 <br/>
+<span class="text-primary">驱动科研创新</span>
+</h2>
+<p class="text-lg text-slate-600 dark:text-slate-400 max-w-md">
+                            面向教育与企业的统一 AI 智研入口，集成先进算法与海量算力，助力您的研究更进一步。
+                        </p>
+</div>
+</div>
+<div class="relative z-10 mt-auto">
+<div class="flex items-center gap-4 p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur rounded-lg border border-primary/10">
+<div class="size-12 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-white">企业级安全保障</p>
+<p class="text-xs text-slate-500">端到端加密与数据隔离技术</p>
+</div>
+</div>
+</div>
+<!-- Abstract background decoration -->
+<div class="absolute -bottom-20 -left-20 size-80 bg-primary/10 rounded-full blur-3xl"></div>
+<div class="absolute -top-20 -right-20 size-96 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+<!-- Right Side: Login Form -->
+<div class="flex flex-col justify-center p-8 sm:p-16">
+<div class="w-full max-w-md mx-auto">
+<!-- Mobile Logo -->
+<div class="lg:hidden flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-primary text-3xl">hub</span>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">海创元智研</h2>
+</div>
+<div class="mb-8">
+<h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">欢迎回来</h3>
+<p class="text-slate-500 dark:text-slate-400">请选择登录方式进入您的智研空间</p>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-slate-200 dark:border-slate-700 mb-8">
+<button class="px-6 py-3 text-sm font-bold text-primary border-b-2 border-primary">账号登录</button>
+<button class="px-6 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">手机验证码</button>
+</div>
+<form class="space-y-5">
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">邮箱/手机号</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="请输入账号" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">登录密码</label>
+<a class="text-xs text-primary hover:underline" href="#">忘记密码？</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="请输入密码" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" type="button">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center">
+<input class="size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" id="remember" type="checkbox"/>
+<label class="ml-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer" for="remember">30天内免登录</label>
+</div>
+<button class="w-full py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-primary/20" type="submit">
+                            立即登录
+                        </button>
+</form>
+<div class="mt-8">
+<div class="relative">
+<div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
+<div class="relative flex justify-center text-xs uppercase"><span class="bg-white dark:bg-slate-900 px-2 text-slate-500">其他方式登录</span></div>
+</div>
+<div class="mt-6 grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-2 py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<div class="size-5 rounded-full bg-[#07C160] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[14px]">chat</span>
+</div>
+<span class="text-sm text-slate-600 dark:text-slate-300">微信登录</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<div class="size-5 rounded-full bg-[#0089FF] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[14px]">business</span>
+</div>
+<span class="text-sm text-slate-600 dark:text-slate-300">钉钉登录</span>
+</button>
+</div>
+</div>
+<p class="mt-8 text-center text-sm text-slate-500">
+                        还没有账号？<a class="text-primary font-semibold hover:underline" href="#">立即注册</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="p-6 text-center">
+<div class="flex flex-wrap justify-center gap-6 text-sm text-slate-500 mb-4">
+<a class="hover:text-primary transition-colors" href="#">关于我们</a>
+<a class="hover:text-primary transition-colors" href="#">服务协议</a>
+<a class="hover:text-primary transition-colors" href="#">隐私政策</a>
+<a class="hover:text-primary transition-colors" href="#">联系支持</a>
+<a class="hover:text-primary transition-colors" href="#">官方博客</a>
+</div>
+<p class="text-xs text-slate-400">© 2024 海创元 (Hai Chuang Yuan). All rights reserved. 京ICP备XXXXXXXX号</p>
+</footer>
+</body></html>
