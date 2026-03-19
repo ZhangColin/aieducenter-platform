@@ -4,16 +4,18 @@ import { act } from 'react'
 import { useAuthStore } from '@aieducenter/shared/auth-store'
 import { AuthGuard } from './auth-guard'
 
+// Hoist mock functions so they are available inside vi.mock factories
+const { mockReplace, mockLogin, mockLogout, mockOnFinishHydration } = vi.hoisted(() => ({
+  mockReplace: vi.fn(),
+  mockLogin: vi.fn(),
+  mockLogout: vi.fn(),
+  mockOnFinishHydration: vi.fn(),
+}))
+
 // Mock next/navigation
-const mockReplace = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
 }))
-
-// Mock useAuthStore with persist API
-const mockLogin = vi.fn()
-const mockLogout = vi.fn()
-const mockOnFinishHydration = vi.fn()
 
 vi.mock('@aieducenter/shared/auth-store', () => {
   return {
@@ -24,12 +26,16 @@ vi.mock('@aieducenter/shared/auth-store', () => {
         isAuthenticated: false,
         login: mockLogin,
         logout: mockLogout,
+        setUser: vi.fn(),
       })),
       {
         getState: vi.fn(() => ({
           token: null,
+          user: null,
+          isAuthenticated: false,
           login: mockLogin,
           logout: mockLogout,
+          setUser: vi.fn(),
         })),
         persist: {
           hasHydrated: vi.fn(() => false),
@@ -51,11 +57,15 @@ describe('AuthGuard', () => {
       isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
     vi.mocked(useAuthStore.getState).mockReturnValue({
       token: null,
+      user: null,
+      isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
   })
 
@@ -82,6 +92,7 @@ describe('AuthGuard', () => {
       isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
 
     render(
@@ -104,11 +115,15 @@ describe('AuthGuard', () => {
       isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
     vi.mocked(useAuthStore.getState).mockReturnValue({
       token: 'valid-jwt-token',
+      user: null,
+      isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
 
     const profileData = {
@@ -159,11 +174,15 @@ describe('AuthGuard', () => {
       isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
     vi.mocked(useAuthStore.getState).mockReturnValue({
       token: 'expired-jwt-token',
+      user: null,
+      isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
 
     vi.stubGlobal(
@@ -201,11 +220,15 @@ describe('AuthGuard', () => {
       isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
     vi.mocked(useAuthStore.getState).mockReturnValue({
       token: 'valid-jwt-token',
+      user: null,
+      isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
 
     vi.stubGlobal(
@@ -240,14 +263,20 @@ describe('AuthGuard', () => {
       isAuthenticated: true,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
     vi.mocked(useAuthStore.getState).mockReturnValue({
       token: 'valid-jwt-token',
+      user: null,
+      isAuthenticated: false,
       login: mockLogin,
       logout: mockLogout,
+      setUser: vi.fn(),
     })
 
-    const fetchSpy = vi.stubGlobal('fetch', vi.fn())
+    const fetchFn = vi.fn()
+    vi.stubGlobal('fetch', fetchFn)
+    const fetchSpy = fetchFn
 
     await act(async () => {
       render(
