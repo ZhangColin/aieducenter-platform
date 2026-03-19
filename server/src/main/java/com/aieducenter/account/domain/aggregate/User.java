@@ -46,6 +46,12 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
         return value.matches("^[a-zA-Z][a-zA-Z0-9_]{2,19}$");
     }
 
+    private void validatePasswordStrength(String plainPassword) {
+        if (plainPassword == null || !plainPassword.matches("^(?=.*[a-zA-Z])(?=.*\\d).{8,20}$")) {
+            throw new DomainException(UserError.PASSWORD_WEAK);
+        }
+    }
+
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
@@ -83,6 +89,7 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
         }
         this.username = username;
 
+        validatePasswordStrength(plainPassword);
         this.password = PASSWORD_ENCODER.encode(plainPassword);
 
         // 昵称为空则设置为用户名
@@ -258,6 +265,7 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
             matchesPassword(oldPassword),
             UserError.PASSWORD_INCORRECT
         );
+        validatePasswordStrength(newPassword);
         this.password = PASSWORD_ENCODER.encode(newPassword);
     }
 }

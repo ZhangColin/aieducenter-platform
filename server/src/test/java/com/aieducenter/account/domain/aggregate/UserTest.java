@@ -140,12 +140,41 @@ class UserTest {
     }
 
     @Test
-    void shouldMatchPassword_whenEmptyPassword() {
-        // Given
-        User user = new User("john_doe", "", null, null);
+    void shouldThrow_whenPasswordWeak_pureDigits() {
+        assertThatThrownBy(() -> new User("john_doe", "12345678", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PASSWORD_WEAK);
+    }
 
-        // When & Then
-        assertThat(user.matchesPassword("")).isTrue();
+    @Test
+    void shouldThrow_whenPasswordWeak_pureLetters() {
+        assertThatThrownBy(() -> new User("john_doe", "abcdefgh", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PASSWORD_WEAK);
+    }
+
+    @Test
+    void shouldThrow_whenPasswordWeak_tooShort() {
+        assertThatThrownBy(() -> new User("john_doe", "pass1", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PASSWORD_WEAK);
+    }
+
+    @Test
+    void shouldThrow_whenPasswordWeak_tooLong() {
+        assertThatThrownBy(() -> new User("john_doe", "password1234567890123", null, null))
+            .isInstanceOf(DomainException.class)
+            .extracting("codeMessage")
+            .isEqualTo(UserError.PASSWORD_WEAK);
+    }
+
+    @Test
+    void shouldCreateUser_whenPasswordStrong() {
+        User user = new User("john_doe", "password1", null, null);
+        assertThat(user.getUsername()).isEqualTo("john_doe");
     }
 
     // ========== 修改用户名 ==========
