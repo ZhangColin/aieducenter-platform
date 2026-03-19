@@ -2,8 +2,10 @@ package com.aieducenter.verification.application;
 
 import com.aieducenter.verification.application.dto.SendCodeResponse;
 import com.aieducenter.verification.application.dto.SendEmailCodeCommand;
+import com.aieducenter.verification.application.dto.SendSmsCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
+import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
 import com.aieducenter.verification.config.VerificationCodeProperties;
 import com.aieducenter.verification.domain.error.VerificationCodeError;
 import com.aieducenter.verification.domain.model.VerificationCode;
@@ -12,6 +14,7 @@ import com.aieducenter.verification.domain.model.VerificationType;
 import com.aieducenter.verification.domain.repository.VerificationCodeRepository;
 import com.aieducenter.verification.domain.service.VerificationCodeGenerationService;
 import com.aieducenter.verification.domain.port.MessageSender;
+import cn.hutool.core.lang.Validator;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
 
@@ -106,11 +109,97 @@ public class VerificationCodeAppService {
         VerificationPurpose purpose = validatePurpose(command.purpose());
 
         // 3. 原子操作：验证并标记为已使用
-        String id = command.email() + ":" + command.purpose();
+        String id = command.email() + ":" + purpose.name();
         boolean verified = repository.verifyAndMarkAsUsed(id, command.code());
 
         if (!verified) {
             // 验证失败，尝试获取详细错误信息
+            var verificationCode = repository.findById(id);
+            if (verificationCode.isEmpty()) {
+                throw new DomainException(VerificationCodeError.CODE_INVALID);
+            }
+            var code = verificationCode.get();
+            if (code.isUsed()) {
+                throw new DomainException(VerificationCodeError.CODE_ALREADY_USED);
+            }
+            if (java.time.Instant.now().isAfter(code.getExpireAt())) {
+                throw new DomainException(VerificationCodeError.CODE_EXPIRED);
+            }
+            throw new DomainException(VerificationCodeError.CODE_INVALID);
+        }
+
+        return new VerifyCodeResult(true, "验证码正确");
+    }
+
+    /**
+     * 发送短信验证码。
+     *
+     * @param command 命令
+     * @param ip 客户端IP
+     * @return 发送结果
+     * @throws DomainException 手机号格式错误、限流触发
+     */
+    public SendCodeResponse sendSmsVerificationCode(SendSmsCodeCommand command, String ip) {
+        // 1. 校验手机号格式
+        validatePhoneFormat(command.phone());
+
+        // 2. 校验 purpose
+        VerificationPurpose purpose = validatePurpose(command.purpose());
+
+        // 3. 原子操作：检查并获取手机限流锁
+        Assertions.require(
+            repository.tryAcquirePhoneLock(command.phone(), command.purpose()),
+            VerificationCodeError.RATE_LIMIT_PHONE
+        );
+
+        // 4. 原子操作：检查并增加 IP 计数
+        long ipCount = repository.checkAndIncrementIp(ip);
+        Assertions.require(
+            ipCount <= properties.getIpMaxPerHour(),
+            VerificationCodeError.RATE_LIMIT_IP
+        );
+
+        // 5. 生成验证码
+        String code = generator.generate();
+
+        // 6. 创建验证码实体
+        VerificationCode verificationCode = VerificationCode.create(
+            VerificationType.SMS,
+            command.phone(),
+            code,
+            purpose
+        );
+
+        // 7. 保存到 Redis
+        repository.save(verificationCode);
+
+        // 8. 发送短信
+        messageSender.send(command.phone(), code, purpose);
+
+        int expireSeconds = properties.getExpireMinutes() * 60;
+        long cooldownSeconds = properties.getPhoneCooldownSeconds();
+        return new SendCodeResponse(expireSeconds, (int) cooldownSeconds);
+    }
+
+    /**
+     * 校验短信验证码。
+     *
+     * @param command 命令
+     * @return 校验结果
+     * @throws DomainException 验证码错误、已过期、已使用
+     */
+    public VerifyCodeResult verifyPhoneCode(VerifySmsCodeCommand command) {
+        // 1. 校验手机号格式
+        validatePhoneFormat(command.phone());
+
+        // 2. 校验 purpose
+        VerificationPurpose purpose = validatePurpose(command.purpose());
+
+        // 3. 原子操作：验证并标记为已使用
+        String id = command.phone() + ":" + purpose.name();
+        boolean verified = repository.verifyAndMarkAsUsed(id, command.code());
+
+        if (!verified) {
             var verificationCode = repository.findById(id);
             if (verificationCode.isEmpty()) {
                 throw new DomainException(VerificationCodeError.CODE_INVALID);
@@ -145,9 +234,21 @@ public class VerificationCodeAppService {
     }
 
     /**
+     * 校验手机号格式。
+     */
+    private void validatePhoneFormat(String phone) {
+        if (phone == null || !Validator.isMobile(phone)) {
+            throw new DomainException(VerificationCodeError.PHONE_INVALID);
+        }
+    }
+
+    /**
      * 校验并转换 purpose。
      */
     private VerificationPurpose validatePurpose(String purpose) {
+        if (purpose == null) {
+            throw new DomainException(VerificationCodeError.PURPOSE_INVALID);
+        }
         try {
             return VerificationPurpose.valueOf(purpose.toUpperCase());
         } catch (IllegalArgumentException e) {

@@ -11,9 +11,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.aieducenter.verification.application.dto.SendEmailCodeCommand;
+import com.aieducenter.verification.application.dto.SendSmsCodeCommand;
 import com.aieducenter.verification.application.dto.SendCodeResponse;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
+import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
 import com.aieducenter.verification.config.VerificationCodeProperties;
 import com.aieducenter.verification.domain.error.VerificationCodeError;
 import com.aieducenter.verification.domain.model.VerificationCode;
@@ -209,5 +211,85 @@ class VerificationCodeAppServiceTest {
         assertThatThrownBy(() -> service.verifyCode(command))
             .isInstanceOf(DomainException.class)
             .hasMessageContaining(VerificationCodeError.CODE_EXPIRED.message());
+    }
+
+    // ========== SMS 验证码测试 ==========
+
+    @Test
+    void given_valid_phone_when_send_sms_code_then_success() {
+        // Given
+        when(properties.getExpireMinutes()).thenReturn(5);
+        when(properties.getPhoneCooldownSeconds()).thenReturn(60L);
+        when(properties.getIpMaxPerHour()).thenReturn(10);
+
+        SendSmsCodeCommand command = new SendSmsCodeCommand("13800138000", "REGISTER");
+        when(generator.generate()).thenReturn("654321");
+        when(repository.tryAcquirePhoneLock("13800138000", "REGISTER")).thenReturn(true);
+        when(repository.checkAndIncrementIp("127.0.0.1")).thenReturn(1L);
+
+        // When
+        SendCodeResponse response = service.sendSmsVerificationCode(command, "127.0.0.1");
+
+        // Then
+        assertThat(response.expireInSeconds()).isEqualTo(300);
+        assertThat(response.resentAfterSeconds()).isEqualTo(60);
+        verify(generator).generate();
+        verify(repository).save(any(VerificationCode.class));
+        verify(repository).tryAcquirePhoneLock("13800138000", "REGISTER");
+        verify(repository).checkAndIncrementIp("127.0.0.1");
+        verify(messageSender).send("13800138000", "654321", VerificationPurpose.REGISTER);
+    }
+
+    @Test
+    void given_invalid_phone_when_send_sms_code_then_throw_phone_invalid() {
+        // Given
+        SendSmsCodeCommand command = new SendSmsCodeCommand("invalid-phone", "REGISTER");
+
+        // When & Then
+        assertThatThrownBy(() -> service.sendSmsVerificationCode(command, "127.0.0.1"))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(VerificationCodeError.PHONE_INVALID.message());
+    }
+
+    @Test
+    void given_phone_rate_limited_when_send_sms_code_then_throw_rate_limit_phone() {
+        // Given
+        when(repository.tryAcquirePhoneLock("13800138000", "REGISTER")).thenReturn(false);
+
+        SendSmsCodeCommand command = new SendSmsCodeCommand("13800138000", "REGISTER");
+
+        // When & Then
+        assertThatThrownBy(() -> service.sendSmsVerificationCode(command, "127.0.0.1"))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(VerificationCodeError.RATE_LIMIT_PHONE.message());
+    }
+
+    @Test
+    void given_valid_sms_code_when_verify_phone_code_then_success() {
+        // Given
+        VerifySmsCodeCommand command = new VerifySmsCodeCommand("13800138000", "654321", "REGISTER");
+        when(repository.verifyAndMarkAsUsed("13800138000:REGISTER", "654321")).thenReturn(true);
+
+        // When
+        VerifyCodeResult result = service.verifyPhoneCode(command);
+
+        // Then
+        assertThat(result.verified()).isTrue();
+        verify(repository).verifyAndMarkAsUsed("13800138000:REGISTER", "654321");
+    }
+
+    @Test
+    void given_wrong_code_when_verify_phone_code_then_throw_code_invalid() {
+        // Given
+        VerifySmsCodeCommand command = new VerifySmsCodeCommand("13800138000", "000000", "REGISTER");
+        VerificationCode code = VerificationCode.create(
+            VerificationType.SMS, "13800138000", "654321", VerificationPurpose.REGISTER);
+        when(repository.verifyAndMarkAsUsed("13800138000:REGISTER", "000000")).thenReturn(false);
+        when(repository.findById("13800138000:REGISTER")).thenReturn(java.util.Optional.of(code));
+
+        // When & Then
+        assertThatThrownBy(() -> service.verifyPhoneCode(command))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(VerificationCodeError.CODE_INVALID.message());
     }
 }
