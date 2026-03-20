@@ -8,14 +8,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+      </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <aside style={{ width: '240px', padding: '1rem', borderRight: '1px solid #e5e5e5' }}>
-              运营后台
-            </aside>
-            <main style={{ flex: 1 }}>{children}</main>
-          </div>
+          {children}
         </ThemeProvider>
       </body>
     </html>
