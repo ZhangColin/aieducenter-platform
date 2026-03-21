@@ -598,6 +598,8 @@ export async function sendSmsCode(params: SendSmsCodeParams): Promise<SendSmsCod
 
 - [ ] **Step 3: 创建 auth/index.ts 导出文件**
 
+> **注意**：`api-client/src/auth/` 目录当前不存在 `index.ts`，这是新建文件操作。
+
 创建文件 `packages/api-client/src/auth/index.ts`：
 
 ```typescript
@@ -639,6 +641,8 @@ mkdir -p packages/shared/src/hooks
 - [ ] **Step 2: 创建 use-login.ts 文件**
 
 创建文件 `packages/shared/src/hooks/use-login.ts`：
+
+> **注意**：`@aieducenter/shared/auth-store` 导入路径是有效的，因为 `packages/shared/package.json` 中已配置 `"./auth-store": "./src/auth-store.ts"`。
 
 ```typescript
 /**
