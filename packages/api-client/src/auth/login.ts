@@ -2,9 +2,10 @@
  * 登录 API 客户端
  *
  * 提供密码登录、短信验证码登录和图形验证码获取功能
+ *
+ * <p>使用相对路径，通过 Next.js rewrites 代理到后端。
+ * 开发环境由 Next.js 代理，生产环境由 nginx 代理。</p>
  */
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 // ========== 类型定义 ==========
 
@@ -49,7 +50,7 @@ export interface SendSmsCodeResponse {
  * 密码登录
  */
 export async function loginByPassword(params: LoginByPasswordParams): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/account/login`, {
+  const response = await fetch(`/api/account/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params)
@@ -67,7 +68,7 @@ export async function loginByPassword(params: LoginByPasswordParams): Promise<Lo
  * 短信验证码登录
  */
 export async function loginBySms(params: LoginBySmsParams): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/account/login/sms`, {
+  const response = await fetch(`/api/account/login/sms`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params)
@@ -85,7 +86,7 @@ export async function loginBySms(params: LoginBySmsParams): Promise<LoginRespons
  * 获取图形验证码
  */
 export async function getCaptcha(): Promise<CaptchaResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/captcha`, {
+  const response = await fetch(`/api/captcha`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' }
   })
@@ -102,7 +103,7 @@ export async function getCaptcha(): Promise<CaptchaResponse> {
  * 发送短信验证码
  */
 export async function sendSmsCode(params: SendSmsCodeParams): Promise<SendSmsCodeResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/account/verification-code/sms`, {
+  const response = await fetch(`/api/account/verification-code/sms`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params)
