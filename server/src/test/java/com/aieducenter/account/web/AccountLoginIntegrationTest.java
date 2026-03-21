@@ -1,6 +1,7 @@
 package com.aieducenter.account.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -18,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aieducenter.verification.application.CaptchaAppService;
 import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
 import com.aieducenter.account.config.SaTokenTestConfig;
@@ -38,6 +40,9 @@ class AccountLoginIntegrationTest {
     @MockBean
     private VerificationCodeAppService verificationCodeAppService;
 
+    @MockBean
+    private CaptchaAppService captchaAppService;
+
     @BeforeAll
     static void setup() {
         SaTokenTestConfig.initSaTokenContext();
@@ -48,6 +53,9 @@ class AccountLoginIntegrationTest {
         // Mock verification code for registration calls
         when(verificationCodeAppService.verifyPhoneCode(any()))
             .thenReturn(new VerifyCodeResult(true, "OK"));
+
+        // Mock captcha verification (always pass - void method, no return value)
+        org.mockito.Mockito.doNothing().when(captchaAppService).verifyCaptcha(anyString(), anyString());
     }
 
     // ── 密码登录 ──────────────────────────────────────────────────────────────
@@ -60,7 +68,9 @@ class AccountLoginIntegrationTest {
         String loginBody = """
             {
                 "account": "loginuser1",
-                "password": "Password1"
+                "password": "Password1",
+                "captchaId": "test-captcha-id",
+                "captchaCode": "1234"
             }
             """;
 
@@ -80,7 +90,9 @@ class AccountLoginIntegrationTest {
         String loginBody = """
             {
                 "account": "13800138002",
-                "password": "Password1"
+                "password": "Password1",
+                "captchaId": "test-captcha-id",
+                "captchaCode": "1234"
             }
             """;
 
@@ -99,7 +111,9 @@ class AccountLoginIntegrationTest {
         String loginBody = """
             {
                 "account": "13800138001",
-                "password": "Password1"
+                "password": "Password1",
+                "captchaId": "test-captcha-id",
+                "captchaCode": "1234"
             }
             """;
 
@@ -116,7 +130,9 @@ class AccountLoginIntegrationTest {
         String loginBody = """
             {
                 "account": "nosuchuser",
-                "password": "Password1"
+                "password": "Password1",
+                "captchaId": "test-captcha-id",
+                "captchaCode": "1234"
             }
             """;
 
@@ -139,7 +155,9 @@ class AccountLoginIntegrationTest {
         String smsBody = """
             {
                 "phone": "13900139001",
-                "code": "123456"
+                "code": "123456",
+                "captchaId": "test-captcha-id",
+                "captchaCode": "1234"
             }
             """;
 
@@ -159,7 +177,9 @@ class AccountLoginIntegrationTest {
         String smsBody = """
             {
                 "phone": "13700137001",
-                "code": "123456"
+                "code": "123456",
+                "captchaId": "test-captcha-id",
+                "captchaCode": "1234"
             }
             """;
 
