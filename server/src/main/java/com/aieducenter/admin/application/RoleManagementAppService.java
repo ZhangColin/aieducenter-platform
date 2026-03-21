@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.domain.entity.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
-import com.aieducenter.admin.domain.repository.AdminPermissionRepository;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
@@ -25,14 +24,11 @@ public class RoleManagementAppService {
 
     private final AdminRoleRepository roleRepository;
     private final AdminMenuRepository menuRepository;
-    private final AdminPermissionRepository permissionRepository;
 
     public RoleManagementAppService(AdminRoleRepository roleRepository,
-                                     AdminMenuRepository menuRepository,
-                                     AdminPermissionRepository permissionRepository) {
+                                     AdminMenuRepository menuRepository) {
         this.roleRepository = roleRepository;
         this.menuRepository = menuRepository;
-        this.permissionRepository = permissionRepository;
     }
 
     /**
@@ -139,13 +135,10 @@ public class RoleManagementAppService {
         // 验证角色存在
         findById(roleId);
 
-        // 验证所有权限 ID 存在
-        for (Long permissionId : command.permissionIds()) {
-            permissionRepository.findById(permissionId)
-                    .orElseThrow(() -> new DomainException(AdminError.PERMISSION_NOT_FOUND));
-        }
+        // TODO: 通过 PermissionScanner 验证权限 codes 有效性
+        // 暂时不验证，直接存储
 
-        roleRepository.assignPermissions(roleId, command.permissionIds());
+        roleRepository.assignPermissions(roleId, command.permissionCodes());
     }
 
     // ========== DTO 返回方法 ==========
