@@ -840,7 +840,7 @@ export * from './auth-store'
 export * from './hooks/use-login'
 ```
 
-- [ ] **Step 4: TypeScript 类型检查**
+- [ ] **Step 5: TypeScript 类型检查**
 
 ```bash
 cd packages/shared && pnpm typecheck
@@ -848,7 +848,7 @@ cd packages/shared && pnpm typecheck
 
 Expected: 无错误
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 6: 提交**
 
 ```bash
 git add packages/shared/src/
@@ -882,7 +882,7 @@ cat web/src/app/\(auth\)/login/page.tsx | head -50
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLogin } from '@aieducenter/shared/hooks/use-login'
+import { useLogin } from '@aieducenter/shared'
 
 type LoginType = 'account' | 'sms'
 
