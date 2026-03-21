@@ -8,6 +8,7 @@ import com.aieducenter.account.application.dto.LoginResult;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.error.UserError;
 import com.aieducenter.account.domain.repository.UserRepository;
+import com.aieducenter.verification.application.CaptchaAppService;
 import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
 import com.cartisan.core.exception.DomainException;
@@ -26,14 +27,17 @@ public class AccountLoginAppService {
     private final UserRepository userRepository;
     private final VerificationCodeAppService verificationCodeAppService;
     private final AuthenticationService authenticationService;
+    private final CaptchaAppService captchaAppService;
 
     public AccountLoginAppService(
             UserRepository userRepository,
             VerificationCodeAppService verificationCodeAppService,
-            AuthenticationService authenticationService) {
+            AuthenticationService authenticationService,
+            CaptchaAppService captchaAppService) {
         this.userRepository = userRepository;
         this.verificationCodeAppService = verificationCodeAppService;
         this.authenticationService = authenticationService;
+        this.captchaAppService = captchaAppService;
     }
 
     /**
