@@ -6,7 +6,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import com.aieducenter.admin.domain.entity.AdminRole;
+import com.aieducenter.admin.domain.entity.AdminPermission;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
+import com.aieducenter.admin.domain.repository.AdminPermissionRepository;
 import com.cartisan.core.stereotype.Adapter;
 import com.cartisan.core.stereotype.PortType;
 
@@ -19,6 +21,12 @@ public class JpaAdminRoleRepository implements AdminRoleRepository {
 
     @PersistenceContext
     private EntityManager em;
+
+    private final AdminPermissionRepository permissionRepository;
+
+    public JpaAdminRoleRepository(AdminPermissionRepository permissionRepository) {
+        this.permissionRepository = permissionRepository;
+    }
 
     @Override
     public Optional<AdminRole> findById(Long id) {
@@ -101,7 +109,9 @@ public class JpaAdminRoleRepository implements AdminRoleRepository {
         // 添加新关联
         if (permissionIds != null && !permissionIds.isEmpty()) {
             for (Long permissionId : permissionIds) {
-                AdminRolePermission rp = new AdminRolePermission(roleId, permissionId);
+                AdminPermission permission = permissionRepository.findById(permissionId)
+                        .orElseThrow(() -> new IllegalArgumentException("Permission not found: " + permissionId));
+                AdminRolePermission rp = new AdminRolePermission(roleId, permission.getCode(), permission.getName());
                 em.persist(rp);
             }
         }

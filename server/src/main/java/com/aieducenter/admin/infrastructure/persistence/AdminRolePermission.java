@@ -9,7 +9,6 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "admin_role_permissions")
-@IdClass(AdminRolePermissionId.class)
 public class AdminRolePermission {
 
     @Id
@@ -17,28 +16,42 @@ public class AdminRolePermission {
     private Long roleId;
 
     @Id
-    @Column(name = "permission_id")
-    private Long permissionId;
+    @Column(name = "permission_code")
+    private String permissionCode;
+
+    @Column(name = "permission_name")
+    private String permissionName;
 
     public AdminRolePermission() {
     }
 
-    public AdminRolePermission(Long roleId, Long permissionId) {
+    public AdminRolePermission(Long roleId, String permissionCode, String permissionName) {
         this.roleId = roleId;
-        this.permissionId = permissionId;
+        this.permissionCode = permissionCode;
+        this.permissionName = permissionName;
     }
 
     public Long getRoleId() {
         return roleId;
     }
 
-    public Long getPermissionId() {
-        return permissionId;
+    public String getPermissionCode() {
+        return permissionCode;
     }
-}
 
-/**
- * 角色-权限关联 ID 类。
- */
-record AdminRolePermissionId(Long roleId, Long permissionId) implements java.io.Serializable {
+    public String getPermissionName() {
+        return permissionName;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    public void setPermissionCode(String permissionCode) {
+        this.permissionCode = permissionCode;
+    }
+
+    public void setPermissionName(String permissionName) {
+        this.permissionName = permissionName;
+    }
 }
