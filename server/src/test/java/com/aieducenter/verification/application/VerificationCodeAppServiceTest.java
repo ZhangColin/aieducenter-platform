@@ -222,7 +222,7 @@ class VerificationCodeAppServiceTest {
         when(properties.getPhoneCooldownSeconds()).thenReturn(60L);
         when(properties.getIpMaxPerHour()).thenReturn(10);
 
-        SendSmsCodeCommand command = new SendSmsCodeCommand("13800138000", "REGISTER");
+        SendSmsCodeCommand command = new SendSmsCodeCommand("13800138000", "REGISTER", "captcha-id", "A1B2");
         when(generator.generate()).thenReturn("654321");
         when(repository.tryAcquirePhoneLock("13800138000", "REGISTER")).thenReturn(true);
         when(repository.checkAndIncrementIp("127.0.0.1")).thenReturn(1L);
@@ -243,7 +243,7 @@ class VerificationCodeAppServiceTest {
     @Test
     void given_invalid_phone_when_send_sms_code_then_throw_phone_invalid() {
         // Given
-        SendSmsCodeCommand command = new SendSmsCodeCommand("invalid-phone", "REGISTER");
+        SendSmsCodeCommand command = new SendSmsCodeCommand("invalid-phone", "REGISTER", "captcha-id", "A1B2");
 
         // When & Then
         assertThatThrownBy(() -> service.sendSmsVerificationCode(command, "127.0.0.1"))
@@ -256,7 +256,7 @@ class VerificationCodeAppServiceTest {
         // Given
         when(repository.tryAcquirePhoneLock("13800138000", "REGISTER")).thenReturn(false);
 
-        SendSmsCodeCommand command = new SendSmsCodeCommand("13800138000", "REGISTER");
+        SendSmsCodeCommand command = new SendSmsCodeCommand("13800138000", "REGISTER", "captcha-id", "A1B2");
 
         // When & Then
         assertThatThrownBy(() -> service.sendSmsVerificationCode(command, "127.0.0.1"))
