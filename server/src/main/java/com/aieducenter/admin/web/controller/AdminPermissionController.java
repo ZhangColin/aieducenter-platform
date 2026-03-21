@@ -1,7 +1,6 @@
 package com.aieducenter.admin.web.controller;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import com.aieducenter.admin.application.PermissionManagementAppService;
 import com.aieducenter.admin.application.dto.command.CreatePermissionCommand;
 import com.aieducenter.admin.application.dto.query.PermissionDto;
-import com.aieducenter.admin.domain.entity.AdminPermission;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.ApiResponse;
@@ -38,11 +36,7 @@ public class AdminPermissionController {
     @RequirePermission("admin:permission:read")
     @Operation(summary = "查询权限列表")
     public ApiResponse<List<PermissionDto>> findAll() {
-        List<AdminPermission> permissions = permissionManagementAppService.findAll();
-        List<PermissionDto> dtos = permissions.stream()
-            .map(PermissionDto::from)
-            .collect(Collectors.toList());
-        return ApiResponse.ok(dtos);
+        return ApiResponse.ok(permissionManagementAppService.findAllAsDto());
     }
 
     @GetMapping("/{id}")
@@ -50,8 +44,7 @@ public class AdminPermissionController {
     @RequirePermission("admin:permission:read")
     @Operation(summary = "查询权限详情")
     public ApiResponse<PermissionDto> findById(@PathVariable Long id) {
-        AdminPermission permission = permissionManagementAppService.findById(id);
-        return ApiResponse.ok(PermissionDto.from(permission));
+        return ApiResponse.ok(permissionManagementAppService.findByIdAsDto(id));
     }
 
     @PostMapping
@@ -59,13 +52,13 @@ public class AdminPermissionController {
     @RequirePermission("admin:permission:write")
     @Operation(summary = "创建权限")
     public ApiResponse<Long> create(@Valid @RequestBody CreatePermissionCommand command) {
-        AdminPermission permission = permissionManagementAppService.create(
+        Long id = permissionManagementAppService.createAndReturnId(
             command.name(),
             command.code(),
             command.menuId(),
             command.sortOrder()
         );
-        return ApiResponse.ok(permission.getId());
+        return ApiResponse.ok(id);
     }
 
     @DeleteMapping("/{id}")

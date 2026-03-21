@@ -2,6 +2,7 @@ package com.aieducenter.admin.application;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import com.aieducenter.admin.domain.entity.AdminPermission;
 import com.aieducenter.admin.domain.repository.AdminPermissionRepository;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.application.dto.query.PermissionDto;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -63,6 +65,14 @@ public class PermissionManagementAppService {
     }
 
     /**
+     * 创建权限并返回 ID。
+     */
+    @Transactional
+    public Long createAndReturnId(String name, String code, Long menuId, Integer sortOrder) {
+        return create(name, code, menuId, sortOrder).getId();
+    }
+
+    /**
      * 修改权限。
      */
     @Transactional
@@ -97,5 +107,25 @@ public class PermissionManagementAppService {
         // 验证存在
         AdminPermission permission = findById(id);
         permissionRepository.delete(permission);
+    }
+
+    // ========== DTO 返回方法 ==========
+
+    /**
+     * 获取所有权限列表（DTO）。
+     */
+    public List<PermissionDto> findAllAsDto() {
+        List<AdminPermission> permissions = permissionRepository.findAll();
+        return permissions.stream()
+                .map(PermissionDto::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 根据 ID 获取权限详情（DTO）。
+     */
+    public PermissionDto findByIdAsDto(Long id) {
+        AdminPermission permission = findById(id);
+        return PermissionDto.from(permission);
     }
 }

@@ -1,6 +1,7 @@
 package com.aieducenter.admin.application;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.domain.entity.AdminMenu;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.application.dto.query.MenuDto;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -55,6 +57,14 @@ public class MenuManagementAppService {
 
         AdminMenu menu = new AdminMenu(name, path, icon, parentId, sortOrder);
         return menuRepository.save(menu);
+    }
+
+    /**
+     * 创建菜单并返回 ID。
+     */
+    @Transactional
+    public Long createAndReturnId(String name, String path, String icon, Long parentId, Integer sortOrder) {
+        return create(name, path, icon, parentId, sortOrder).getId();
     }
 
     /**
@@ -145,5 +155,25 @@ public class MenuManagementAppService {
             }
         }
         return false;
+    }
+
+    // ========== DTO 返回方法 ==========
+
+    /**
+     * 获取菜单树（DTO）。
+     */
+    public List<MenuDto> findTreeAsDto() {
+        List<AdminMenu> menus = menuRepository.findTree();
+        return menus.stream()
+                .map(menu -> MenuDto.fromTree(menu, menus))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 根据 ID 获取菜单详情（DTO）。
+     */
+    public MenuDto findByIdAsDto(Long id) {
+        AdminMenu menu = findById(id);
+        return MenuDto.from(menu);
     }
 }

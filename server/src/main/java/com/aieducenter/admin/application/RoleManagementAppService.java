@@ -2,6 +2,7 @@ package com.aieducenter.admin.application;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import com.aieducenter.admin.domain.repository.AdminPermissionRepository;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
+import com.aieducenter.admin.application.dto.query.RoleDto;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -60,6 +62,14 @@ public class RoleManagementAppService {
 
         AdminRole role = new AdminRole(name, code, description, sortOrder);
         return roleRepository.save(role);
+    }
+
+    /**
+     * 创建角色并返回 ID。
+     */
+    @Transactional
+    public Long createAndReturnId(String name, String code, String description, Integer sortOrder) {
+        return create(name, code, description, sortOrder).getId();
     }
 
     /**
@@ -136,5 +146,23 @@ public class RoleManagementAppService {
         }
 
         roleRepository.assignPermissions(roleId, command.permissionIds());
+    }
+
+    // ========== DTO 返回方法 ==========
+
+    /**
+     * 获取所有角色列表（DTO）。
+     */
+    public List<RoleDto> findAllAsDto() {
+        List<AdminRole> roles = roleRepository.findAll();
+        return roles.stream().map(RoleDto::from).collect(Collectors.toList());
+    }
+
+    /**
+     * 根据 ID 获取角色详情（DTO）。
+     */
+    public RoleDto findByIdAsDto(Long id) {
+        AdminRole role = findById(id);
+        return RoleDto.from(role);
     }
 }
