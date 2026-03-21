@@ -57,7 +57,7 @@ export function useLogin() {
 
       return { success: true }
     } catch (err: any) {
-      const message = err.error?.message || '登录失败，请重试'
+      const message = err.message || '登录失败，请重试'
       setError(message)
       return { success: false, error: message }
     } finally {
@@ -89,7 +89,7 @@ export function useLogin() {
 
       return { success: true }
     } catch (err: any) {
-      const message = err.error?.message || '登录失败，请重试'
+      const message = err.message || '登录失败，请重试'
       setError(message)
       return { success: false, error: message }
     } finally {
@@ -126,7 +126,7 @@ export function useLogin() {
       })
       return { success: true, data }
     } catch (err: any) {
-      const message = err.error?.message || '发送验证码失败'
+      const message = err.message || '发送验证码失败'
       setError(message)
       return { success: false, error: message }
     }

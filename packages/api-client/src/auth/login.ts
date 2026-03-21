@@ -44,6 +44,14 @@ export interface SendSmsCodeResponse {
   cooldownSeconds: number
 }
 
+// 后端统一响应格式
+interface ApiResponse<T> {
+  code: number
+  message: string
+  data: T
+  errors?: any
+}
+
 // ========== API 函数 ==========
 
 /**
@@ -57,11 +65,12 @@ export async function loginByPassword(params: LoginByPasswordParams): Promise<Lo
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Login failed' }))
-    throw new Error(error.message || 'Login failed')
+    const error = await response.json().catch(() => ({ message: '登录失败' }))
+    throw error
   }
 
-  return response.json()
+  const result: ApiResponse<LoginResponse> = await response.json()
+  return result.data
 }
 
 /**
@@ -75,11 +84,12 @@ export async function loginBySms(params: LoginBySmsParams): Promise<LoginRespons
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'SMS login failed' }))
-    throw new Error(error.message || 'SMS login failed')
+    const error = await response.json().catch(() => ({ message: '登录失败' }))
+    throw error
   }
 
-  return response.json()
+  const result: ApiResponse<LoginResponse> = await response.json()
+  return result.data
 }
 
 /**
@@ -92,11 +102,12 @@ export async function getCaptcha(): Promise<CaptchaResponse> {
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to get captcha' }))
-    throw new Error(error.message || 'Failed to get captcha')
+    const error = await response.json().catch(() => ({ message: '获取验证码失败' }))
+    throw error
   }
 
-  return response.json()
+  const result: ApiResponse<CaptchaResponse> = await response.json()
+  return result.data
 }
 
 /**
@@ -110,9 +121,10 @@ export async function sendSmsCode(params: SendSmsCodeParams): Promise<SendSmsCod
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to send SMS code' }))
-    throw new Error(error.message || 'Failed to send SMS code')
+    const error = await response.json().catch(() => ({ message: '发送验证码失败' }))
+    throw error
   }
 
-  return response.json()
+  const result: ApiResponse<SendSmsCodeResponse> = await response.json()
+  return result.data
 }
