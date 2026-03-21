@@ -45,7 +45,6 @@ dependencies {
     // Spring Security Crypto
     implementation("org.springframework.security:spring-security-crypto")
 
-<<<<<<< HEAD
     // Hutool（使用 hutool-all，版本由 BOM 管理）
     implementation("cn.hutool:hutool-all")
 
@@ -57,11 +56,6 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding")
-=======
-    // Hutool (for validation)
-    implementation("cn.hutool:hutool-core:5.8.29")
-    implementation("cn.hutool:hutool-captcha:5.8.29")
->>>>>>> 1ded2fb (deps: add hutool-captcha dependency)
 
     // SpringDoc OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
@@ -74,10 +68,6 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-    jvmArgs("--enable-preview")
-}
-
-tasks.bootRun {
     jvmArgs("--enable-preview")
 }
 
