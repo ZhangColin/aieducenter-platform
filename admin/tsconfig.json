@@ -6,7 +6,10 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@aieducenter/ui": ["../packages/ui/src"],
+      "@aieducenter/api-client": ["../packages/api-client/src"],
+      "@aieducenter/shared": ["../packages/shared/src"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
