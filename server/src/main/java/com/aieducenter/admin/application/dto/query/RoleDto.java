@@ -1,6 +1,8 @@
 package com.aieducenter.admin.application.dto.query;
 
-import java.util.List;
+import java.util.Set;
+
+import com.aieducenter.admin.domain.entity.AdminRole;
 
 /**
  * 角色 DTO。
@@ -13,18 +15,19 @@ public record RoleDto(
         String code,
         String description,
         Integer sortOrder,
-        List<Long> menuIds,
-        List<String> permissionCodes
+        Set<Long> menuIds,
+        Set<String> permissionCodes
 ) {
-    public static RoleDto from(com.aieducenter.admin.domain.entity.AdminRole role) {
+
+    public static RoleDto from(AdminRole role) {
         return new RoleDto(
                 role.getId(),
                 role.getName(),
                 role.getCode(),
                 role.getDescription(),
                 role.getSortOrder(),
-                List.copyOf(role.getMenuIds()),
-                List.copyOf(role.getPermissionCodes())
+                role.getMenuIds(),
+                role.getPermissionCodes()
         );
     }
 }
