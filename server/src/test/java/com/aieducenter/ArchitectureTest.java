@@ -26,7 +26,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
  *
  * <p>已知例外：</p>
  * <ul>
- *   <li>{@code User} 直接使用 {@code BCryptPasswordEncoder}（SKILL.md DDD-005 明确许可）</li>
+ *   <li>{@code User}、{@code Admin} 直接使用 {@code BCryptPasswordEncoder}（SKILL.md DDD-005 明确许可）</li>
  * </ul>
  */
 @AnalyzeClasses(packages = "com.aieducenter", importOptions = ImportOption.DoNotIncludeTests.class)
@@ -44,16 +44,16 @@ public class ArchitectureTest {
     /**
      * 领域层不依赖 Spring。
      *
-     * <p>例外：User 聚合根使用 BCryptPasswordEncoder（SKILL.md DDD-005）。</p>
+     * <p>例外：User、Admin 聚合根使用 BCryptPasswordEncoder（SKILL.md DDD-005）。</p>
      */
     @ArchTest
     static final ArchRule domainShouldNotDependOnSpring =
         noClasses()
             .that()
             .resideInAPackage("..domain..")
-            .and(DescribedPredicate.not(simpleName("User")))
+            .and(DescribedPredicate.not(simpleName("User")).and(DescribedPredicate.not(simpleName("Admin"))))
             .should().dependOnClassesThat().resideInAPackage("org.springframework..")
-            .because("Domain layer should be framework-agnostic (exception: User uses BCryptPasswordEncoder per SKILL.md DDD-005)");
+            .because("Domain layer should be framework-agnostic (exception: User, Admin use BCryptPasswordEncoder per SKILL.md DDD-005)");
 
     @ArchTest
     static final ArchRule controllersShouldOnlyDependOnApplication =
