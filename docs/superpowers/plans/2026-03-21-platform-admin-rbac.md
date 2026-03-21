@@ -1159,6 +1159,11 @@ public interface AdminUserRepository {
      * 查询管理员总数。
      */
     long count();
+
+    /**
+     * 分配角色给管理员。
+     */
+    void assignRoles(Long adminId, List<Long> roleIds);
 }
 ```
 
@@ -1424,6 +1429,22 @@ public class JpaAdminUserRepository implements AdminUserRepository {
     public long count() {
         return em.createQuery("SELECT COUNT(a) FROM Admin a WHERE a.deleted = false", Long.class)
                 .getSingleResult();
+    }
+
+    @Override
+    public void assignRoles(Long adminId, List<Long> roleIds) {
+        // 先删除原有角色关联
+        em.createQuery("DELETE FROM AdminUserRole aur WHERE aur.adminId = :adminId")
+                .setParameter("adminId", adminId)
+                .executeUpdate();
+
+        // 添加新角色关联
+        if (roleIds != null && !roleIds.isEmpty()) {
+            for (Long roleId : roleIds) {
+                AdminUserRole aur = new AdminUserRole(adminId, roleId);
+                em.persist(aur);
+            }
+        }
     }
 }
 ```
@@ -2362,8 +2383,8 @@ public record AdminDto(
                 admin.getAvatar().orElse(null),
                 admin.getStatus().name(),
                 admin.isSystem(),
-                null, // createdAt 需要从 Auditable 获取
-                null, // updatedAt
+                admin.getCreatedAt(),   // 继承自 Auditable
+                admin.getUpdatedAt(),   // 继承自 Auditable
                 roles
         );
     }
@@ -2793,9 +2814,7 @@ public class AdminManagementAppService {
         Admin admin = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        // 通过 EntityManager 处理 admin_user_roles 关联表
-        // 具体实现可以添加到 AdminUserRepository 中
-        // assignRoles(Long adminId, List<Long> roleIds) 方法
+        adminUserRepository.assignRoles(id, command.roleIds());
     }
 }
 ```
