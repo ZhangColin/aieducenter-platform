@@ -18,8 +18,10 @@ import com.aieducenter.account.application.dto.LoginBySmsCommand;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.error.UserError;
 import com.aieducenter.account.domain.repository.UserRepository;
+import com.aieducenter.verification.application.CaptchaAppService;
 import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
+import com.aieducenter.verification.domain.error.CaptchaError;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.security.authentication.AuthenticationService;
 import com.cartisan.security.authentication.TokenInfo;
@@ -32,6 +34,9 @@ class AccountLoginAppServiceTest {
 
     @Mock
     private VerificationCodeAppService verificationCodeAppService;
+
+    @Mock
+    private CaptchaAppService captchaAppService;
 
     @Mock
     private AuthenticationService authenticationService;
@@ -49,7 +54,7 @@ class AccountLoginAppServiceTest {
     void given_username_when_login_by_password_then_return_token() {
         // Given
         var user = User.restore(1001L, "testuser", null, null, HASH_PASSWORD123, "Test", null);
-        var command = new LoginByPasswordCommand("testuser", "password123");
+        var command = new LoginByPasswordCommand("testuser", "password123", "captchaId", "1234");
         var tokenInfo = new TokenInfo("token-abc", 1001L, Instant.now().plusSeconds(3600));
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
@@ -60,13 +65,14 @@ class AccountLoginAppServiceTest {
 
         // Then
         assertThat(result.token()).isEqualTo("token-abc");
+        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
     }
 
     @Test
     void given_email_when_login_by_password_then_return_token() {
         // Given
         var user = User.restore(1002L, "testuser", "test@example.com", null, HASH_PASSWORD123, "Test", null);
-        var command = new LoginByPasswordCommand("test@example.com", "password123");
+        var command = new LoginByPasswordCommand("test@example.com", "password123", "captchaId", "1234");
         var tokenInfo = new TokenInfo("token-email", 1002L, Instant.now().plusSeconds(3600));
 
         when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.empty());
@@ -78,13 +84,14 @@ class AccountLoginAppServiceTest {
 
         // Then
         assertThat(result.token()).isEqualTo("token-email");
+        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
     }
 
     @Test
     void given_phone_when_login_by_password_then_return_token() {
         // Given
         var user = User.restore(1003L, "testuser", null, "13812345678", HASH_PASSWORD123, "Test", null);
-        var command = new LoginByPasswordCommand("13812345678", "password123");
+        var command = new LoginByPasswordCommand("13812345678", "password123", "captchaId", "1234");
         var tokenInfo = new TokenInfo("token-phone", 1003L, Instant.now().plusSeconds(3600));
 
         when(userRepository.findByUsername("13812345678")).thenReturn(Optional.empty());
@@ -97,12 +104,13 @@ class AccountLoginAppServiceTest {
 
         // Then
         assertThat(result.token()).isEqualTo("token-phone");
+        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
     }
 
     @Test
     void given_unknown_account_when_login_by_password_then_throw_account_not_found() {
         // Given
-        var command = new LoginByPasswordCommand("unknown", "password123");
+        var command = new LoginByPasswordCommand("unknown", "password123", "captchaId", "1234");
 
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("unknown")).thenReturn(Optional.empty());
@@ -120,7 +128,7 @@ class AccountLoginAppServiceTest {
         // Use a real BCrypt hash of "correctPass1" so matchesPassword works
         var user = User.restore(1004L, "testuser", null, null,
             "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", "Test", null);
-        var command = new LoginByPasswordCommand("testuser", "wrongPassword1");
+        var command = new LoginByPasswordCommand("testuser", "wrongPassword1", "captchaId", "1234");
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
@@ -130,13 +138,27 @@ class AccountLoginAppServiceTest {
             .hasMessageContaining(UserError.LOGIN_PASSWORD_INCORRECT.message());
     }
 
+    @Test
+    void given_invalid_captcha_when_login_by_password_then_throw_captcha_invalid() {
+        // Given
+        var command = new LoginByPasswordCommand("testuser", "password123", "invalidId", "wrong");
+
+        doThrow(new DomainException(CaptchaError.CAPTCHA_INVALID))
+            .when(captchaAppService).verifyCaptcha("invalidId", "wrong");
+
+        // When & Then
+        assertThatThrownBy(() -> loginAppService.loginByPassword(command))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(CaptchaError.CAPTCHA_INVALID.message());
+    }
+
     // ========== loginBySms tests ==========
 
     @Test
     void given_valid_sms_code_when_login_by_sms_then_return_token() {
         // Given
         var user = User.restore(1005L, "testuser", null, "13812345678", "$2a$10$validhashedpassword", "Test", null);
-        var command = new LoginBySmsCommand("13812345678", "123456");
+        var command = new LoginBySmsCommand("13812345678", "123456", "captchaId", "1234");
         var tokenInfo = new TokenInfo("token-sms", 1005L, Instant.now().plusSeconds(3600));
 
         when(userRepository.findByPhoneNumber("13812345678")).thenReturn(Optional.of(user));
@@ -147,13 +169,14 @@ class AccountLoginAppServiceTest {
 
         // Then
         assertThat(result.token()).isEqualTo("token-sms");
+        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
         verify(verificationCodeAppService).verifyPhoneCode(new VerifySmsCodeCommand("13812345678", "123456", "LOGIN"));
     }
 
     @Test
     void given_unregistered_phone_when_login_by_sms_then_throw_account_not_found() {
         // Given
-        var command = new LoginBySmsCommand("13899999999", "123456");
+        var command = new LoginBySmsCommand("13899999999", "123456", "captchaId", "1234");
 
         when(userRepository.findByPhoneNumber("13899999999")).thenReturn(Optional.empty());
 
@@ -161,13 +184,14 @@ class AccountLoginAppServiceTest {
         assertThatThrownBy(() -> loginAppService.loginBySms(command))
             .isInstanceOf(DomainException.class)
             .hasMessageContaining(UserError.ACCOUNT_NOT_FOUND.message());
+        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
         verify(verificationCodeAppService).verifyPhoneCode(any());
     }
 
     @Test
     void given_invalid_sms_code_when_login_by_sms_then_propagate_verification_error() {
         // Given
-        var command = new LoginBySmsCommand("13812345678", "000000");
+        var command = new LoginBySmsCommand("13812345678", "000000", "captchaId", "1234");
         var verificationError = new DomainException(
             com.aieducenter.verification.domain.error.VerificationCodeError.CODE_INVALID);
 
@@ -178,5 +202,20 @@ class AccountLoginAppServiceTest {
         // When & Then
         assertThatThrownBy(() -> loginAppService.loginBySms(command))
             .isSameAs(verificationError);
+        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
+    }
+
+    @Test
+    void given_invalid_captcha_when_login_by_sms_then_throw_captcha_invalid() {
+        // Given
+        var command = new LoginBySmsCommand("13812345678", "123456", "invalidId", "wrong");
+
+        doThrow(new DomainException(CaptchaError.CAPTCHA_INVALID))
+            .when(captchaAppService).verifyCaptcha("invalidId", "wrong");
+
+        // When & Then
+        assertThatThrownBy(() -> loginAppService.loginBySms(command))
+            .isInstanceOf(DomainException.class)
+            .hasMessageContaining(CaptchaError.CAPTCHA_INVALID.message());
     }
 }
