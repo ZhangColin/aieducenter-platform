@@ -1,29 +1,56 @@
 package com.aieducenter.admin.config;
 
+import cn.dev33.satoken.stp.StpInterface;
+
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cn.dev33.satoken.stp.StpLogic;
+import com.aieducenter.admin.domain.service.AdminPermissionService;
 
 /**
  * Sa-Token 配置。
  *
- * <p>为管理员模块配置独立的 StpLogic Bean，实现多账号体系隔离。</p>
+ * <p>为管理员模块配置独立的 StpInterface 实现，支持管理员权限查询。</p>
  *
  * @since 0.1.0
  */
 @Configuration
 public class SaTokenConfig {
 
+    private static final String ADMIN_LOGIN_TYPE = "admin";
+
+    private final AdminPermissionService adminPermissionService;
+
+    public SaTokenConfig(AdminPermissionService adminPermissionService) {
+        this.adminPermissionService = adminPermissionService;
+    }
+
     /**
-     * 管理员 StpLogic Bean。
-     *
-     * <p>使用 "admin" 作为 loginType，与普通用户登录隔离。</p>
-     *
-     * @return 管理员专用的 StpLogic 实例
+     * Sa-Token 权限接口实现。
+     * <p>通过 loginType 区分管理员和普通用户</p>
      */
     @Bean
-    public StpLogic adminStpLogic() {
-        return new StpLogic("admin");
+    public StpInterface cartisanStpInterface() {
+        return new StpInterface() {
+            @Override
+            public List<String> getPermissionList(Object loginId, String loginType) {
+                if (ADMIN_LOGIN_TYPE.equals(loginType)) {
+                    return adminPermissionService.getPermissions((Long) loginId);
+                }
+                // TODO: 后续实现租户权限
+                return List.of();
+            }
+
+            @Override
+            public List<String> getRoleList(Object loginId, String loginType) {
+                if (ADMIN_LOGIN_TYPE.equals(loginType)) {
+                    return adminPermissionService.getRoles((Long) loginId);
+                }
+                // TODO: 后续实现租户角色
+                return List.of();
+            }
+        };
     }
 }

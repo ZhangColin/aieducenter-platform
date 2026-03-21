@@ -34,15 +34,19 @@ public class AdminAuthAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminPermissionService adminPermissionService;
-    private final StpLogic adminStpLogic;
 
     public AdminAuthAppService(
             AdminUserRepository adminUserRepository,
-            AdminPermissionService adminPermissionService,
-            StpLogic adminStpLogic) {
+            AdminPermissionService adminPermissionService) {
         this.adminUserRepository = adminUserRepository;
         this.adminPermissionService = adminPermissionService;
-        this.adminStpLogic = adminStpLogic;
+    }
+
+    /**
+     * 获取管理员专用的 StpLogic 实例。
+     */
+    private StpLogic adminStpLogic() {
+        return new StpLogic(ADMIN_LOGIN_TYPE);
     }
 
     /**
@@ -66,10 +70,10 @@ public class AdminAuthAppService {
 
         // 登录 Sa-Token（使用 admin loginType 隔离会话）
         long timeout = command.rememberMe() ? REMEMBER_TIMEOUT : DEFAULT_TIMEOUT;
-        adminStpLogic.login(admin.getId(), timeout);
+        adminStpLogic().login(admin.getId(), timeout);
 
         // 获取 Token 信息
-        String token = adminStpLogic.getTokenValue();
+        String token = adminStpLogic().getTokenValue();
         Instant expireTime = Instant.now().plusSeconds(timeout);
 
         // 获取角色、菜单、权限
@@ -93,7 +97,7 @@ public class AdminAuthAppService {
      * 管理员登出。
      */
     public void logout() {
-        adminStpLogic.logout();
+        adminStpLogic().logout();
     }
 
     /**
@@ -101,13 +105,13 @@ public class AdminAuthAppService {
      */
     @Transactional(readOnly = true)
     public LoginResult getCurrentAdmin() {
-        Long adminId = adminStpLogic.getLoginIdAsLong();
+        Long adminId = adminStpLogic().getLoginIdAsLong();
 
         Admin admin = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        String token = adminStpLogic.getTokenValue();
-        Instant expireTime = Instant.ofEpochSecond(adminStpLogic.getTokenTimeout());
+        String token = adminStpLogic().getTokenValue();
+        Instant expireTime = Instant.ofEpochSecond(adminStpLogic().getTokenTimeout());
 
         List<String> roleCodes = adminPermissionService.getRoles(admin.getId());
         List<String> permissionCodes = adminPermissionService.getPermissions(admin.getId());
@@ -129,7 +133,7 @@ public class AdminAuthAppService {
      */
     @Transactional
     public void updatePassword(String oldPassword, String newPassword) {
-        Long adminId = adminStpLogic.getLoginIdAsLong();
+        Long adminId = adminStpLogic().getLoginIdAsLong();
         Admin admin = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
