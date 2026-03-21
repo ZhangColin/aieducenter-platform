@@ -1,6 +1,7 @@
 package com.aieducenter.admin.application;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +70,7 @@ public class RoleManagementAppService {
         AdminRole role = findById(id);
 
         // 如果修改 code，检查唯一性
-        if (!role.getCode().equals(code)) {
+        if (!Objects.equals(role.getCode(), code)) {
             roleRepository.findByCode(code).ifPresent(existing -> {
                 throw new DomainException(AdminError.ROLE_CODE_ALREADY_EXISTS);
             });
@@ -91,7 +92,7 @@ public class RoleManagementAppService {
 
         // 超级管理员角色不能删除
         if (role.isSuperAdmin()) {
-            throw new DomainException(AdminError.ROLE_IN_USE);
+            throw new DomainException(AdminError.SUPER_ADMIN_CANNOT_DELETE);
         }
 
         // 检查是否有管理员使用该角色

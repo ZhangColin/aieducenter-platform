@@ -49,7 +49,7 @@ public class MenuManagementAppService {
             // 检查层级（最多3级）- 通过计算父菜单的层级
             int parentDepth = calculateDepth(parentId);
             if (parentDepth >= AdminMenu.MAX_DEPTH - 1) {
-                throw new DomainException(AdminError.MENU_HAS_CHILDREN);
+                throw new DomainException(AdminError.MENU_DEPTH_EXCEEDED);
             }
         }
 
@@ -66,17 +66,22 @@ public class MenuManagementAppService {
 
         // 如果修改父菜单，验证新父菜单
         if (parentId != null && !parentId.equals(menu.getParentId())) {
+            // 不允许将菜单设置为自己的父级
+            if (parentId.equals(id)) {
+                throw new DomainException(AdminError.MENU_INVALID_PARENT);
+            }
+
             AdminMenu parent = findById(parentId);
 
             // 检查层级
             int parentDepth = calculateDepth(parent.getId());
             if (parentDepth >= AdminMenu.MAX_DEPTH - 1) {
-                throw new DomainException(AdminError.MENU_HAS_CHILDREN);
+                throw new DomainException(AdminError.MENU_DEPTH_EXCEEDED);
             }
 
             // 不允许将菜单设置为自己的后代
             if (isDescendant(menu.getId(), parentId)) {
-                throw new DomainException(AdminError.MENU_HAS_CHILDREN);
+                throw new DomainException(AdminError.MENU_INVALID_PARENT);
             }
         }
 

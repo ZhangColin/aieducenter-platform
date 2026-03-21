@@ -45,6 +45,26 @@ public enum AdminError implements CodeMessage {
      */
     ROLE_CODE_ALREADY_EXISTS(409, "ADMIN_004", "角色编码已存在"),
 
+    /**
+     * 权限编码已存在。
+     */
+    PERMISSION_CODE_ALREADY_EXISTS(409, "ADMIN_004_1", "权限编码已存在"),
+
+    /**
+     * 菜单层级超限。
+     */
+    MENU_DEPTH_EXCEEDED(403, "ADMIN_014_1", "菜单层级不能超过3级"),
+
+    /**
+     * 菜单父级设置无效。
+     */
+    MENU_INVALID_PARENT(403, "ADMIN_014_2", "不能将菜单设置为自己的父级或后代"),
+
+    /**
+     * 超级管理员角色不能删除。
+     */
+    SUPER_ADMIN_CANNOT_DELETE(403, "ADMIN_013_1", "超级管理员角色不能删除"),
+
     // ========== 密码错误 (400) ==========
 
     /**

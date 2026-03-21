@@ -1,6 +1,7 @@
 package com.aieducenter.admin.application;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,7 @@ public class PermissionManagementAppService {
     public AdminPermission create(String name, String code, Long menuId, Integer sortOrder) {
         // 检查 code 唯一性
         if (permissionRepository.findByCode(code).isPresent()) {
-            throw new DomainException(AdminError.ROLE_CODE_ALREADY_EXISTS);
+            throw new DomainException(AdminError.PERMISSION_CODE_ALREADY_EXISTS);
         }
 
         // 验证菜单存在
@@ -69,9 +70,9 @@ public class PermissionManagementAppService {
         AdminPermission permission = findById(id);
 
         // 如果修改 code，检查唯一性
-        if (!permission.getCode().equals(code)) {
+        if (!Objects.equals(permission.getCode(), code)) {
             permissionRepository.findByCode(code).ifPresent(existing -> {
-                throw new DomainException(AdminError.ROLE_CODE_ALREADY_EXISTS);
+                throw new DomainException(AdminError.PERMISSION_CODE_ALREADY_EXISTS);
             });
         }
 
