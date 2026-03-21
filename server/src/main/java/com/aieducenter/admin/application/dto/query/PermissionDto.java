@@ -6,19 +6,7 @@ package com.aieducenter.admin.application.dto.query;
  * @since 0.1.0
  */
 public record PermissionDto(
-        Long id,
-        String name,
-        String code,
-        Long menuId,
-        Integer sortOrder
+    String code,
+    String name
 ) {
-    public static PermissionDto from(com.aieducenter.admin.domain.entity.AdminPermission permission) {
-        return new PermissionDto(
-                permission.getId(),
-                permission.getName(),
-                permission.getCode(),
-                permission.getMenuId(),
-                permission.getSortOrder()
-        );
-    }
 }

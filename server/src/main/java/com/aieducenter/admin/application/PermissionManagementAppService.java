@@ -117,7 +117,7 @@ public class PermissionManagementAppService {
     public List<PermissionDto> findAllAsDto() {
         List<AdminPermission> permissions = permissionRepository.findAll();
         return permissions.stream()
-                .map(PermissionDto::from)
+                .map(p -> new PermissionDto(p.getCode(), p.getName()))
                 .collect(Collectors.toList());
     }
 
@@ -126,6 +126,6 @@ public class PermissionManagementAppService {
      */
     public PermissionDto findByIdAsDto(Long id) {
         AdminPermission permission = findById(id);
-        return PermissionDto.from(permission);
+        return new PermissionDto(permission.getCode(), permission.getName());
     }
 }
