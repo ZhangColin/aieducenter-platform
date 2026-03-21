@@ -32,16 +32,19 @@ public class VerificationCodeAppService {
     private final VerificationCodeGenerationService generator;
     private final MessageSender messageSender;
     private final VerificationCodeProperties properties;
+    private final CaptchaAppService captchaAppService;
 
     public VerificationCodeAppService(
             VerificationCodeRepository repository,
             VerificationCodeGenerationService generator,
             MessageSender messageSender,
-            VerificationCodeProperties properties) {
+            VerificationCodeProperties properties,
+            CaptchaAppService captchaAppService) {
         this.repository = repository;
         this.generator = generator;
         this.messageSender = messageSender;
         this.properties = properties;
+        this.captchaAppService = captchaAppService;
     }
 
     /**
@@ -143,6 +146,9 @@ public class VerificationCodeAppService {
         // 1. 校验手机号格式
         validatePhoneFormat(command.phone());
 
+        // 校验图形验证码
+        captchaAppService.verifyCaptcha(command.captchaId(), command.captchaCode());
+
         // 2. 校验 purpose
         VerificationPurpose purpose = validatePurpose(command.purpose());
 
@@ -161,6 +167,7 @@ public class VerificationCodeAppService {
 
         // 5. 生成验证码
         String code = generator.generate();
+        code = "123456";  // TODO: 短信接口对接后删除此行
 
         // 6. 创建验证码实体
         VerificationCode verificationCode = VerificationCode.create(
