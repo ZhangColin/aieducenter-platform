@@ -81,7 +81,7 @@ dependencies {
 
 - [ ] **Step 2: 运行 gradle sync 验证依赖**
 
-Run: `./gradlew dependencies --configuration runtimeClasspath | grep captcha`
+Run: `cd server && ./gradlew dependencies --configuration runtimeClasspath | grep captcha`
 Expected: 看到 `cn.hutool:hutool-captcha:5.8.29`
 
 - [ ] **Step 3: 提交**
@@ -105,26 +105,43 @@ package com.aieducenter.verification.domain.error;
 
 import com.cartisan.core.exception.CodeMessage;
 
+/**
+ * 图形验证码相关错误码。
+ */
 public enum CaptchaError implements CodeMessage {
-    CAPTCHA_INVALID(40001, "图形验证码错误"),
-    CAPTCHA_EXPIRED(40002, "图形验证码已过期");
+    /**
+     * 图形验证码错误。
+     */
+    CAPTCHA_INVALID("CAPTCHA_INVALID", "图形验证码错误", 400),
 
-    private final int code;
+    /**
+     * 图形验证码已过期。
+     */
+    CAPTCHA_EXPIRED("CAPTCHA_EXPIRED", "图形验证码已过期", 400);
+
+    private final String code;
     private final String message;
-
-    CaptchaError(int code, String message) {
-        this.code = code;
-        this.message = message;
-    }
+    private final int httpStatus;
 
     @Override
-    public int code() {
+    public String code() {
         return code;
     }
 
     @Override
     public String message() {
         return message;
+    }
+
+    @Override
+    public int httpStatus() {
+        return httpStatus;
+    }
+
+    CaptchaError(String code, String message, int httpStatus) {
+        this.code = code;
+        this.message = message;
+        this.httpStatus = httpStatus;
     }
 }
 ```
@@ -448,7 +465,6 @@ import org.springframework.stereotype.Service;
 
 import com.aieducenter.verification.application.dto.CreateCaptchaResponse;
 import com.aieducenter.verification.domain.error.CaptchaError;
-import com.aieducenter.verification.domain.model.CaptchaCode;
 import com.aieducenter.verification.domain.repository.CaptchaRepository;
 import com.aieducenter.verification.domain.service.CaptchaGenerationService;
 import com.cartisan.core.exception.DomainException;
