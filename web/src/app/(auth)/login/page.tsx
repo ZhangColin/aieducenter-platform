@@ -39,6 +39,9 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState(0)
   const [smsSent, setSmsSent] = useState(false)
 
+  // 表单验证错误
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
   // 初始化：获取验证码
   useEffect(() => {
     fetchCaptcha()
@@ -84,11 +87,27 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     clearError()
+    setFieldErrors({})
+
+    const errors: Record<string, string> = {}
 
     if (loginType === 'account') {
-      if (!account || !password || !captchaCode) {
+      // 密码登录验证
+      if (!account.trim()) {
+        errors.account = '请输入账号'
+      }
+      if (!password) {
+        errors.password = '请输入密码'
+      }
+      if (!captchaCode.trim()) {
+        errors.captchaCode = '请输入图形验证码'
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
         return
       }
+
       const result = await loginByPassword({ account, password, captchaId, captchaCode })
       if (result.success) {
         // 登录成功，已在 hook 中处理跳转
@@ -97,9 +116,24 @@ export default function LoginPage() {
         fetchCaptcha()
       }
     } else {
-      if (!phone || !smsCode || !captchaCode) {
+      // 短信验证码登录验证
+      if (!phone.trim()) {
+        errors.phone = '请输入手机号'
+      } else if (!/^1[3-9]\d{9}$/.test(phone)) {
+        errors.phone = '请输入正确的手机号'
+      }
+      if (!smsCode.trim()) {
+        errors.smsCode = '请输入短信验证码'
+      }
+      if (!captchaCode.trim()) {
+        errors.captchaCode = '请输入图形验证码'
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
         return
       }
+
       const result = await loginBySms({ phone, code: smsCode, captchaId, captchaCode })
       if (result.success) {
         // 登录成功，已在 hook 中处理跳转
@@ -163,7 +197,7 @@ export default function LoginPage() {
               {/* Tabs */}
               <div className="flex border-b border-slate-200 dark:border-slate-700 mb-8">
                 <button
-                  onClick={() => { setLoginType('account'); clearError() }}
+                  onClick={() => { setLoginType('account'); clearError(); setFieldErrors({}) }}
                   className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${
                     loginType === 'account'
                       ? 'text-primary border-primary'
@@ -197,6 +231,7 @@ export default function LoginPage() {
               <form onSubmit={handleLogin} className="space-y-5">
                 {loginType === 'account' ? (
                   <>
+                    {/* 账号输入 */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         账号
@@ -209,12 +244,14 @@ export default function LoginPage() {
                           type="text"
                           placeholder="用户名/邮箱/手机号"
                           value={account}
-                          onChange={(e) => setAccount(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                          onChange={(e) => { setAccount(e.target.value); setFieldErrors(prev => ({ ...prev, account: '' })) }}
+                          className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.account ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
                         />
                       </div>
+                      {fieldErrors.account && <p className="text-xs text-red-500">{fieldErrors.account}</p>}
                     </div>
 
+                    {/* 密码输入 */}
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -229,8 +266,8 @@ export default function LoginPage() {
                           type={showPassword ? 'text' : 'password'}
                           placeholder="请输入密码"
                           value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full pl-10 pr-12 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                          onChange={(e) => { setPassword(e.target.value); setFieldErrors(prev => ({ ...prev, password: '' })) }}
+                          className={`w-full pl-10 pr-12 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.password ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
                         />
                         <button
                           type="button"
@@ -242,10 +279,12 @@ export default function LoginPage() {
                           </span>
                         </button>
                       </div>
+                      {fieldErrors.password && <p className="text-xs text-red-500">{fieldErrors.password}</p>}
                     </div>
                   </>
                 ) : (
                   <>
+                    {/* 手机号输入 */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         手机号
@@ -258,13 +297,15 @@ export default function LoginPage() {
                           type="tel"
                           placeholder="请输入手机号"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => { setPhone(e.target.value); setFieldErrors(prev => ({ ...prev, phone: '' })) }}
                           maxLength={11}
-                          className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                          className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.phone ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
                         />
                       </div>
+                      {fieldErrors.phone && <p className="text-xs text-red-500">{fieldErrors.phone}</p>}
                     </div>
 
+                    {/* 短信验证码输入 */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         短信验证码
@@ -278,9 +319,9 @@ export default function LoginPage() {
                             type="text"
                             placeholder="请输入验证码"
                             value={smsCode}
-                            onChange={(e) => setSmsCode(e.target.value)}
+                            onChange={(e) => { setSmsCode(e.target.value); setFieldErrors(prev => ({ ...prev, smsCode: '' })) }}
                             maxLength={6}
-                            className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.smsCode ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
                           />
                         </div>
                         <button
@@ -292,6 +333,7 @@ export default function LoginPage() {
                           {countdown > 0 ? `${countdown}s` : '获取验证码'}
                         </button>
                       </div>
+                      {fieldErrors.smsCode && <p className="text-xs text-red-500">{fieldErrors.smsCode}</p>}
                     </div>
                   </>
                 )}
@@ -306,8 +348,8 @@ export default function LoginPage() {
                       type="text"
                       placeholder="请输入验证码"
                       value={captchaCode}
-                      onChange={(e) => setCaptchaCode(e.target.value)}
-                      className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      onChange={(e) => { setCaptchaCode(e.target.value); setFieldErrors(prev => ({ ...prev, captchaCode: '' })) }}
+                      className={`flex-1 px-4 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.captchaCode ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
                     />
                     <div
                       className="w-40 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center bg-white dark:bg-slate-800 flex-shrink-0"
@@ -324,6 +366,7 @@ export default function LoginPage() {
                       )}
                     </div>
                   </div>
+                  {fieldErrors.captchaCode && <p className="text-xs text-red-500">{fieldErrors.captchaCode}</p>}
                   <p className="text-xs text-slate-500">点击图片刷新验证码</p>
                 </div>
 
