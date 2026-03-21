@@ -42,9 +42,9 @@ public class AdminRole extends SoftDeletable {
     @Transient
     private Set<Long> menuIds = new HashSet<>();
 
-    // 关联的权限（不持久化，仅用于查询时组装）
+    // 关联的权限 Code（不持久化，仅用于查询时组装）
     @Transient
-    private Set<Long> permissionIds = new HashSet<>();
+    private Set<String> permissionCodes = new HashSet<>();
 
     /**
      * 创建角色。
@@ -98,8 +98,8 @@ public class AdminRole extends SoftDeletable {
         return menuIds;
     }
 
-    public Set<Long> getPermissionIds() {
-        return permissionIds;
+    public Set<String> getPermissionCodes() {
+        return permissionCodes;
     }
 
     // ========== Setter ==========
@@ -124,8 +124,8 @@ public class AdminRole extends SoftDeletable {
         this.menuIds = menuIds != null ? menuIds : new HashSet<>();
     }
 
-    public void setPermissionIds(Set<Long> permissionIds) {
-        this.permissionIds = permissionIds != null ? permissionIds : new HashSet<>();
+    public void setPermissionCodes(Set<String> permissionCodes) {
+        this.permissionCodes = permissionCodes != null ? permissionCodes : new HashSet<>();
     }
 
     // ========== 业务行为 ==========

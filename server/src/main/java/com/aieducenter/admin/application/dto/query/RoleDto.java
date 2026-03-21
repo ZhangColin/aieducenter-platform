@@ -14,7 +14,7 @@ public record RoleDto(
         String description,
         Integer sortOrder,
         List<Long> menuIds,
-        List<Long> permissionIds
+        List<String> permissionCodes
 ) {
     public static RoleDto from(com.aieducenter.admin.domain.entity.AdminRole role) {
         return new RoleDto(
@@ -24,7 +24,7 @@ public record RoleDto(
                 role.getDescription(),
                 role.getSortOrder(),
                 List.copyOf(role.getMenuIds()),
-                List.copyOf(role.getPermissionIds())
+                List.copyOf(role.getPermissionCodes())
         );
     }
 }
