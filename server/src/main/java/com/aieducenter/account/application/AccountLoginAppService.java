@@ -47,20 +47,25 @@ public class AccountLoginAppService {
      *
      * @param command 登录命令
      * @return 登录结果（含 token）
-     * @throws DomainException ACCOUNT_NOT_FOUND (401) / LOGIN_PASSWORD_INCORRECT (401)
+     * @throws DomainException ACCOUNT_NOT_FOUND (401) / LOGIN_PASSWORD_INCORRECT (401) / CAPTCHA_INVALID (400)
      */
     public LoginResult loginByPassword(LoginByPasswordCommand command) {
-        String account = command.account();
+        // 1. 验证图形验证码
+        captchaAppService.verifyCaptcha(command.captchaId(), command.captchaCode());
 
+        // 2. 查找用户
+        String account = command.account();
         User user = userRepository.findByUsername(account)
             .or(() -> userRepository.findByEmail(account))
             .or(() -> userRepository.findByPhoneNumber(account))
             .orElseThrow(() -> new DomainException(UserError.ACCOUNT_NOT_FOUND));
 
+        // 3. 验证密码
         if (!user.matchesPassword(command.password())) {
             throw new DomainException(UserError.LOGIN_PASSWORD_INCORRECT);
         }
 
+        // 4. 生成 Token
         var tokenInfo = authenticationService.login(user.getId());
         return new LoginResult(tokenInfo.token());
     }
@@ -68,19 +73,25 @@ public class AccountLoginAppService {
     /**
      * 短信验证码登录。
      *
-     * <p>先校验验证码（失败则直接向上抛出），再查找账号。</p>
+     * <p>先校验图形验证码，再校验短信验证码（失败则直接向上抛出），最后查找账号。</p>
      *
      * @param command 登录命令
      * @return 登录结果（含 token）
      * @throws DomainException ACCOUNT_NOT_FOUND (401)，或 VerificationCodeError（验证码无效/过期/已用）
      */
     public LoginResult loginBySms(LoginBySmsCommand command) {
+        // 1. 验证图形验证码
+        captchaAppService.verifyCaptcha(command.captchaId(), command.captchaCode());
+
+        // 2. 校验短信验证码
         verificationCodeAppService.verifyPhoneCode(
             new VerifySmsCodeCommand(command.phone(), command.code(), "LOGIN"));
 
+        // 3. 查找用户
         User user = userRepository.findByPhoneNumber(command.phone())
             .orElseThrow(() -> new DomainException(UserError.ACCOUNT_NOT_FOUND));
 
+        // 4. 生成 Token
         var tokenInfo = authenticationService.login(user.getId());
         return new LoginResult(tokenInfo.token());
     }
