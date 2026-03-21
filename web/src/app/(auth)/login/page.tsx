@@ -1,15 +1,113 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useLogin } from '@aieducenter/shared'
+
+type LoginType = 'account' | 'sms'
 
 export default function LoginPage() {
-  const [loginType, setLoginType] = useState<'account' | 'sms'>('account')
-  const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
+  const router = useRouter()
+  const {
+    loginByPassword,
+    loginBySms,
+    getCaptcha,
+    sendSmsCode,
+    isLoading,
+    error,
+    clearError
+  } = useLogin()
 
-  const handleLogin = (e: React.FormEvent) => {
+  // UI 状态
+  const [loginType, setLoginType] = useState<LoginType>('account')
+  const [showPassword, setShowPassword] = useState(false)
+
+  // 表单数据 - 密码登录
+  const [account, setAccount] = useState('')
+  const [password, setPassword] = useState('')
+
+  // 表单数据 - 短信登录
+  const [phone, setPhone] = useState('')
+  const [smsCode, setSmsCode] = useState('')
+
+  // 验证码相关
+  const [captchaId, setCaptchaId] = useState('')
+  const [captchaUrl, setCaptchaUrl] = useState('')
+  const [captchaCode, setCaptchaCode] = useState('')
+
+  // 短信倒计时
+  const [countdown, setCountdown] = useState(0)
+  const [smsSent, setSmsSent] = useState(false)
+
+  // 初始化：获取验证码
+  useEffect(() => {
+    fetchCaptcha()
+  }, [])
+
+  // 倒计时逻辑
+  useEffect(() => {
+    if (countdown <= 0) return
+    const timer = setInterval(() => {
+      setCountdown(prev => prev - 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [countdown])
+
+  // 获取图形验证码
+  const fetchCaptcha = async () => {
+    const result = await getCaptcha()
+    if (result) {
+      setCaptchaId(result.captchaId)
+      setCaptchaUrl(result.image)
+      setCaptchaCode('')
+    }
+  }
+
+  // 发送短信验证码
+  const handleSendSms = async () => {
+    if (countdown > 0) return
+    if (!phone || phone.length !== 11) {
+      return
+    }
+
+    const result = await sendSmsCode(phone, captchaId, captchaCode)
+    if (result.success) {
+      setSmsSent(true)
+      setCountdown(60)
+    } else {
+      // 验证码可能错误，刷新
+      fetchCaptcha()
+    }
+  }
+
+  // 处理登录
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: 实现登录逻辑
+    clearError()
+
+    if (loginType === 'account') {
+      if (!account || !password || !captchaCode) {
+        return
+      }
+      const result = await loginByPassword({ account, password, captchaId, captchaCode })
+      if (result.success) {
+        // 登录成功，已在 hook 中处理跳转
+      } else {
+        // 刷新验证码
+        fetchCaptcha()
+      }
+    } else {
+      if (!phone || !smsCode || !captchaCode) {
+        return
+      }
+      const result = await loginBySms({ phone, code: smsCode, captchaId, captchaCode })
+      if (result.success) {
+        // 登录成功，已在 hook 中处理跳转
+      } else {
+        // 刷新验证码
+        fetchCaptcha()
+      }
+    }
   }
 
   return (
@@ -44,7 +142,6 @@ export default function LoginPage() {
                 </div>
               </div>
             </div>
-            {/* Abstract background decoration */}
             <div className="absolute -bottom-20 -left-20 size-80 bg-primary/10 rounded-full blur-3xl"></div>
             <div className="absolute -top-20 -right-20 size-96 bg-primary/5 rounded-full blur-3xl"></div>
           </div>
@@ -66,7 +163,7 @@ export default function LoginPage() {
               {/* Tabs */}
               <div className="flex border-b border-slate-200 dark:border-slate-700 mb-8">
                 <button
-                  onClick={() => setLoginType('account')}
+                  onClick={() => { setLoginType('account'); clearError() }}
                   className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${
                     loginType === 'account'
                       ? 'text-primary border-primary'
@@ -76,7 +173,7 @@ export default function LoginPage() {
                   账号登录
                 </button>
                 <button
-                  onClick={() => setLoginType('sms')}
+                  onClick={() => { setLoginType('sms'); clearError() }}
                   className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                     loginType === 'sms'
                       ? 'text-primary border-primary'
@@ -87,12 +184,22 @@ export default function LoginPage() {
                 </button>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">error</span>
+                    {error}
+                  </p>
+                </div>
+              )}
+
               <form onSubmit={handleLogin} className="space-y-5">
                 {loginType === 'account' ? (
                   <>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        邮箱/手机号
+                        账号
                       </label>
                       <div className="relative">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
@@ -100,7 +207,9 @@ export default function LoginPage() {
                         </span>
                         <input
                           type="text"
-                          placeholder="请输入账号"
+                          placeholder="用户名/邮箱/手机号"
+                          value={account}
+                          onChange={(e) => setAccount(e.target.value)}
                           className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                         />
                       </div>
@@ -111,9 +220,6 @@ export default function LoginPage() {
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           登录密码
                         </label>
-                        <a className="text-xs text-primary hover:underline" href="#">
-                          忘记密码？
-                        </a>
                       </div>
                       <div className="relative">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
@@ -122,7 +228,9 @@ export default function LoginPage() {
                         <input
                           type={showPassword ? 'text' : 'password'}
                           placeholder="请输入密码"
-                          className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full pl-10 pr-12 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                         />
                         <button
                           type="button"
@@ -134,22 +242,6 @@ export default function LoginPage() {
                           </span>
                         </button>
                       </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <input
-                        id="remember"
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                      />
-                      <label
-                        htmlFor="remember"
-                        className="ml-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer"
-                      >
-                        30天内免登录
-                      </label>
                     </div>
                   </>
                 ) : (
@@ -165,6 +257,9 @@ export default function LoginPage() {
                         <input
                           type="tel"
                           placeholder="请输入手机号"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          maxLength={11}
                           className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                         />
                       </div>
@@ -172,7 +267,7 @@ export default function LoginPage() {
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        验证码
+                        短信验证码
                       </label>
                       <div className="flex gap-3">
                         <div className="relative flex-1">
@@ -182,25 +277,74 @@ export default function LoginPage() {
                           <input
                             type="text"
                             placeholder="请输入验证码"
+                            value={smsCode}
+                            onChange={(e) => setSmsCode(e.target.value)}
+                            maxLength={6}
                             className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                           />
                         </div>
                         <button
                           type="button"
-                          className="px-4 py-3 whitespace-nowrap rounded-lg border border-primary text-primary font-medium hover:bg-primary/5 transition-colors"
+                          onClick={handleSendSms}
+                          disabled={countdown > 0 || !phone || phone.length !== 11}
+                          className="px-4 py-3 whitespace-nowrap rounded-lg border border-primary text-primary font-medium hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
                         >
-                          获取验证码
+                          {countdown > 0 ? `${countdown}s` : '获取验证码'}
                         </button>
                       </div>
                     </div>
                   </>
                 )}
 
+                {/* 图形验证码 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    图形验证码
+                  </label>
+                  <div className="flex gap-3">
+                    <div className="relative flex-1">
+                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
+                        captcha
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="请输入验证码"
+                        value={captchaCode}
+                        onChange={(e) => setCaptchaCode(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      />
+                    </div>
+                    <div
+                      className="w-32 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={fetchCaptcha}
+                    >
+                      {captchaUrl ? (
+                        <img
+                          src={captchaUrl}
+                          alt="验证码"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500">点击图片刷新验证码</p>
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-primary/20"
+                  disabled={isLoading}
+                  className="w-full py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  立即登录
+                  {isLoading ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin">refresh</span>
+                      登录中...
+                    </>
+                  ) : (
+                    '立即登录'
+                  )}
                 </button>
               </form>
 
@@ -215,13 +359,13 @@ export default function LoginPage() {
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-4">
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                  <button type="button" className="flex items-center justify-center gap-2 py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                     <div className="size-5 rounded-full bg-[#07C160] flex items-center justify-center text-white">
                       <span className="material-symbols-outlined text-[14px]">chat</span>
                     </div>
                     <span className="text-sm text-slate-600 dark:text-slate-300">微信登录</span>
                   </button>
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                  <button type="button" className="flex items-center justify-center gap-2 py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                     <div className="size-5 rounded-full bg-[#0089FF] flex items-center justify-center text-white">
                       <span className="material-symbols-outlined text-[14px]">business</span>
                     </div>
@@ -232,7 +376,7 @@ export default function LoginPage() {
 
               <p className="mt-8 text-center text-sm text-slate-500">
                 还没有账号？{' '}
-                <a className="text-primary font-semibold hover:underline" href="/register">
+                <a className="text-primary font-semibold hover:underline cursor-pointer" onClick={() => router.push('/register')}>
                   立即注册
                 </a>
               </p>
