@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -42,6 +43,13 @@ class AccountLoginIntegrationTest {
         SaTokenTestConfig.initSaTokenContext();
     }
 
+    @BeforeEach
+    void setUpMocks() {
+        // Mock verification code for registration calls
+        when(verificationCodeAppService.verifyPhoneCode(any()))
+            .thenReturn(new VerifyCodeResult(true, "OK"));
+    }
+
     // ── 密码登录 ──────────────────────────────────────────────────────────────
 
     @Test
@@ -66,11 +74,12 @@ class AccountLoginIntegrationTest {
     @Test
     @Transactional
     void given_email_and_password_when_login_by_password_then_return_token() throws Exception {
-        registerUser("emailuser1", "Password1", "emailuser@example.com", null);
+        // Note: Email registration is no longer supported, using phone instead
+        registerUser("emailuser1", "Password1", null, "13800138002");
 
         String loginBody = """
             {
-                "account": "emailuser@example.com",
+                "account": "13800138002",
                 "password": "Password1"
             }
             """;
@@ -163,12 +172,14 @@ class AccountLoginIntegrationTest {
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private void registerUser(String username, String password, String email, String phone) throws Exception {
+        // Note: email parameter is ignored - no longer supported in RegisterCommand
         StringBuilder body = new StringBuilder();
         body.append("{");
         body.append("\"username\":\"").append(username).append("\",");
         body.append("\"password\":\"").append(password).append("\"");
-        if (email != null) body.append(",\"email\":\"").append(email).append("\"");
         if (phone != null) body.append(",\"phone\":\"").append(phone).append("\"");
+        // Add verification code (now required)
+        body.append(",\"verificationCode\":\"123456\"");
         body.append("}");
 
         mvc.perform(post("/api/account/register")

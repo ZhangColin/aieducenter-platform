@@ -1,6 +1,8 @@
 package com.aieducenter.account.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.verification.application.VerificationCodeAppService;
+import com.aieducenter.verification.application.dto.VerifyCodeResult;
 import com.aieducenter.account.config.SaTokenTestConfig;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.repository.UserRepository;
@@ -52,11 +55,16 @@ class AccountRegistrationIntegrationTest {
     @Test
     @Transactional
     void given_valid_registration_when_register_then_return_token_and_create_user_and_tenant() throws Exception {
+        // Mock verification code check
+        when(verificationCodeAppService.verifyPhoneCode(any()))
+            .thenReturn(new VerifyCodeResult(true, "OK"));
+
         String requestBody = """
             {
                 "username": "newuser123",
                 "password": "password123",
-                "nickname": "New User"
+                "nickname": "New User",
+                "verificationCode": "123456"
             }
             """;
 
@@ -75,6 +83,10 @@ class AccountRegistrationIntegrationTest {
     @Test
     @Transactional
     void given_duplicate_username_when_register_then_return_409() throws Exception {
+        // Mock verification code check
+        when(verificationCodeAppService.verifyPhoneCode(any()))
+            .thenReturn(new VerifyCodeResult(true, "OK"));
+
         User existingUser = User.register("testuser123", "password123", null, null, null);
         userRepository.save(existingUser);
 
@@ -82,7 +94,8 @@ class AccountRegistrationIntegrationTest {
             {
                 "username": "testuser123",
                 "password": "password123",
-                "nickname": "Another"
+                "nickname": "Another",
+                "verificationCode": "123456"
             }
             """;
 
@@ -100,7 +113,8 @@ class AccountRegistrationIntegrationTest {
             {
                 "username": "weakuser1",
                 "password": "weakpass",
-                "nickname": "Weak User"
+                "nickname": "Weak User",
+                "verificationCode": "123456"
             }
             """;
 

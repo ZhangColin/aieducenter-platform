@@ -7,7 +7,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +36,7 @@ import com.cartisan.core.exception.DomainException;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ExtendWith(MockitoExtension.class)
 class AccountPasswordResetIntegrationTest {
 
     @Autowired
@@ -46,19 +50,27 @@ class AccountPasswordResetIntegrationTest {
         SaTokenTestConfig.initSaTokenContext();
     }
 
-    // ── Scenario 1: Email reset success — new password works ─────────────────
+    @BeforeEach
+    void setUpMocks() {
+        // Mock verification code for registration calls
+        when(verificationCodeAppService.verifyPhoneCode(any()))
+            .thenReturn(new VerifyCodeResult(true, "OK"));
+    }
+
+    // ── Scenario 1: Phone reset success — new password works ─────────────────
 
     @Test
     @Transactional
     void given_email_account_when_reset_password_then_new_password_works() throws Exception {
-        registerUser("resetuser1", "OldPass123", "test@example.com", null);
+        // Note: Email registration is no longer supported, using phone instead
+        registerUser("resetuser1", "OldPass123", null, "13800138001");
 
-        when(verificationCodeAppService.verifyCode(any(VerifyCodeCommand.class)))
+        when(verificationCodeAppService.verifyPhoneCode(any(VerifySmsCodeCommand.class)))
             .thenReturn(new VerifyCodeResult(true, "OK"));
 
         String resetBody = """
             {
-                "account": "test@example.com",
+                "account": "13800138001",
                 "verificationCode": "123456",
                 "newPassword": "NewPass456"
             }
@@ -73,7 +85,7 @@ class AccountPasswordResetIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                        "account": "test@example.com",
+                        "account": "13800138001",
                         "password": "NewPass456"
                     }
                     """))
@@ -87,6 +99,7 @@ class AccountPasswordResetIntegrationTest {
     void given_phone_account_when_reset_password_then_new_password_works() throws Exception {
         registerUser("resetuser2", "OldPass123", null, "13800138000");
 
+        // Reset the mock for the reset-password call
         when(verificationCodeAppService.verifyPhoneCode(any(VerifySmsCodeCommand.class)))
             .thenReturn(new VerifyCodeResult(true, "OK"));
 
@@ -161,12 +174,14 @@ class AccountPasswordResetIntegrationTest {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void registerUser(String username, String password, String email, String phone) throws Exception {
+        // Note: email parameter is ignored - no longer supported in RegisterCommand
         StringBuilder body = new StringBuilder();
         body.append("{");
         body.append("\"username\":\"").append(username).append("\",");
         body.append("\"password\":\"").append(password).append("\"");
-        if (email != null) body.append(",\"email\":\"").append(email).append("\"");
         if (phone != null) body.append(",\"phone\":\"").append(phone).append("\"");
+        // Add verification code (now required)
+        body.append(",\"verificationCode\":\"123456\"");
         body.append("}");
 
         mvc.perform(post("/api/account/register")
