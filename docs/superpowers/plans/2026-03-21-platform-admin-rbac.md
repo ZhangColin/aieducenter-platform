@@ -1154,6 +1154,11 @@ public interface AdminUserRepository {
      * 查询管理员是否拥有指定角色。
      */
     boolean hasRole(Long adminId, String roleCode);
+
+    /**
+     * 查询管理员总数。
+     */
+    long count();
 }
 ```
 
@@ -1313,6 +1318,8 @@ import org.springframework.stereotype.Repository;
 
 import com.aieducenter.admin.domain.aggregate.Admin;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
+import com.cartisan.core.stereotype.Adapter;
+import com.cartisan.core.stereotype.PortType;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -1412,6 +1419,12 @@ public class JpaAdminUserRepository implements AdminUserRepository {
                 .getSingleResult();
         return count > 0;
     }
+
+    @Override
+    public long count() {
+        return em.createQuery("SELECT COUNT(a) FROM Admin a WHERE a.deleted = false", Long.class)
+                .getSingleResult();
+    }
 }
 ```
 
@@ -1426,6 +1439,8 @@ import org.springframework.stereotype.Repository;
 
 import com.aieducenter.admin.domain.entity.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
+import com.cartisan.core.stereotype.Adapter;
+import com.cartisan.core.stereotype.PortType;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -1891,6 +1906,7 @@ import com.aieducenter.admin.domain.entity.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
+import com.cartisan.core.stereotype.DomainService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -2002,6 +2018,8 @@ git commit -m "feat(admin): add AdminPermissionService domain service"
 - Create: `server/src/main/java/com/aieducenter/admin/application/dto/command/UpdateMenuCommand.java`
 - Create: `server/src/main/java/com/aieducenter/admin/application/dto/command/CreatePermissionCommand.java`
 - Create: `server/src/main/java/com/aieducenter/admin/application/dto/command/AssignRolesCommand.java`
+- Create: `server/src/main/java/com/aieducenter/admin/application/dto/command/AssignMenusCommand.java`
+- Create: `server/src/main/java/com/aieducenter/admin/application/dto/command/AssignPermissionsCommand.java`
 - Create: `server/src/main/java/com/aieducenter/admin/application/dto/query/AdminDto.java`
 - Create: `server/src/main/java/com/aieducenter/admin/application/dto/query/RoleDto.java`
 - Create: `server/src/main/java/com/aieducenter/admin/application/dto/query/MenuDto.java`
@@ -2645,7 +2663,6 @@ import com.aieducenter.admin.domain.repository.AdminUserRepository;
 
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
-import com.cartisan.core.util.Assertions;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -2661,13 +2678,21 @@ public class AdminManagementAppService {
     private final AdminRoleRepository adminRoleRepository;
 
     /**
-     * 查询所有管理员。
+     * 查询管理员列表（分页）。
      */
     @Transactional(readOnly = true)
-    public List<AdminDto> findAll() {
-        return adminUserRepository.findAll().stream()
+    public com.cartisan.web.response.PageResponse<AdminDto> findAll(int page, int size) {
+        com.cartisan.data.query.page.PageQuery pageQuery = com.cartisan.data.query.page.PageQuery.of(page, size);
+
+        long total = adminUserRepository.count(); // TODO: 添加 count 方法到 AdminUserRepository
+
+        List<AdminDto> items = adminUserRepository.findAll().stream()
+                .skip(pageQuery.offset())
+                .limit(pageQuery.size())
                 .map(admin -> AdminDto.from(admin, List.of()))
                 .toList();
+
+        return com.cartisan.web.response.PageResponse.of(items, total, page, size);
     }
 
     /**
@@ -2768,11 +2793,9 @@ public class AdminManagementAppService {
         Admin admin = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        // 先删除原有角色
-        // TODO: 实现 admin_user_roles 的删除逻辑
-
-        // 添加新角色
-        // TODO: 实现 admin_user_roles 的插入逻辑
+        // 通过 EntityManager 处理 admin_user_roles 关联表
+        // 具体实现可以添加到 AdminUserRepository 中
+        // assignRoles(Long adminId, List<Long> roleIds) 方法
     }
 }
 ```
@@ -3249,9 +3272,11 @@ public class AdminUserController {
     @GetMapping
     @RequireAuth
     @RequirePermission("admin:user:read")
-    @Operation(summary = "查询管理员列表")
-    public ApiResponse<List<AdminDto>> findAll() {
-        return ApiResponse.ok(adminManagementAppService.findAll());
+    @Operation(summary = "查询管理员列表（分页）")
+    public ApiResponse<com.cartisan.web.response.PageResponse<AdminDto>> findAll(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(adminManagementAppService.findAll(page, size));
     }
 
     @GetMapping("/{id}")
@@ -3584,7 +3609,7 @@ git commit -m "feat(admin): add controllers for auth, users, roles, menus, permi
 ## Task 12: Update Sa-Token Configuration
 
 **Files:**
-- Modify: `server/src/main/java/com/aieducenter/account/config/SaTokenConfig.java`
+- Modify: `server/src/main/java/com/aieducenter/config/SaTokenConfig.java`
 
 - [ ] **Step 1: Update SaTokenConfig to add StpInterface**
 
