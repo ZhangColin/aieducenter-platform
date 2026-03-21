@@ -1,0 +1,60 @@
+package com.aieducenter.admin.web.controller;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import com.aieducenter.admin.application.AdminAuthAppService;
+import com.aieducenter.admin.application.dto.command.AdminLoginCommand;
+import com.aieducenter.admin.application.dto.query.LoginResult;
+import com.cartisan.security.annotation.RequireAuth;
+import com.cartisan.web.response.ApiResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+/**
+ * 管理员认证控制器。
+ */
+@RestController
+@RequestMapping("/api/v1/admin/auth")
+@Validated
+@Tag(name = "Admin Auth", description = "管理员认证")
+public class AdminAuthController {
+
+    private final AdminAuthAppService adminAuthAppService;
+
+    public AdminAuthController(AdminAuthAppService adminAuthAppService) {
+        this.adminAuthAppService = adminAuthAppService;
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "管理员登录")
+    public ApiResponse<LoginResult> login(@Valid @RequestBody AdminLoginCommand command) {
+        return ApiResponse.ok(adminAuthAppService.login(command));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "管理员登出")
+    public ApiResponse<Void> logout() {
+        adminAuthAppService.logout();
+        return ApiResponse.ok();
+    }
+
+    @GetMapping("/current")
+    @RequireAuth
+    @Operation(summary = "获取当前管理员信息")
+    public ApiResponse<LoginResult> getCurrentAdmin() {
+        return ApiResponse.ok(adminAuthAppService.getCurrentAdmin());
+    }
+
+    @PutMapping("/current/password")
+    @RequireAuth
+    @Operation(summary = "修改当前管理员密码")
+    public ApiResponse<Void> updatePassword(
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword) {
+        adminAuthAppService.updatePassword(oldPassword, newPassword);
+        return ApiResponse.ok();
+    }
+}
