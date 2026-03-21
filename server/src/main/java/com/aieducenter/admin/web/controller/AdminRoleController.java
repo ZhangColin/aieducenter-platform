@@ -101,7 +101,7 @@ public class AdminRoleController {
     @Operation(summary = "分配菜单")
     public ApiResponse<Void> assignMenus(
             @PathVariable Long id,
-            @RequestBody AssignMenusCommand command) {
+            @Valid @RequestBody AssignMenusCommand command) {
         roleManagementAppService.assignMenus(id, command);
         return ApiResponse.ok();
     }
@@ -112,7 +112,7 @@ public class AdminRoleController {
     @Operation(summary = "分配权限")
     public ApiResponse<Void> assignPermissions(
             @PathVariable Long id,
-            @RequestBody AssignPermissionsCommand command) {
+            @Valid @RequestBody AssignPermissionsCommand command) {
         roleManagementAppService.assignPermissions(id, command);
         return ApiResponse.ok();
     }

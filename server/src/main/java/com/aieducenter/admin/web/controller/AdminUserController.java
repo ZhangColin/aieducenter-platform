@@ -72,7 +72,7 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:user:delete")
+    @RequirePermission("admin:user:write")
     @Operation(summary = "删除管理员")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         adminManagementAppService.delete(id);

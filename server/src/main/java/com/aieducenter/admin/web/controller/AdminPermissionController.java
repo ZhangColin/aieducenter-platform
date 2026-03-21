@@ -35,6 +35,7 @@ public class AdminPermissionController {
 
     @GetMapping
     @RequireAuth
+    @RequirePermission("admin:permission:read")
     @Operation(summary = "查询权限列表")
     public ApiResponse<List<PermissionDto>> findAll() {
         List<AdminPermission> permissions = permissionManagementAppService.findAll();
