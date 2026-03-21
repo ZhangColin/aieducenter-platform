@@ -14,5 +14,10 @@ public enum VerificationType {
     /**
      * 短信验证码（预留）。
      */
-    SMS
+    SMS,
+
+    /**
+     * 图形验证码。
+     */
+    CAPTCHA
 }
