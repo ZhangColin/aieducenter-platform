@@ -1,14 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     // TODO: 实现后台登录逻辑
+    router.push('/dashboard')
   }
 
   return (

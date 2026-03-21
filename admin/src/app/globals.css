@@ -68,6 +68,42 @@
   }
 }
 
+/* Dashboard specific styles */
+.active-nav-bg {
+  background-color: rgba(48, 140, 232, 0.1);
+  color: #308ce8;
+}
+
+.first-tier-active {
+  background-color: #308ce8;
+  color: white !important;
+}
+
+/* Sidebar Toggle Logic */
+:where(.sidebar-collapsed) .secondary-sidebar {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  border-right-width: 0;
+}
+
+:where(.sidebar-collapsed) #toggle-btn span {
+  transform: rotate(180deg);
+}
+
+.secondary-sidebar {
+  transition: width 0.3s ease, opacity 0.2s ease;
+}
+
+#toggle-btn span {
+  transition: transform 0.3s ease;
+}
+
+.menu-content {
+  max-height: none;
+  overflow: visible;
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));
