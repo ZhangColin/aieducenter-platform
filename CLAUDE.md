@@ -6,7 +6,7 @@
 
 ### 后端
 - Java 21 / Spring Boot 3.4.x / Gradle Kotlin DSL
-- 基座框架：cartisan-boot（DDD、Web、Security、Data、AI、Event、Test）
+- 基座框架：cartisan-boot（DDD、Web、Security、Data、AI、Event、Test）→ [使用手册](docs/guide/cartisan-boot-使用手册.md)
 - 缓存/消息：Redis（余额缓存、限流、会话上下文、Streams 消息队列）
 
 ### 前端
