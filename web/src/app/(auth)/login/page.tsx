@@ -302,27 +302,22 @@ export default function LoginPage() {
                     图形验证码
                   </label>
                   <div className="flex gap-3">
-                    <div className="relative flex-1">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
-                        captcha
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="请输入验证码"
-                        value={captchaCode}
-                        onChange={(e) => setCaptchaCode(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="请输入验证码"
+                      value={captchaCode}
+                      onChange={(e) => setCaptchaCode(e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    />
                     <div
-                      className="w-32 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                      className="w-40 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center bg-white dark:bg-slate-800 flex-shrink-0"
                       onClick={fetchCaptcha}
                     >
                       {captchaUrl ? (
                         <img
                           src={captchaUrl}
                           alt="验证码"
-                          className="w-full h-full object-cover"
+                          className="max-w-full max-h-full object-contain"
                         />
                       ) : (
                         <div className="w-full h-full bg-slate-200 dark:bg-slate-700 animate-pulse" />

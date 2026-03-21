@@ -586,16 +586,20 @@ export default function RegisterPage() {
                     <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 animate-fade-in">
                       <p className="text-xs text-slate-500 mb-2">请输入图形验证码后发送短信验证码</p>
                       <div className="flex gap-3 items-start">
-                        {captchaUrl ? (
-                          <img
-                            src={captchaUrl}
-                            alt="验证码"
-                            className="cursor-pointer rounded border border-slate-200 dark:border-slate-700 hover:opacity-80 transition-opacity"
-                            onClick={getCaptcha}
-                          />
-                        ) : (
-                          <div className="w-32 h-12 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-                        )}
+                        <div
+                          className="w-40 h-12 rounded border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center bg-white dark:bg-slate-800 flex-shrink-0"
+                          onClick={getCaptcha}
+                        >
+                          {captchaUrl ? (
+                            <img
+                              src={captchaUrl}
+                              alt="验证码"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                          )}
+                        </div>
                         <div className="flex-1 space-y-2">
                           <input
                             type="text"
