@@ -1,7 +1,10 @@
 package com.aieducenter.admin.infrastructure.persistence;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -22,35 +25,43 @@ public class JpaAdminRoleRepository implements AdminRoleRepository {
 
     @Override
     public Optional<AdminRole> findById(Long id) {
-        return em.createQuery("SELECT r FROM AdminRole r WHERE r.id = :id AND r.deleted = false", AdminRole.class)
+        Optional<AdminRole> role = em.createQuery("SELECT r FROM AdminRole r WHERE r.id = :id AND r.deleted = false", AdminRole.class)
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst();
+        role.ifPresent(this::populateTransientFields);
+        return role;
     }
 
     @Override
     public Optional<AdminRole> findByCode(String code) {
-        return em.createQuery("SELECT r FROM AdminRole r WHERE r.code = :code AND r.deleted = false", AdminRole.class)
+        Optional<AdminRole> role = em.createQuery("SELECT r FROM AdminRole r WHERE r.code = :code AND r.deleted = false", AdminRole.class)
                 .setParameter("code", code)
                 .getResultStream()
                 .findFirst();
+        role.ifPresent(this::populateTransientFields);
+        return role;
     }
 
     @Override
     public List<AdminRole> findAll() {
-        return em.createQuery("SELECT r FROM AdminRole r WHERE r.deleted = false ORDER BY r.sortOrder", AdminRole.class)
+        List<AdminRole> roles = em.createQuery("SELECT r FROM AdminRole r WHERE r.deleted = false ORDER BY r.sortOrder", AdminRole.class)
                 .getResultList();
+        roles.forEach(this::populateTransientFields);
+        return roles;
     }
 
     @Override
     public List<AdminRole> findByAdminId(Long adminId) {
-        return em.createQuery(
+        List<AdminRole> roles = em.createQuery(
                 "SELECT r FROM AdminRole r " +
                 "INNER JOIN AdminUserRole aur ON r.id = aur.roleId " +
                 "WHERE aur.adminId = :adminId AND r.deleted = false " +
                 "ORDER BY r.sortOrder", AdminRole.class)
                 .setParameter("adminId", adminId)
                 .getResultList();
+        roles.forEach(this::populateTransientFields);
+        return roles;
     }
 
     @Override
@@ -106,5 +117,32 @@ public class JpaAdminRoleRepository implements AdminRoleRepository {
                 em.persist(rp);
             }
         }
+    }
+
+    /**
+     * 填充 AdminRole 的瞬时字段（menuIds 和 permissionCodes）。
+     */
+    private void populateTransientFields(AdminRole role) {
+        if (role == null || role.getId() == null) {
+            return;
+        }
+
+        Long roleId = role.getId();
+
+        // 加载 menuIds
+        Set<Long> menuIds = em.createQuery(
+                "SELECT rm.menuId FROM AdminRoleMenu rm WHERE rm.roleId = :roleId", Long.class)
+                .setParameter("roleId", roleId)
+                .getResultStream()
+                .collect(Collectors.toSet());
+        role.setMenuIds(menuIds);
+
+        // 加载 permissionCodes
+        Set<String> permissionCodes = em.createQuery(
+                "SELECT rp.permissionCode FROM AdminRolePermission rp WHERE rp.roleId = :roleId", String.class)
+                .setParameter("roleId", roleId)
+                .getResultStream()
+                .collect(Collectors.toSet());
+        role.setPermissionCodes(permissionCodes);
     }
 }
