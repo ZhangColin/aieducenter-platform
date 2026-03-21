@@ -1,4 +1,25 @@
+'use client'
+
+import { useAuthStore } from '@aieducenter/shared'
+import { logout as logoutApi } from '@aieducenter/api-client'
+
 export default function HomePage() {
+  const { isAuthenticated, user } = useAuthStore()
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi()
+      // 清除本地状态
+      useAuthStore.getState().logout()
+      window.location.href = '/'
+    } catch (err) {
+      console.error('退出登录失败:', err)
+      // 即使 API 失败，也清除本地状态
+      useAuthStore.getState().logout()
+      window.location.href = '/'
+    }
+  }
+
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
       {/* Navigation */}
@@ -23,12 +44,28 @@ export default function HomePage() {
             >
               <span className="material-symbols-outlined">light_mode</span>
             </button>
-            <a href="/login" className="hidden sm:flex h-10 items-center justify-center rounded-lg px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
-              登录
-            </a>
-            <a href="/login" className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-              立即开始
-            </a>
+            {isAuthenticated ? (
+              <>
+                <span className="hidden sm:flex text-sm text-slate-600">
+                  欢迎, {user?.nickname || user?.userId}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="flex h-10 items-center justify-center rounded-lg border border-slate-200 px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  退出
+                </button>
+              </>
+            ) : (
+              <>
+                <a href="/login" className="hidden sm:flex h-10 items-center justify-center rounded-lg px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                  登录
+                </a>
+                <a href="/login" className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                  立即开始
+                </a>
+              </>
+            )}
           </div>
         </div>
       </header>

@@ -128,3 +128,21 @@ export async function sendSmsCode(params: SendSmsCodeParams): Promise<SendSmsCod
   const result: ApiResponse<SendSmsCodeResponse> = await response.json()
   return result.data
 }
+
+/**
+ * 退出登录
+ */
+export async function logout(): Promise<void> {
+  const response = await fetch(`/api/account/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // Sa-Token 需要从 cookie 中获取 token，浏览器会自动发送
+    }
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '退出登录失败' }))
+    throw error
+  }
+}

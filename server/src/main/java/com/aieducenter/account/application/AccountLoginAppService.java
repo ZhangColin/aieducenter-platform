@@ -95,4 +95,13 @@ public class AccountLoginAppService {
         var tokenInfo = authenticationService.login(user.getId());
         return new LoginResult(tokenInfo.token());
     }
+
+    /**
+     * 退出登录。
+     *
+     * <p>调用 Sa-Token 的退出接口，清除服务端会话。</p>
+     */
+    public void logout() {
+        authenticationService.logout();
+    }
 }

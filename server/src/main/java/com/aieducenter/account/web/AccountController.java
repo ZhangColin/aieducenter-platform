@@ -58,6 +58,12 @@ public class AccountController {
         return ApiResponse.ok(loginAppService.loginBySms(command));
     }
 
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout() {
+        loginAppService.logout();
+        return ApiResponse.ok(null);
+    }
+
     @PostMapping("/reset-password")
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordCommand command) {
         passwordResetAppService.resetPassword(command);
