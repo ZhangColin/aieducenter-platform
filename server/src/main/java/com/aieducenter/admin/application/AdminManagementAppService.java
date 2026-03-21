@@ -1,0 +1,168 @@
+package com.aieducenter.admin.application;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
+import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
+import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
+import com.aieducenter.admin.application.dto.query.AdminDto;
+import com.aieducenter.admin.application.dto.query.RoleDto;
+import com.aieducenter.admin.domain.aggregate.Admin;
+import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.repository.AdminRoleRepository;
+import com.aieducenter.admin.domain.repository.AdminUserRepository;
+
+import com.cartisan.core.exception.ApplicationException;
+import com.cartisan.core.util.Assertions;
+
+import com.cartisan.web.response.PageResponse;
+
+/**
+ * 管理员管理应用服务。
+ *
+ * @since 0.1.0
+ */
+@Service
+public class AdminManagementAppService {
+
+    private final AdminUserRepository adminUserRepository;
+    private final AdminRoleRepository adminRoleRepository;
+
+    public AdminManagementAppService(
+            AdminUserRepository adminUserRepository,
+            AdminRoleRepository adminRoleRepository) {
+        this.adminUserRepository = adminUserRepository;
+        this.adminRoleRepository = adminRoleRepository;
+    }
+
+    /**
+     * 查询管理员列表（分页）。
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<AdminDto> findAll(int page, int size) {
+        // 参数校验
+        if (page < 1) {
+            page = 1;
+        }
+        if (size < 1) {
+            size = 20;
+        } else if (size > 100) {
+            size = 100;
+        }
+
+        long total = adminUserRepository.count();
+        long offset = (long) (page - 1) * size;
+
+        List<AdminDto> items = adminUserRepository.findAll().stream()
+                .skip(offset)
+                .limit(size)
+                .map(admin -> AdminDto.from(admin, List.of()))
+                .toList();
+
+        return new PageResponse<>(items, total, page, size);
+    }
+
+    /**
+     * 查询管理员详情。
+     */
+    @Transactional(readOnly = true)
+    public AdminDto findById(Long id) {
+        Admin admin = adminUserRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+
+        List<RoleDto> roles = adminRoleRepository.findByAdminId(id).stream()
+                .map(RoleDto::from)
+                .toList();
+
+        return AdminDto.from(admin, roles);
+    }
+
+    /**
+     * 创建管理员。
+     */
+    @Transactional
+    public Long create(CreateAdminCommand command) {
+        Assertions.require(
+                !adminUserRepository.existsByUsername(command.username()),
+                AdminError.USERNAME_ALREADY_EXISTS
+        );
+
+        Admin admin = new Admin(command.username(), command.password(), command.nickname());
+        if (command.email() != null) {
+            admin.updateEmail(command.email());
+        }
+        if (command.phone() != null) {
+            admin.updatePhone(command.phone());
+        }
+
+        Admin saved = adminUserRepository.save(admin);
+        return saved.getId();
+    }
+
+    /**
+     * 更新管理员。
+     */
+    @Transactional
+    public void update(Long id, UpdateAdminCommand command) {
+        Admin admin = adminUserRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+
+        if (command.nickname() != null) {
+            admin.updateNickname(command.nickname());
+        }
+        if (command.email() != null) {
+            admin.updateEmail(command.email());
+        }
+        if (command.phone() != null) {
+            admin.updatePhone(command.phone());
+        }
+        if (command.avatar() != null) {
+            admin.updateAvatar(command.avatar());
+        }
+
+        adminUserRepository.save(admin);
+    }
+
+    /**
+     * 删除管理员。
+     */
+    @Transactional
+    public void delete(Long id) {
+        Admin admin = adminUserRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+
+        admin.checkCanBeDeleted();
+        adminUserRepository.delete(admin);
+    }
+
+    /**
+     * 修改管理员状态。
+     */
+    @Transactional
+    public void updateStatus(Long id, String status) {
+        Admin admin = adminUserRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+
+        if ("ACTIVE".equals(status)) {
+            admin.enable();
+        } else if ("DISABLED".equals(status)) {
+            admin.disable();
+        }
+
+        adminUserRepository.save(admin);
+    }
+
+    /**
+     * 分配角色。
+     */
+    @Transactional
+    public void assignRoles(Long id, AssignRolesCommand command) {
+        Admin admin = adminUserRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+
+        adminUserRepository.assignRoles(id, command.roleIds());
+    }
+}
