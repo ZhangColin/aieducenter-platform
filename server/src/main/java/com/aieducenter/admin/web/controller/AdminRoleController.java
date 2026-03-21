@@ -36,7 +36,11 @@ public class AdminRoleController {
 
     @GetMapping
     @RequireAuth
-    @RequirePermission("admin:role:read")
+    @RequirePermission(
+        value = "admin:role:read",
+        name = "平台管理 / 角色管理 / 查看",
+        scope = "admin"
+    )
     @Operation(summary = "查询角色列表")
     public ApiResponse<List<RoleDto>> findAll() {
         return ApiResponse.ok(roleManagementAppService.findAllAsDto());
@@ -44,7 +48,11 @@ public class AdminRoleController {
 
     @GetMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:role:read")
+    @RequirePermission(
+        value = "admin:role:read",
+        name = "平台管理 / 角色管理 / 查看",
+        scope = "admin"
+    )
     @Operation(summary = "查询角色详情")
     public ApiResponse<RoleDto> findById(@PathVariable Long id) {
         return ApiResponse.ok(roleManagementAppService.findByIdAsDto(id));
@@ -52,7 +60,11 @@ public class AdminRoleController {
 
     @PostMapping
     @RequireAuth
-    @RequirePermission("admin:role:write")
+    @RequirePermission(
+        value = "admin:role:write",
+        name = "平台管理 / 角色管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "创建角色")
     public ApiResponse<Long> create(@Valid @RequestBody CreateRoleCommand command) {
         Long id = roleManagementAppService.createAndReturnId(
@@ -66,7 +78,11 @@ public class AdminRoleController {
 
     @PutMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:role:write")
+    @RequirePermission(
+        value = "admin:role:write",
+        name = "平台管理 / 角色管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "更新角色")
     public ApiResponse<Void> update(
             @PathVariable Long id,
@@ -83,7 +99,11 @@ public class AdminRoleController {
 
     @DeleteMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:role:write")
+    @RequirePermission(
+        value = "admin:role:write",
+        name = "平台管理 / 角色管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "删除角色")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         roleManagementAppService.delete(id);
@@ -92,7 +112,11 @@ public class AdminRoleController {
 
     @PutMapping("/{id}/menus")
     @RequireAuth
-    @RequirePermission("admin:role:write")
+    @RequirePermission(
+        value = "admin:role:write",
+        name = "平台管理 / 角色管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "分配菜单")
     public ApiResponse<Void> assignMenus(
             @PathVariable Long id,
@@ -103,7 +127,11 @@ public class AdminRoleController {
 
     @PutMapping("/{id}/permissions")
     @RequireAuth
-    @RequirePermission("admin:role:write")
+    @RequirePermission(
+        value = "admin:role:write",
+        name = "平台管理 / 角色管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "分配权限")
     public ApiResponse<Void> assignPermissions(
             @PathVariable Long id,

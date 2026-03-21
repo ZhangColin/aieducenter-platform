@@ -35,7 +35,11 @@ public class AdminUserController {
 
     @GetMapping
     @RequireAuth
-    @RequirePermission("admin:user:read")
+    @RequirePermission(
+        value = "admin:user:read",
+        name = "平台管理 / 用户管理 / 查看",
+        scope = "admin"
+    )
     @Operation(summary = "查询管理员列表（分页）")
     public ApiResponse<com.cartisan.web.response.PageResponse<AdminDto>> findAll(
             @RequestParam(defaultValue = "1") int page,
@@ -45,7 +49,11 @@ public class AdminUserController {
 
     @GetMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:user:read")
+    @RequirePermission(
+        value = "admin:user:read",
+        name = "平台管理 / 用户管理 / 查看",
+        scope = "admin"
+    )
     @Operation(summary = "查询管理员详情")
     public ApiResponse<AdminDto> findById(@PathVariable Long id) {
         return ApiResponse.ok(adminManagementAppService.findById(id));
@@ -53,7 +61,11 @@ public class AdminUserController {
 
     @PostMapping
     @RequireAuth
-    @RequirePermission("admin:user:write")
+    @RequirePermission(
+        value = "admin:user:write",
+        name = "平台管理 / 用户管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "创建管理员")
     public ApiResponse<Long> create(@Valid @RequestBody CreateAdminCommand command) {
         return ApiResponse.ok(adminManagementAppService.create(command));
@@ -61,7 +73,11 @@ public class AdminUserController {
 
     @PutMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:user:write")
+    @RequirePermission(
+        value = "admin:user:write",
+        name = "平台管理 / 用户管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "更新管理员")
     public ApiResponse<Void> update(
             @PathVariable Long id,
@@ -72,7 +88,11 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:user:write")
+    @RequirePermission(
+        value = "admin:user:write",
+        name = "平台管理 / 用户管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "删除管理员")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         adminManagementAppService.delete(id);
@@ -81,7 +101,11 @@ public class AdminUserController {
 
     @PutMapping("/{id}/status")
     @RequireAuth
-    @RequirePermission("admin:user:write")
+    @RequirePermission(
+        value = "admin:user:write",
+        name = "平台管理 / 用户管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "修改管理员状态")
     public ApiResponse<Void> updateStatus(
             @PathVariable Long id,
@@ -92,7 +116,11 @@ public class AdminUserController {
 
     @PutMapping("/{id}/roles")
     @RequireAuth
-    @RequirePermission("admin:user:write")
+    @RequirePermission(
+        value = "admin:user:write",
+        name = "平台管理 / 用户管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "分配角色")
     public ApiResponse<Void> assignRoles(
             @PathVariable Long id,

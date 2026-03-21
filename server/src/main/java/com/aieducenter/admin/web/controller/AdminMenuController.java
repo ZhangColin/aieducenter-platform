@@ -41,7 +41,11 @@ public class AdminMenuController {
 
     @GetMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:menu:read")
+    @RequirePermission(
+        value = "admin:menu:read",
+        name = "平台管理 / 菜单管理 / 查看",
+        scope = "admin"
+    )
     @Operation(summary = "查询菜单详情")
     public ApiResponse<MenuDto> findById(@PathVariable Long id) {
         return ApiResponse.ok(menuManagementAppService.findByIdAsDto(id));
@@ -49,7 +53,11 @@ public class AdminMenuController {
 
     @PostMapping
     @RequireAuth
-    @RequirePermission("admin:menu:write")
+    @RequirePermission(
+        value = "admin:menu:write",
+        name = "平台管理 / 菜单管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "创建菜单")
     public ApiResponse<Long> create(@Valid @RequestBody CreateMenuCommand command) {
         Long id = menuManagementAppService.createAndReturnId(
@@ -57,14 +65,19 @@ public class AdminMenuController {
             command.path(),
             command.icon(),
             command.parentId(),
-            command.sortOrder()
+            command.sortOrder(),
+            command.type()
         );
         return ApiResponse.ok(id);
     }
 
     @PutMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:menu:write")
+    @RequirePermission(
+        value = "admin:menu:write",
+        name = "平台管理 / 菜单管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "更新菜单")
     public ApiResponse<Void> update(
             @PathVariable Long id,
@@ -75,14 +88,19 @@ public class AdminMenuController {
             command.path(),
             command.icon(),
             command.parentId(),
-            command.sortOrder()
+            command.sortOrder(),
+            command.type()
         );
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/{id}")
     @RequireAuth
-    @RequirePermission("admin:menu:write")
+    @RequirePermission(
+        value = "admin:menu:write",
+        name = "平台管理 / 菜单管理 / 编辑",
+        scope = "admin"
+    )
     @Operation(summary = "删除菜单")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         menuManagementAppService.delete(id);
