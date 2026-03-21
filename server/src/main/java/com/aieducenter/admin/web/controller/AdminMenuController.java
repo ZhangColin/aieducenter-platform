@@ -34,6 +34,11 @@ public class AdminMenuController {
 
     @GetMapping
     @RequireAuth
+    @RequirePermission(
+        value = "admin:menu:read",
+        name = "平台管理 / 菜单管理 / 查看",
+        scope = "admin"
+    )
     @Operation(summary = "查询菜单列表（树形）")
     public ApiResponse<List<MenuDto>> findTree() {
         return ApiResponse.ok(menuManagementAppService.findTreeAsDto());
