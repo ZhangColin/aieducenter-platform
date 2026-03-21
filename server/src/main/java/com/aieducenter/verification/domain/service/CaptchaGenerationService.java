@@ -29,7 +29,7 @@ public class CaptchaGenerationService {
     public CaptchaResult generate() {
         LineCaptcha captcha = new LineCaptcha(WIDTH, HEIGHT, CODE_COUNT, LINE_COUNT);
 
-        String image = captcha.getImageBase64();
+        String image = "data:image/png;base64," + captcha.getImageBase64();
         String code = captcha.getCode();
 
         return new CaptchaResult(image, code);

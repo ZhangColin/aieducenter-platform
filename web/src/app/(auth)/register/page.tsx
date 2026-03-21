@@ -13,6 +13,9 @@ export default function RegisterPage() {
   // Form states
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [registerError, setRegisterError] = useState('')
+  const [toast, setToast] = useState('')
 
   // Form data
   const [formData, setFormData] = useState({
@@ -24,16 +27,29 @@ export default function RegisterPage() {
     verificationCode: '',
   })
 
+  // Validation error states
+  const [usernameError, setUsernameError] = useState('')
+  const [phoneError, setPhoneError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
+
   // Availability check states
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>()
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>()
 
-  // Captcha modal states
-  const [showCaptchaModal, setShowCaptchaModal] = useState(false)
+  // Captcha states (inline, not modal)
+  const [showCaptcha, setShowCaptcha] = useState(false)
   const [captchaUrl, setCaptchaUrl] = useState('')
   const [captchaId, setCaptchaId] = useState('')
   const [captchaCode, setCaptchaCode] = useState('')
   const [captchaError, setCaptchaError] = useState('')
+  const [smsSent, setSmsSent] = useState(false)
+
+  // Show toast message
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(''), 3000)
+  }
 
   // Username validation and availability check
   useEffect(() => {
@@ -42,6 +58,7 @@ export default function RegisterPage() {
         await checkUsername(formData.username)
       } else {
         setUsernameStatus(undefined)
+        setUsernameError('')
       }
     }, 500)
 
@@ -51,15 +68,32 @@ export default function RegisterPage() {
   const checkUsername = async (username: string) => {
     // Basic validation: 3-20 chars, letter start
     const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_]{2,19}$/
-    if (!username || username.length < 3) {
+
+    if (!username) {
+      setUsernameError('')
       setUsernameStatus(undefined)
       return
     }
-    if (!usernameRegex.test(username)) {
-      setUsernameStatus('taken')
+
+    if (username.length < 3) {
+      setUsernameError('用户名至少需要3个字符')
+      setUsernameStatus(undefined)
       return
     }
 
+    if (username.length > 20) {
+      setUsernameError('用户名最多20个字符')
+      setUsernameStatus(undefined)
+      return
+    }
+
+    if (!usernameRegex.test(username)) {
+      setUsernameError('用户名必须以字母开头，只能包含字母、数字和下划线')
+      setUsernameStatus(undefined)
+      return
+    }
+
+    setUsernameError('')
     setUsernameStatus('checking')
     try {
       const res = await fetch(
@@ -67,6 +101,9 @@ export default function RegisterPage() {
       )
       const data = await res.json()
       setUsernameStatus(data.data ? 'available' : 'taken')
+      if (!data.data) {
+        setUsernameError('该用户名已被占用')
+      }
     } catch {
       setUsernameStatus(undefined)
     }
@@ -79,6 +116,7 @@ export default function RegisterPage() {
         await checkPhone(formData.phone)
       } else {
         setPhoneStatus(undefined)
+        setPhoneError('')
       }
     }, 500)
 
@@ -88,24 +126,85 @@ export default function RegisterPage() {
   const checkPhone = async (phone: string) => {
     // Basic validation: 11 digits, starts with 1
     const phoneRegex = /^1[3-9]\d{9}$/
-    if (!phone || phone.length < 11) {
+
+    if (!phone) {
+      setPhoneError('')
       setPhoneStatus(undefined)
       return
     }
-    if (!phoneRegex.test(phone)) {
-      setPhoneStatus('taken')
+
+    if (phone.length < 11) {
+      setPhoneError('请输入11位手机号')
+      setPhoneStatus(undefined)
       return
     }
 
+    if (!phoneRegex.test(phone)) {
+      setPhoneError('手机号格式不正确（1开头，11位数字）')
+      setPhoneStatus(undefined)
+      return
+    }
+
+    setPhoneError('')
     setPhoneStatus('checking')
     try {
       const res = await fetch(`/api/account/check-phone?phone=${phone}`)
       const data = await res.json()
       setPhoneStatus(data.data ? 'available' : 'taken')
+      if (!data.data) {
+        setPhoneError('该手机号已被注册')
+      }
     } catch {
       setPhoneStatus(undefined)
     }
   }
+
+  // Password validation
+  useEffect(() => {
+    if (!formData.password) {
+      setPasswordError('')
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setPasswordError('密码至少需要8个字符')
+      return
+    }
+
+    if (formData.password.length > 20) {
+      setPasswordError('密码最多20个字符')
+      return
+    }
+
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/
+    if (!passwordRegex.test(formData.password)) {
+      setPasswordError('密码必须同时包含字母和数字')
+      return
+    }
+
+    setPasswordError('')
+
+    // Check confirm password match
+    if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError('两次输入的密码不一致')
+    } else {
+      setConfirmPasswordError('')
+    }
+  }, [formData.password])
+
+  // Confirm password validation
+  useEffect(() => {
+    if (!formData.confirmPassword) {
+      setConfirmPasswordError('')
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError('两次输入的密码不一致')
+    } else {
+      setConfirmPasswordError('')
+    }
+  }, [formData.confirmPassword, formData.password])
 
   // Get captcha image
   const getCaptcha = async () => {
@@ -120,20 +219,22 @@ export default function RegisterPage() {
     }
   }
 
-  // Show captcha modal before sending SMS
+  // Show captcha inline when clicking "Get SMS Code"
   const sendSmsCode = () => {
     if (countdown > 0) return
     if (!formData.phone || phoneStatus !== 'available') {
       return
     }
-    setShowCaptchaModal(true)
-    getCaptcha()
+    if (!showCaptcha) {
+      setShowCaptcha(true)
+      getCaptcha()
+    }
   }
 
-  // Confirm and send SMS code after captcha verification
+  // Send SMS code after captcha verification
   const confirmSendSms = async () => {
     if (!captchaCode.trim()) {
-      setCaptchaError('请输入验证码')
+      setCaptchaError('请输入图形验证码')
       return
     }
 
@@ -150,9 +251,10 @@ export default function RegisterPage() {
       })
 
       if (res.ok) {
-        setShowCaptchaModal(false)
         setCaptchaCode('')
         setCaptchaUrl('')
+        setShowCaptcha(false)
+        setSmsSent(true)
         // Start countdown
         setCountdown(60)
         const timer = setInterval(() => {
@@ -164,10 +266,11 @@ export default function RegisterPage() {
             return prev - 1
           })
         }, 1000)
+        showToast('验证码已发送')
       } else {
         const data = await res.json()
-        setCaptchaError(data.message || '验证码错误，请重试')
-        getCaptcha() // Refresh captcha on error
+        setCaptchaError(data.message || '验证码错误')
+        getCaptcha()
       }
     } catch {
       setCaptchaError('发送失败，请重试')
@@ -175,10 +278,40 @@ export default function RegisterPage() {
     }
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  // Register API call
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: 实现注册逻辑
-    console.log('Register with:', formData)
+    setRegisterError('')
+    setIsRegistering(true)
+
+    try {
+      const res = await fetch('/api/account/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          nickname: formData.nickname || undefined,
+          phone: formData.phone,
+          verificationCode: formData.verificationCode,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        showToast('注册成功！')
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 1000)
+      } else {
+        setRegisterError(data.message || '注册失败，请重试')
+      }
+    } catch {
+      setRegisterError('网络错误，请检查连接后重试')
+    } finally {
+      setIsRegistering(false)
+    }
   }
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -214,17 +347,28 @@ export default function RegisterPage() {
   // Check if form is valid for submission
   const isFormValid =
     formData.username &&
+    !usernameError &&
     usernameStatus === 'available' &&
     formData.phone &&
+    !phoneError &&
     phoneStatus === 'available' &&
     formData.password &&
+    !passwordError &&
     formData.confirmPassword &&
-    formData.password === formData.confirmPassword &&
+    !confirmPasswordError &&
     formData.verificationCode &&
     agreeTerms
 
   return (
     <div className="min-h-screen flex flex-col bg-background-light dark:bg-background-dark font-display">
+      {/* Toast Notification - Light Theme */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <span className="material-symbols-outlined text-emerald-600">check_circle</span>
+          <span className="text-sm font-medium">{toast}</span>
+        </div>
+      )}
+
       <div className="flex-grow flex items-center justify-center p-4 sm:p-8">
         <div className="max-w-[1000px] w-full grid lg:grid-cols-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden min-h-[600px]">
           {/* Left Side: Branding & Info */}
@@ -290,18 +434,14 @@ export default function RegisterPage() {
                       value={formData.username}
                       onChange={(e) => handleInputChange('username', e.target.value)}
                       className={`w-full pl-10 pr-10 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-                        usernameStatus === 'taken'
-                          ? 'border-red-300 dark:border-red-700'
-                          : usernameStatus === 'available'
-                            ? 'border-green-300 dark:border-green-700'
-                            : 'border-slate-200 dark:border-slate-700'
+                        usernameError ? 'border-red-300 dark:border-red-700' :
+                        usernameStatus === 'available' ? 'border-green-300 dark:border-green-700' :
+                        'border-slate-200 dark:border-slate-700'
                       }`}
                     />
                     <StatusIcon status={usernameStatus} />
                   </div>
-                  {usernameStatus === 'taken' && (
-                    <p className="text-xs text-red-500">用户名已被占用或格式不正确</p>
-                  )}
+                  {usernameError && <p className="text-xs text-red-500">{usernameError}</p>}
                 </div>
 
                 {/* Phone */}
@@ -320,18 +460,14 @@ export default function RegisterPage() {
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       maxLength={11}
                       className={`w-full pl-10 pr-10 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-                        phoneStatus === 'taken'
-                          ? 'border-red-300 dark:border-red-700'
-                          : phoneStatus === 'available'
-                            ? 'border-green-300 dark:border-green-700'
-                            : 'border-slate-200 dark:border-slate-700'
+                        phoneError ? 'border-red-300 dark:border-red-700' :
+                        phoneStatus === 'available' ? 'border-green-300 dark:border-green-700' :
+                        'border-slate-200 dark:border-slate-700'
                       }`}
                     />
                     <StatusIcon status={phoneStatus} />
                   </div>
-                  {phoneStatus === 'taken' && (
-                    <p className="text-xs text-red-500">手机号已被注册或格式不正确</p>
-                  )}
+                  {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
                 </div>
 
                 {/* Password */}
@@ -348,7 +484,9 @@ export default function RegisterPage() {
                       placeholder="8-20位字符，包含字母及数字"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      className={`w-full pl-10 pr-12 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
+                        passwordError ? 'border-red-300 dark:border-red-700' : 'border-slate-200 dark:border-slate-700'
+                      }`}
                     />
                     <button
                       type="button"
@@ -360,6 +498,7 @@ export default function RegisterPage() {
                       </span>
                     </button>
                   </div>
+                  {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
                 </div>
 
                 {/* Confirm Password */}
@@ -377,9 +516,7 @@ export default function RegisterPage() {
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       className={`w-full pl-10 pr-12 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-                        formData.confirmPassword && formData.password !== formData.confirmPassword
-                          ? 'border-red-300 dark:border-red-700'
-                          : 'border-slate-200 dark:border-slate-700'
+                        confirmPasswordError ? 'border-red-300 dark:border-red-700' : 'border-slate-200 dark:border-slate-700'
                       }`}
                     />
                     <button
@@ -392,9 +529,7 @@ export default function RegisterPage() {
                       </span>
                     </button>
                   </div>
-                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                    <p className="text-xs text-red-500">两次输入的密码不一致</p>
-                  )}
+                  {confirmPasswordError && <p className="text-xs text-red-500">{confirmPasswordError}</p>}
                 </div>
 
                 {/* Nickname (Optional) */}
@@ -416,11 +551,13 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* SMS Code */}
+                {/* SMS Code with Inline Captcha */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     验证码 <span className="text-red-500">*</span>
                   </label>
+
+                  {/* SMS Code Input */}
                   <div className="flex gap-3">
                     <div className="relative flex-1">
                       <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
@@ -438,12 +575,66 @@ export default function RegisterPage() {
                       type="button"
                       onClick={sendSmsCode}
                       disabled={countdown > 0 || phoneStatus !== 'available'}
-                      className="px-4 py-3 rounded-lg border border-primary text-primary font-medium hover:bg-primary/5 transition-colors whitespace-nowrap min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-3 rounded-lg border border-primary text-primary font-medium hover:bg-primary/5 transition-colors whitespace-nowrap min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed relative"
                     >
-                      {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                      {countdown > 0 ? `${countdown}s` : smsSent ? '重新获取' : '获取验证码'}
                     </button>
                   </div>
+
+                  {/* Inline Captcha Section */}
+                  {showCaptcha && (
+                    <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 animate-fade-in">
+                      <p className="text-xs text-slate-500 mb-2">请输入图形验证码后发送短信验证码</p>
+                      <div className="flex gap-3 items-start">
+                        {captchaUrl ? (
+                          <img
+                            src={captchaUrl}
+                            alt="验证码"
+                            className="cursor-pointer rounded border border-slate-200 dark:border-slate-700 hover:opacity-80 transition-opacity"
+                            onClick={getCaptcha}
+                          />
+                        ) : (
+                          <div className="w-32 h-12 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                        )}
+                        <div className="flex-1 space-y-2">
+                          <input
+                            type="text"
+                            placeholder="图形验证码"
+                            className="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-700 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                            value={captchaCode}
+                            onChange={(e) => setCaptchaCode(e.target.value)}
+                          />
+                          {captchaError && <p className="text-xs text-red-500">{captchaError}</p>}
+                          <button
+                            type="button"
+                            onClick={confirmSendSms}
+                            className="w-full py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                          >
+                            发送验证码
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Success message */}
+                  {smsSent && !showCaptcha && countdown === 0 && (
+                    <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      验证码已发送，固定为 123456
+                    </p>
+                  )}
                 </div>
+
+                {/* Register Error */}
+                {registerError && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {registerError}
+                    </p>
+                  </div>
+                )}
 
                 {/* Compliance */}
                 <div className="flex items-start gap-2 pt-2">
@@ -473,10 +664,20 @@ export default function RegisterPage() {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    disabled={!isFormValid}
-                    className="w-full bg-primary text-white py-3.5 rounded-lg font-bold text-lg hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                    disabled={!isFormValid || isRegistering}
+                    className="w-full bg-primary text-white py-3.5 rounded-lg font-bold text-lg hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2"
                   >
-                    立即注册
+                    {isRegistering ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin text-lg">refresh</span>
+                        注册中...
+                      </>
+                    ) : (
+                      <>
+                        <span>立即注册</span>
+                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -517,54 +718,6 @@ export default function RegisterPage() {
           © 2024 海创元 (Hai Chuang Yuan). All rights reserved. 京ICP备XXXXXXXX号
         </p>
       </footer>
-
-      {/* Captcha Modal */}
-      {showCaptchaModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-lg p-6 max-w-sm w-full mx-4 shadow-2xl">
-            <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-slate-100">请输入图形验证码</h3>
-            {captchaUrl ? (
-              <img
-                src={captchaUrl}
-                alt="验证码"
-                className="mb-4 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-700 hover:opacity-80 transition-opacity"
-                onClick={getCaptcha}
-              />
-            ) : (
-              <div className="mb-4 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />
-            )}
-            <input
-              type="text"
-              placeholder="请输入验证码"
-              className="w-full px-4 py-2 border rounded-lg mb-4 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              value={captchaCode}
-              onChange={(e) => setCaptchaCode(e.target.value)}
-              autoFocus
-            />
-            {captchaError && <p className="text-red-500 text-sm mb-4">{captchaError}</p>}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCaptchaModal(false)
-                  setCaptchaCode('')
-                  setCaptchaError('')
-                }}
-                className="flex-1 py-2 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={confirmSendSms}
-                className="flex-1 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                确认
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

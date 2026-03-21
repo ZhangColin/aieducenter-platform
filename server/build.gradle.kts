@@ -71,6 +71,10 @@ tasks.withType<Test> {
     jvmArgs("--enable-preview")
 }
 
+tasks.bootRun {
+    jvmArgs("--enable-preview")
+}
+
 pitest {
     junit5PluginVersion = "1.2.3"
     targetClasses = setOf(
