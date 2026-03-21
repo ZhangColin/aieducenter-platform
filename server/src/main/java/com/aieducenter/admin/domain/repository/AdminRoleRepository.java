@@ -39,6 +39,9 @@ public interface AdminRoleRepository {
 
     /**
      * 分配权限给角色。
+     *
+     * @param roleId 角色 ID
+     * @param permissionCodes 权限 Code 列表
      */
-    void assignPermissions(Long roleId, List<Long> permissionIds);
+    void assignPermissions(Long roleId, List<String> permissionCodes);
 }
