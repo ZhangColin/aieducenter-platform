@@ -1918,7 +1918,9 @@ git commit -m "feat(admin): add repository implementations"
 package com.aieducenter.admin.domain.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -2002,18 +2004,33 @@ public class AdminPermissionService {
 
     /**
      * 构建菜单树。
+     * <p>递归构建父子关系，最多支持 3 层</p>
      */
     private List<AdminMenu> buildMenuTree(List<Long> menuIds) {
         List<AdminMenu> allMenus = adminMenuRepository.findAll();
-        List<AdminMenu> result = new ArrayList<>();
+        Map<Long, AdminMenu> menuMap = new HashMap<>();
+        List<AdminMenu> roots = new ArrayList<>();
 
+        // 构建映射
         for (AdminMenu menu : allMenus) {
-            if (menuIds.contains(menu.getId()) && menu.getParentId() == null) {
-                result.add(menu);
+            if (menuIds.contains(menu.getId())) {
+                menuMap.put(menu.getId(), menu);
             }
         }
 
-        return result;
+        // 建立父子关系
+        for (AdminMenu menu : menuMap.values()) {
+            if (menu.getParentId() == null) {
+                roots.add(menu);
+            } else {
+                AdminMenu parent = menuMap.get(menu.getParentId());
+                if (parent != null) {
+                    parent.addChild(menu);
+                }
+            }
+        }
+
+        return roots;
     }
 }
 ```
@@ -2549,8 +2566,9 @@ import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.domain.service.AdminPermissionService;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.stp.StpLogic;
 import com.cartisan.core.exception.ApplicationException;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 管理员认证应用服务。
@@ -2563,9 +2581,11 @@ public class AdminAuthAppService {
 
     private static final long DEFAULT_TIMEOUT = 28800;      // 8 小时
     private static final long REMEMBER_TIMEOUT = 604800;     // 7 天
+    private static final String ADMIN_LOGIN_TYPE = "admin";
 
     private final AdminUserRepository adminUserRepository;
     private final AdminPermissionService adminPermissionService;
+    private final StpLogic adminStpLogic;
 
     /**
      * 管理员登录。
@@ -2586,13 +2606,13 @@ public class AdminAuthAppService {
             throw new ApplicationException(AdminError.LOGIN_FAILED);
         }
 
-        // 登录 Sa-Token（使用 ADMIN 账号体系）
+        // 登录 Sa-Token（使用 admin loginType 隔离会话）
         long timeout = command.rememberMe() ? REMEMBER_TIMEOUT : DEFAULT_TIMEOUT;
-        StpUtil.ADMIN.login(admin.getId());
-        StpUtil.ADMIN.setTimeout(timeout);
+        adminStpLogic.login(admin.getId());
+        adminStpLogic.setTimeout(timeout);
 
         // 获取 Token 信息
-        String token = StpUtil.ADMIN.getTokenValue();
+        String token = adminStpLogic.getTokenValue();
         Instant expireTime = Instant.now().plusSeconds(timeout);
 
         // 获取角色、菜单、权限
@@ -2616,7 +2636,7 @@ public class AdminAuthAppService {
      * 管理员登出。
      */
     public void logout() {
-        StpUtil.ADMIN.logout();
+        adminStpLogic.logout();
     }
 
     /**
@@ -2624,13 +2644,13 @@ public class AdminAuthAppService {
      */
     @Transactional(readOnly = true)
     public LoginResult getCurrentAdmin() {
-        Long adminId = StpUtil.ADMIN.getLoginIdAsLong();
+        Long adminId = adminStpLogic.getLoginIdAsLong();
 
         Admin admin = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        String token = StpUtil.ADMIN.getTokenValue();
-        Instant expireTime = Instant.ofEpochSecond(StpUtil.ADMIN.getTokenTimeout());
+        String token = adminStpLogic.getTokenValue();
+        Instant expireTime = Instant.ofEpochSecond(adminStpLogic.getTokenTimeout());
 
         List<String> roleCodes = adminPermissionService.getRoles(admin.getId());
         List<String> permissionCodes = adminPermissionService.getPermissions(admin.getId());
@@ -2652,7 +2672,7 @@ public class AdminAuthAppService {
      */
     @Transactional
     public void updatePassword(String oldPassword, String newPassword) {
-        Long adminId = StpUtil.ADMIN.getLoginIdAsLong();
+        Long adminId = adminStpLogic.getLoginIdAsLong();
         Admin admin = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
@@ -2705,7 +2725,7 @@ public class AdminManagementAppService {
     public com.cartisan.web.response.PageResponse<AdminDto> findAll(int page, int size) {
         com.cartisan.data.query.page.PageQuery pageQuery = com.cartisan.data.query.page.PageQuery.of(page, size);
 
-        long total = adminUserRepository.count(); // TODO: 添加 count 方法到 AdminUserRepository
+        long total = adminUserRepository.count();
 
         List<AdminDto> items = adminUserRepository.findAll().stream()
                 .skip(pageQuery.offset())
@@ -3643,6 +3663,7 @@ import org.springframework.context.annotation.Configuration;
 import com.aieducenter.admin.domain.service.AdminPermissionService;
 
 import cn.dev33.satoken.stp.StpInterface;
+import cn.dev33.satoken.stp.StpLogic;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -3652,6 +3673,7 @@ import lombok.RequiredArgsConstructor;
  * <ul>
  *   <li>配置 StpInterface 实现，支持管理员和普通用户权限查询</li>
  *   <li>通过 loginType 区分不同用户类型</li>
+ *   <li>提供管理员专用的 StpLogic Bean</li>
  * </ul>
  *
  * @since 0.1.0
@@ -3660,8 +3682,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SaTokenConfig {
 
+    private static final String ADMIN_LOGIN_TYPE = "admin";
+
     private final AdminPermissionService adminPermissionService;
     // private final TenantPermissionService tenantPermissionService; // TODO: 后续实现
+
+    /**
+     * 管理员专用 StpLogic。
+     * <p>使用 loginType="admin" 隔离管理员会话与普通用户会话</p>
+     */
+    @Bean
+    public StpLogic adminStpLogic() {
+        return StpLogic.create(ADMIN_LOGIN_TYPE);
+    }
 
     /**
      * Sa-Token 权限接口实现。
@@ -3672,7 +3705,7 @@ public class SaTokenConfig {
         return new StpInterface() {
             @Override
             public List<String> getPermissionList(Object loginId, String loginType) {
-                if ("admin".equals(loginType)) {
+                if (ADMIN_LOGIN_TYPE.equals(loginType)) {
                     return adminPermissionService.getPermissions((Long) loginId);
                 }
                 // TODO: 后续实现租户权限
@@ -3684,7 +3717,7 @@ public class SaTokenConfig {
 
             @Override
             public List<String> getRoleList(Object loginId, String loginType) {
-                if ("admin".equals(loginType)) {
+                if (ADMIN_LOGIN_TYPE.equals(loginType)) {
                     return adminPermissionService.getRoles((Long) loginId);
                 }
                 // TODO: 后续实现租户角色
