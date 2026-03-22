@@ -21,13 +21,6 @@ class AdminRoleMenuTest {
     }
 
     @Test
-    void given_null_roleId_when_create_then_throw_exception() {
-        // When & Then
-        assertThatThrownBy(() -> new AdminRoleMenu(null, 2L))
-                .isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
     void given_null_menuId_when_create_then_throw_exception() {
         // When & Then
         assertThatThrownBy(() -> new AdminRoleMenu(1L, null))
@@ -43,5 +36,15 @@ class AdminRoleMenuTest {
         // When & Then
         assertThat(rm1).isEqualTo(rm2);
         assertThat(rm1.hashCode()).isEqualTo(rm2.hashCode());
+    }
+
+    @Test
+    void given_null_roleId_when_create_then_success() {
+        // When
+        AdminRoleMenu roleMenu = new AdminRoleMenu(null, 2L);
+
+        // Then
+        assertThat(roleMenu.getRoleId()).isNull();
+        assertThat(roleMenu.getMenuId()).isEqualTo(2L);
     }
 }

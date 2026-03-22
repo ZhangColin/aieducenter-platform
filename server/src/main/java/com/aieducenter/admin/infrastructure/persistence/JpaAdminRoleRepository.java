@@ -1,16 +1,11 @@
 package com.aieducenter.admin.infrastructure.persistence;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
 import com.aieducenter.admin.domain.entity.AdminRole;
-import com.aieducenter.admin.domain.entity.AdminRoleMenu;
-import com.aieducenter.admin.domain.entity.AdminRolePermission;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.cartisan.core.stereotype.Adapter;
 import com.cartisan.core.stereotype.PortType;
@@ -27,43 +22,35 @@ public class JpaAdminRoleRepository implements AdminRoleRepository {
 
     @Override
     public Optional<AdminRole> findById(Long id) {
-        Optional<AdminRole> role = em.createQuery("SELECT r FROM AdminRole r WHERE r.id = :id AND r.deleted = false", AdminRole.class)
+        return em.createQuery("SELECT r FROM AdminRole r WHERE r.id = :id AND r.deleted = false", AdminRole.class)
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst();
-        role.ifPresent(this::populateTransientFields);
-        return role;
     }
 
     @Override
     public Optional<AdminRole> findByCode(String code) {
-        Optional<AdminRole> role = em.createQuery("SELECT r FROM AdminRole r WHERE r.code = :code AND r.deleted = false", AdminRole.class)
+        return em.createQuery("SELECT r FROM AdminRole r WHERE r.code = :code AND r.deleted = false", AdminRole.class)
                 .setParameter("code", code)
                 .getResultStream()
                 .findFirst();
-        role.ifPresent(this::populateTransientFields);
-        return role;
     }
 
     @Override
     public List<AdminRole> findAll() {
-        List<AdminRole> roles = em.createQuery("SELECT r FROM AdminRole r WHERE r.deleted = false ORDER BY r.sortOrder", AdminRole.class)
+        return em.createQuery("SELECT r FROM AdminRole r WHERE r.deleted = false ORDER BY r.sortOrder", AdminRole.class)
                 .getResultList();
-        roles.forEach(this::populateTransientFields);
-        return roles;
     }
 
     @Override
     public List<AdminRole> findByAdminId(Long adminId) {
-        List<AdminRole> roles = em.createQuery(
+        return em.createQuery(
                 "SELECT r FROM AdminRole r " +
                 "INNER JOIN AdminUserRole aur ON r.id = aur.roleId " +
                 "WHERE aur.adminId = :adminId AND r.deleted = false " +
                 "ORDER BY r.sortOrder", AdminRole.class)
                 .setParameter("adminId", adminId)
                 .getResultList();
-        roles.forEach(this::populateTransientFields);
-        return roles;
     }
 
     @Override
@@ -90,61 +77,26 @@ public class JpaAdminRoleRepository implements AdminRoleRepository {
 
     @Override
     public void assignMenus(Long roleId, List<Long> menuIds) {
-        // 先删除原有关联
-        em.createQuery("DELETE FROM AdminRoleMenu rm WHERE rm.roleId = :roleId")
-                .setParameter("roleId", roleId)
-                .executeUpdate();
-
-        // 添加新关联
-        if (menuIds != null && !menuIds.isEmpty()) {
+        AdminRole role = findById(roleId).orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
+        role.clearMenus();
+        if (menuIds != null) {
             for (Long menuId : menuIds) {
-                AdminRoleMenu rm = new AdminRoleMenu(roleId, menuId);
-                em.persist(rm);
+                role.addMenu(menuId);
             }
         }
+        em.merge(role);
     }
 
     @Override
     public void assignPermissions(Long roleId, List<String> permissionCodes) {
-        // 删除原有权限
-        em.createQuery("DELETE FROM AdminRolePermission rp WHERE rp.roleId = :roleId")
-                .setParameter("roleId", roleId)
-                .executeUpdate();
-
-        // 添加新权限
-        if (permissionCodes != null && !permissionCodes.isEmpty()) {
+        AdminRole role = findById(roleId).orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
+        role.clearPermissions();
+        if (permissionCodes != null) {
             // TODO: 通过 PermissionScanner 获取权限名称
             for (String permissionCode : permissionCodes) {
-                AdminRolePermission rp = new AdminRolePermission(roleId, permissionCode, null);
-                em.persist(rp);
+                role.addPermission(permissionCode, null);
             }
         }
-    }
-
-    /**
-     * 填充 AdminRole 的瞬时字段（menuIds 和 permissionCodes）。
-     */
-    private void populateTransientFields(AdminRole role) {
-        if (role == null || role.getId() == null) {
-            return;
-        }
-
-        Long roleId = role.getId();
-
-        // 加载 menuIds
-        Set<Long> menuIds = em.createQuery(
-                "SELECT rm.menuId FROM AdminRoleMenu rm WHERE rm.roleId = :roleId", Long.class)
-                .setParameter("roleId", roleId)
-                .getResultStream()
-                .collect(Collectors.toSet());
-        role.setMenuIds(menuIds);
-
-        // 加载 permissionCodes
-        Set<String> permissionCodes = em.createQuery(
-                "SELECT rp.permissionCode FROM AdminRolePermission rp WHERE rp.roleId = :roleId", String.class)
-                .setParameter("roleId", roleId)
-                .getResultStream()
-                .collect(Collectors.toSet());
-        role.setPermissionCodes(permissionCodes);
+        em.merge(role);
     }
 }

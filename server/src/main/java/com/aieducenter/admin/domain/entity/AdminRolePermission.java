@@ -35,7 +35,7 @@ public class AdminRolePermission {
      * 创建关联。
      */
     public AdminRolePermission(Long roleId, String permissionCode, String permissionName) {
-        this.roleId = Objects.requireNonNull(roleId, "roleId must not be null");
+        this.roleId = roleId;
         this.permissionCode = Objects.requireNonNull(permissionCode, "permissionCode must not be null");
         this.permissionName = permissionName;
     }

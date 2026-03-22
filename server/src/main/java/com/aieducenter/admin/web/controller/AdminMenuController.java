@@ -70,8 +70,7 @@ public class AdminMenuController {
             command.path(),
             command.icon(),
             command.parentId(),
-            command.sortOrder(),
-            command.type()
+            command.sortOrder()
         );
         return ApiResponse.ok(id);
     }
@@ -93,8 +92,7 @@ public class AdminMenuController {
             command.path(),
             command.icon(),
             command.parentId(),
-            command.sortOrder(),
-            command.type()
+            command.sortOrder()
         );
         return ApiResponse.ok();
     }

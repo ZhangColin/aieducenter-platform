@@ -32,7 +32,7 @@ public class AdminRoleMenu {
      * 创建关联。
      */
     public AdminRoleMenu(Long roleId, Long menuId) {
-        this.roleId = Objects.requireNonNull(roleId, "roleId must not be null");
+        this.roleId = roleId;
         this.menuId = Objects.requireNonNull(menuId, "menuId must not be null");
     }
 

@@ -2,6 +2,7 @@ package com.aieducenter.admin.domain.entity;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.cartisan.data.jpa.domain.SoftDeletable;
 
@@ -38,13 +39,15 @@ public class AdminRole extends SoftDeletable {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    // 关联的菜单（不持久化，仅用于查询时组装）
-    @Transient
-    private Set<Long> menuIds = new HashSet<>();
+    // 关联的菜单
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "role_id")
+    private Set<AdminRoleMenu> roleMenus = new HashSet<>();
 
-    // 关联的权限 Code（不持久化，仅用于查询时组装）
-    @Transient
-    private Set<String> permissionCodes = new HashSet<>();
+    // 关联的权限
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "role_id")
+    private Set<AdminRolePermission> rolePermissions = new HashSet<>();
 
     /**
      * 创建角色。
@@ -95,11 +98,23 @@ public class AdminRole extends SoftDeletable {
     }
 
     public Set<Long> getMenuIds() {
-        return menuIds;
+        return roleMenus.stream()
+                .map(AdminRoleMenu::getMenuId)
+                .collect(Collectors.toSet());
     }
 
     public Set<String> getPermissionCodes() {
-        return permissionCodes;
+        return rolePermissions.stream()
+                .map(AdminRolePermission::getPermissionCode)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<AdminRoleMenu> getRoleMenus() {
+        return roleMenus;
+    }
+
+    public Set<AdminRolePermission> getRolePermissions() {
+        return rolePermissions;
     }
 
     // ========== Setter ==========
@@ -120,14 +135,6 @@ public class AdminRole extends SoftDeletable {
         this.sortOrder = sortOrder;
     }
 
-    public void setMenuIds(Set<Long> menuIds) {
-        this.menuIds = menuIds != null ? menuIds : new HashSet<>();
-    }
-
-    public void setPermissionCodes(Set<String> permissionCodes) {
-        this.permissionCodes = permissionCodes != null ? permissionCodes : new HashSet<>();
-    }
-
     // ========== 业务行为 ==========
 
     /**
@@ -135,5 +142,33 @@ public class AdminRole extends SoftDeletable {
      */
     public boolean isSuperAdmin() {
         return "SUPER_ADMIN".equals(this.code);
+    }
+
+    /**
+     * 添加菜单关联。
+     */
+    public void addMenu(Long menuId) {
+        roleMenus.add(new AdminRoleMenu(this.id, menuId));
+    }
+
+    /**
+     * 清除所有菜单关联。
+     */
+    public void clearMenus() {
+        roleMenus.clear();
+    }
+
+    /**
+     * 添加权限关联。
+     */
+    public void addPermission(String permissionCode, String permissionName) {
+        rolePermissions.add(new AdminRolePermission(this.id, permissionCode, permissionName));
+    }
+
+    /**
+     * 清除所有权限关联。
+     */
+    public void clearPermissions() {
+        rolePermissions.clear();
     }
 }

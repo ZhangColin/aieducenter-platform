@@ -22,13 +22,6 @@ class AdminRolePermissionTest {
     }
 
     @Test
-    void given_null_roleId_when_create_then_throw_exception() {
-        // When & Then
-        assertThatThrownBy(() -> new AdminRolePermission(null, "admin:user:read", "用户管理-查看"))
-                .isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
     void given_null_permissionCode_when_create_then_throw_exception() {
         // When & Then
         assertThatThrownBy(() -> new AdminRolePermission(1L, null, "用户管理-查看"))
@@ -42,5 +35,16 @@ class AdminRolePermissionTest {
 
         // Then
         assertThat(rp.getPermissionName()).isNull();
+    }
+
+    @Test
+    void given_null_roleId_when_create_then_success() {
+        // When
+        AdminRolePermission rp = new AdminRolePermission(null, "admin:user:read", "用户管理-查看");
+
+        // Then
+        assertThat(rp.getRoleId()).isNull();
+        assertThat(rp.getPermissionCode()).isEqualTo("admin:user:read");
+        assertThat(rp.getPermissionName()).isEqualTo("用户管理-查看");
     }
 }
