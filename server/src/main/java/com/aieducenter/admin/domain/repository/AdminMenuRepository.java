@@ -15,25 +15,33 @@ import com.cartisan.core.stereotype.PortType;
 @Port(PortType.REPOSITORY)
 public interface AdminMenuRepository {
 
-    Optional<AdminMenu> findById(Long id);
-
-    List<AdminMenu> findAll();
-
-    List<AdminMenu> findByParentId(Long parentId);
-
-    List<AdminMenu> findByRoleId(Long roleId);
-
     /**
-     * 查询所有菜单并组装成树形结构。
+     * 保存菜单。
      */
-    List<AdminMenu> findTree();
-
     AdminMenu save(AdminMenu menu);
 
-    void delete(AdminMenu menu);
+    /**
+     * 根据 ID 查询菜单。
+     */
+    Optional<AdminMenu> findById(Long id);
+
+    /**
+     * 查询所有菜单（按排序字段排序）。
+     */
+    List<AdminMenu> findAll();
+
+    /**
+     * 根据父 ID 查询菜单。
+     */
+    List<AdminMenu> findByParentId(Long parentId);
 
     /**
      * 检查菜单是否有子菜单。
      */
-    boolean hasChildren(Long menuId);
+    boolean existsByParentId(Long parentId);
+
+    /**
+     * 删除菜单。
+     */
+    void delete(AdminMenu menu);
 }

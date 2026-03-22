@@ -62,7 +62,7 @@ public class AdminPermissionService {
      */
     public List<AdminMenu> getMenus(Long adminId) {
         if (hasSuperAdminRole(adminId)) {
-            return adminMenuRepository.findTree();
+            return buildMenuTree(null);  // null 表示获取所有菜单
         }
 
         List<AdminRole> roles = adminRoleRepository.findByAdminId(adminId);
@@ -73,20 +73,15 @@ public class AdminPermissionService {
         // 收集所有菜单 ID
         List<Long> menuIds = new ArrayList<>();
         for (AdminRole role : roles) {
-            for (AdminMenu menu : adminMenuRepository.findByRoleId(role.getId())) {
-                menuIds.add(menu.getId());
-            }
+            menuIds.addAll(role.getMenuIds());
+        }
+
+        if (menuIds.isEmpty()) {
+            return List.of();
         }
 
         // 查询菜单并组装树形结构
         return buildMenuTree(menuIds);
-    }
-
-    /**
-     * 判断是否为超级管理员。
-     */
-    public boolean hasSuperAdminRole(Long adminId) {
-        return adminUserRepository.hasRole(adminId, "SUPER_ADMIN");
     }
 
     /**
@@ -98,9 +93,9 @@ public class AdminPermissionService {
         Map<Long, AdminMenu> menuMap = new HashMap<>();
         List<AdminMenu> roots = new ArrayList<>();
 
-        // 构建映射
+        // 构建映射（如果 menuIds 为 null，则包含所有菜单）
         for (AdminMenu menu : allMenus) {
-            if (menuIds.contains(menu.getId())) {
+            if (menuIds == null || menuIds.contains(menu.getId())) {
                 menuMap.put(menu.getId(), menu);
             }
         }
@@ -118,5 +113,12 @@ public class AdminPermissionService {
         }
 
         return roots;
+    }
+
+    /**
+     * 判断是否为超级管理员。
+     */
+    public boolean hasSuperAdminRole(Long adminId) {
+        return adminUserRepository.hasRole(adminId, "SUPER_ADMIN");
     }
 }

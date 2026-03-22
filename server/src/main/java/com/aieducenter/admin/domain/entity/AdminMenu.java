@@ -3,6 +3,7 @@ package com.aieducenter.admin.domain.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.data.jpa.domain.SoftDeletable;
 
 import jakarta.persistence.*;
@@ -20,7 +21,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "admin_menus")
-public class AdminMenu extends SoftDeletable {
+public class AdminMenu extends SoftDeletable implements AggregateRoot<AdminMenu> {
 
     public static final int MAX_DEPTH = 3;
 

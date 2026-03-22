@@ -1,6 +1,9 @@
 package com.aieducenter.admin.application;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -28,7 +31,28 @@ public class MenuManagementAppService {
      * 获取菜单树（3层）。
      */
     public List<AdminMenu> findTree() {
-        return menuRepository.findTree();
+        List<AdminMenu> allMenus = menuRepository.findAll();
+
+        // 组装树形结构
+        Map<Long, AdminMenu> menuMap = new HashMap<>();
+        List<AdminMenu> rootMenus = new ArrayList<>();
+
+        for (AdminMenu menu : allMenus) {
+            menuMap.put(menu.getId(), menu);
+        }
+
+        for (AdminMenu menu : allMenus) {
+            if (menu.getParentId() == null) {
+                rootMenus.add(menu);
+            } else {
+                AdminMenu parent = menuMap.get(menu.getParentId());
+                if (parent != null) {
+                    parent.addChild(menu);
+                }
+            }
+        }
+
+        return rootMenus;
     }
 
     /**
@@ -111,11 +135,18 @@ public class MenuManagementAppService {
         AdminMenu menu = findById(id);
 
         // 有子菜单的不能删除
-        if (menuRepository.hasChildren(id)) {
+        if (hasChildren(id)) {
             throw new DomainException(AdminError.MENU_HAS_CHILDREN);
         }
 
         menuRepository.delete(menu);
+    }
+
+    /**
+     * 检查菜单是否有子菜单。
+     */
+    private boolean hasChildren(Long menuId) {
+        return menuRepository.existsByParentId(menuId);
     }
 
     /**
@@ -163,7 +194,7 @@ public class MenuManagementAppService {
      * 获取菜单树（DTO）。
      */
     public List<MenuDto> findTreeAsDto() {
-        List<AdminMenu> menus = menuRepository.findTree();
+        List<AdminMenu> menus = findTree();
         return menus.stream()
                 .map(menu -> MenuDto.fromTree(menu, menus))
                 .collect(Collectors.toList());
