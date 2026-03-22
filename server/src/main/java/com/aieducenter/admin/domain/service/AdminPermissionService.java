@@ -47,6 +47,16 @@ public class AdminPermissionService {
     }
 
     /**
+     * 获取管理员的角色 ID 列表。
+     */
+    public List<Long> getRoleIds(Long adminId) {
+        return em.createQuery(
+                "SELECT aur.roleId FROM AdminUserRole aur WHERE aur.adminId = :adminId", Long.class)
+                .setParameter("adminId", adminId)
+                .getResultList();
+    }
+
+    /**
      * 获取管理员的权限编码列表。
      * <p>超级管理员返回空列表，由拦截器直接放行</p>
      */

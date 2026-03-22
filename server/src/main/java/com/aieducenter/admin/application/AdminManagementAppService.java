@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.EntityManager;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +17,7 @@ import com.aieducenter.admin.domain.entity.AdminRole;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
+import com.aieducenter.admin.domain.service.AdminPermissionService;
 
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
@@ -35,15 +34,15 @@ public class AdminManagementAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
-    private final EntityManager em;
+    private final AdminPermissionService adminPermissionService;
 
     public AdminManagementAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
-            EntityManager em) {
+            AdminPermissionService adminPermissionService) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
-        this.em = em;
+        this.adminPermissionService = adminPermissionService;
     }
 
     /**
@@ -81,11 +80,8 @@ public class AdminManagementAppService {
         Admin admin = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        // 通过跨表查询获取角色 ID，再查询角色
-        List<Long> roleIds = em.createQuery(
-                "SELECT aur.roleId FROM AdminUserRole aur WHERE aur.adminId = :adminId", Long.class)
-                .setParameter("adminId", id)
-                .getResultList();
+        // 通过领域服务获取角色 ID，再查询角色
+        List<Long> roleIds = adminPermissionService.getRoleIds(id);
 
         List<RoleDto> roles = roleIds.stream()
                 .map(roleId -> adminRoleRepository.findById(roleId))
