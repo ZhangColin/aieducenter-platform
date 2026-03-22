@@ -12,7 +12,7 @@ import com.aieducenter.admin.application.dto.query.LoginResult;
 import com.aieducenter.admin.application.dto.query.MenuDto;
 import com.aieducenter.admin.application.dto.query.PermissionDto;
 import com.aieducenter.admin.application.dto.query.RoleDto;
-import com.aieducenter.admin.domain.aggregate.Admin;
+import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.domain.service.AdminPermissionService;
@@ -55,37 +55,37 @@ public class AdminAuthAppService {
     @Transactional(readOnly = true)
     public LoginResult login(AdminLoginCommand command) {
         // 查询管理员
-        Admin admin = adminUserRepository.findByUsername(command.username())
+        AdminUser adminUser = adminUserRepository.findByUsername(command.username())
                 .orElseThrow(() -> new ApplicationException(AdminError.LOGIN_FAILED));
 
         // 校验状态
-        if (!admin.isActive()) {
+        if (!adminUser.isActive()) {
             throw new ApplicationException(AdminError.ADMIN_DISABLED);
         }
 
         // 校验密码
-        if (!admin.matchesPassword(command.password())) {
+        if (!adminUser.matchesPassword(command.password())) {
             throw new ApplicationException(AdminError.LOGIN_FAILED);
         }
 
         // 登录 Sa-Token（使用 admin loginType 隔离会话）
         long timeout = command.rememberMe() ? REMEMBER_TIMEOUT : DEFAULT_TIMEOUT;
-        adminStpLogic().login(admin.getId(), timeout);
+        adminStpLogic().login(adminUser.getId(), timeout);
 
         // 获取 Token 信息
         String token = adminStpLogic().getTokenValue();
         Instant expireTime = Instant.now().plusSeconds(timeout);
 
         // 获取角色、菜单、权限
-        List<String> roleCodes = adminPermissionService.getRoles(admin.getId());
-        List<String> permissionCodes = adminPermissionService.getPermissions(admin.getId());
-        List<MenuDto> menus = adminPermissionService.getMenus(admin.getId())
+        List<String> roleCodes = adminPermissionService.getRoles(adminUser.getId());
+        List<String> permissionCodes = adminPermissionService.getPermissions(adminUser.getId());
+        List<MenuDto> menus = adminPermissionService.getMenus(adminUser.getId())
                 .stream()
                 .map(MenuDto::from)
                 .toList();
 
         // 构建 DTO
-        AdminDto adminDto = AdminDto.from(admin, List.of());
+        AdminDto adminDto = AdminDto.from(adminUser, List.of());
         List<RoleDto> roles = roleCodes.stream()
                 .map(code -> new RoleDto(null, null, code, null, null, null, null))
                 .toList();
@@ -107,20 +107,20 @@ public class AdminAuthAppService {
     public LoginResult getCurrentAdmin() {
         Long adminId = adminStpLogic().getLoginIdAsLong();
 
-        Admin admin = adminUserRepository.findById(adminId)
+        AdminUser adminUser = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
         String token = adminStpLogic().getTokenValue();
         Instant expireTime = Instant.ofEpochSecond(adminStpLogic().getTokenTimeout());
 
-        List<String> roleCodes = adminPermissionService.getRoles(admin.getId());
-        List<String> permissionCodes = adminPermissionService.getPermissions(admin.getId());
-        List<MenuDto> menus = adminPermissionService.getMenus(admin.getId())
+        List<String> roleCodes = adminPermissionService.getRoles(adminUser.getId());
+        List<String> permissionCodes = adminPermissionService.getPermissions(adminUser.getId());
+        List<MenuDto> menus = adminPermissionService.getMenus(adminUser.getId())
                 .stream()
                 .map(MenuDto::from)
                 .toList();
 
-        AdminDto adminDto = AdminDto.from(admin, List.of());
+        AdminDto adminDto = AdminDto.from(adminUser, List.of());
         List<RoleDto> roles = roleCodes.stream()
                 .map(code -> new RoleDto(null, null, code, null, null, null, null))
                 .toList();
@@ -134,10 +134,10 @@ public class AdminAuthAppService {
     @Transactional
     public void updatePassword(String oldPassword, String newPassword) {
         Long adminId = adminStpLogic().getLoginIdAsLong();
-        Admin admin = adminUserRepository.findById(adminId)
+        AdminUser adminUser = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        admin.updatePassword(oldPassword, newPassword);
-        adminUserRepository.save(admin);
+        adminUser.updatePassword(oldPassword, newPassword);
+        adminUserRepository.save(adminUser);
     }
 }

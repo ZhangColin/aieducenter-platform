@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.aieducenter.admin.domain.entity.AdminRole;
+import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminError;

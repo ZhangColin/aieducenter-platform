@@ -3,52 +3,21 @@ package com.aieducenter.admin.domain.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.aieducenter.admin.domain.aggregate.Admin;
-import com.cartisan.core.stereotype.Port;
-import com.cartisan.core.stereotype.PortType;
+import com.aieducenter.admin.domain.aggregate.AdminUser;
+import com.cartisan.data.jpa.repository.BaseRepository;
 
 /**
  * 管理员仓储接口。
  *
  * @since 0.1.0
  */
-@Port(PortType.REPOSITORY)
-public interface AdminUserRepository {
+public interface AdminUserRepository extends BaseRepository<AdminUser, Long> {
 
-    /**
-     * 保存管理员。
-     */
-    Admin save(Admin admin);
+    Optional<AdminUser> findByUsername(String username);
 
-    /**
-     * 根据 ID 查询管理员。
-     */
-    Optional<Admin> findById(Long id);
-
-    /**
-     * 根据用户名查询管理员。
-     */
-    Optional<Admin> findByUsername(String username);
-
-    /**
-     * 检查用户名是否存在。
-     */
     boolean existsByUsername(String username);
 
-    /**
-     * 查询所有管理员（按创建时间倒序）。
-     */
-    List<Admin> findAll();
-
-    /**
-     * 删除管理员。
-     */
-    void delete(Admin admin);
-
-    /**
-     * 查询管理员总数。
-     */
-    long count();
+    List<AdminUser> findAll();
 
     /**
      * 查询管理员是否拥有指定角色。

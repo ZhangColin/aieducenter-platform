@@ -12,8 +12,8 @@ import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
 import com.aieducenter.admin.application.dto.query.AdminDto;
 import com.aieducenter.admin.application.dto.query.RoleDto;
-import com.aieducenter.admin.domain.aggregate.Admin;
-import com.aieducenter.admin.domain.entity.AdminRole;
+import com.aieducenter.admin.domain.aggregate.AdminUser;
+import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
@@ -77,7 +77,7 @@ public class AdminManagementAppService {
      */
     @Transactional(readOnly = true)
     public AdminDto findById(Long id) {
-        Admin admin = adminUserRepository.findById(id)
+        AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
         // 通过领域服务获取角色 ID，再查询角色
@@ -90,7 +90,7 @@ public class AdminManagementAppService {
                 .map(RoleDto::from)
                 .collect(Collectors.toList());
 
-        return AdminDto.from(admin, roles);
+        return AdminDto.from(adminUser, roles);
     }
 
     /**
@@ -103,15 +103,15 @@ public class AdminManagementAppService {
                 AdminError.USERNAME_ALREADY_EXISTS
         );
 
-        Admin admin = new Admin(command.username(), command.password(), command.nickname());
+        AdminUser adminUser = new AdminUser(command.username(), command.password(), command.nickname());
         if (command.email() != null) {
-            admin.updateEmail(command.email());
+            adminUser.updateEmail(command.email());
         }
         if (command.phone() != null) {
-            admin.updatePhone(command.phone());
+            adminUser.updatePhone(command.phone());
         }
 
-        Admin saved = adminUserRepository.save(admin);
+        AdminUser saved = adminUserRepository.save(adminUser);
         return saved.getId();
     }
 
@@ -120,23 +120,23 @@ public class AdminManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateAdminCommand command) {
-        Admin admin = adminUserRepository.findById(id)
+        AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
         if (command.nickname() != null) {
-            admin.updateNickname(command.nickname());
+            adminUser.updateNickname(command.nickname());
         }
         if (command.email() != null) {
-            admin.updateEmail(command.email());
+            adminUser.updateEmail(command.email());
         }
         if (command.phone() != null) {
-            admin.updatePhone(command.phone());
+            adminUser.updatePhone(command.phone());
         }
         if (command.avatar() != null) {
-            admin.updateAvatar(command.avatar());
+            adminUser.updateAvatar(command.avatar());
         }
 
-        adminUserRepository.save(admin);
+        adminUserRepository.save(adminUser);
     }
 
     /**
@@ -144,11 +144,11 @@ public class AdminManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        Admin admin = adminUserRepository.findById(id)
+        AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        admin.checkCanBeDeleted();
-        adminUserRepository.delete(admin);
+        adminUser.checkCanBeDeleted();
+        adminUserRepository.delete(adminUser);
     }
 
     /**
@@ -156,16 +156,16 @@ public class AdminManagementAppService {
      */
     @Transactional
     public void updateStatus(Long id, String status) {
-        Admin admin = adminUserRepository.findById(id)
+        AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
         if ("ACTIVE".equals(status)) {
-            admin.enable();
+            adminUser.enable();
         } else if ("DISABLED".equals(status)) {
-            admin.disable();
+            adminUser.disable();
         }
 
-        adminUserRepository.save(admin);
+        adminUserRepository.save(adminUser);
     }
 
     /**
@@ -173,7 +173,7 @@ public class AdminManagementAppService {
      */
     @Transactional
     public void assignRoles(Long id, AssignRolesCommand command) {
-        Admin admin = adminUserRepository.findById(id)
+        AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
         // 验证所有角色 ID 存在
@@ -183,13 +183,13 @@ public class AdminManagementAppService {
         }
 
         // 清除现有角色关联
-        admin.clearRoles();
+        adminUser.clearRoles();
 
         // 添加新角色关联
         for (Long roleId : command.roleIds()) {
-            admin.addRole(roleId);
+            adminUser.addRole(roleId);
         }
 
-        adminUserRepository.save(admin);
+        adminUserRepository.save(adminUser);
     }
 }

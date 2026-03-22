@@ -26,7 +26,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
  *
  * <p>已知例外：</p>
  * <ul>
- *   <li>{@code User}、{@code Admin} 直接使用 {@code BCryptPasswordEncoder}（SKILL.md DDD-005 明确许可）</li>
+ *   <li>{@code User}、{@code AdminUser} 直接使用 {@code BCryptPasswordEncoder}（SKILL.md DDD-005 明确许可）</li>
+ *   <li>领域 Repository 接口继承 {@code BaseRepository}（Spring Data JPA）</li>
  * </ul>
  */
 @AnalyzeClasses(packages = "com.aieducenter", importOptions = ImportOption.DoNotIncludeTests.class)
@@ -44,16 +45,24 @@ public class ArchitectureTest {
     /**
      * 领域层不依赖 Spring。
      *
-     * <p>例外：User、Admin 聚合根使用 BCryptPasswordEncoder（SKILL.md DDD-005）。</p>
+     * <p>例外：
+     * <ul>
+     *   <li>User、AdminUser 聚合根使用 BCryptPasswordEncoder（SKILL.md DDD-005）</li>
+     *   <li>领域 Repository 接口继承 BaseRepository（Spring Data JPA）</li>
+     * </ul>
      */
     @ArchTest
     static final ArchRule domainShouldNotDependOnSpring =
         noClasses()
             .that()
             .resideInAPackage("..domain..")
-            .and(DescribedPredicate.not(simpleName("User")).and(DescribedPredicate.not(simpleName("Admin"))))
+            .and(DescribedPredicate.not(simpleName("User"))
+                .and(DescribedPredicate.not(simpleName("AdminUser")))
+                .and(DescribedPredicate.not(simpleName("AdminRoleRepository")))
+                .and(DescribedPredicate.not(simpleName("AdminMenuRepository")))
+                .and(DescribedPredicate.not(simpleName("AdminUserRepository"))))
             .should().dependOnClassesThat().resideInAPackage("org.springframework..")
-            .because("Domain layer should be framework-agnostic (exception: User, Admin use BCryptPasswordEncoder per SKILL.md DDD-005)");
+            .because("Domain layer should be framework-agnostic (exceptions: User, AdminUser use BCryptPasswordEncoder; Repository interfaces extend BaseRepository)");
 
     @ArchTest
     static final ArchRule controllersShouldOnlyDependOnApplication =

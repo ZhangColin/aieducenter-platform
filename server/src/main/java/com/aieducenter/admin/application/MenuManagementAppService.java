@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.aieducenter.admin.domain.entity.AdminMenu;
+import com.aieducenter.admin.domain.aggregate.AdminMenu;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.application.dto.query.MenuDto;

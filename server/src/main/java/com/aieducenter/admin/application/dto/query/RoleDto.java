@@ -2,7 +2,7 @@ package com.aieducenter.admin.application.dto.query;
 
 import java.util.Set;
 
-import com.aieducenter.admin.domain.entity.AdminRole;
+import com.aieducenter.admin.domain.aggregate.AdminRole;
 
 /**
  * 角色 DTO。

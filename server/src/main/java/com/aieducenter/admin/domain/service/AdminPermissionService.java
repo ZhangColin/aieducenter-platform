@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityManager;
 
-import com.aieducenter.admin.domain.entity.AdminMenu;
-import com.aieducenter.admin.domain.entity.AdminRole;
+import com.aieducenter.admin.domain.aggregate.AdminMenu;
+import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
@@ -66,10 +66,9 @@ public class AdminPermissionService {
         }
         // 通过跨表查询获取权限编码
         return em.createQuery(
-                "SELECT DISTINCT p.code FROM AdminPermission p " +
-                "INNER JOIN AdminRolePermission arp ON p.id = arp.permissionId " +
+                "SELECT DISTINCT arp.permissionCode FROM AdminRolePermission arp " +
                 "INNER JOIN AdminUserRole aur ON arp.roleId = aur.roleId " +
-                "WHERE aur.adminId = :adminId AND p.deleted = false", String.class)
+                "WHERE aur.adminId = :adminId", String.class)
                 .setParameter("adminId", adminId)
                 .getResultList();
     }

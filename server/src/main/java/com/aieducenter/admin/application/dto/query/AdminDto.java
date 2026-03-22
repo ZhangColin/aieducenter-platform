@@ -21,18 +21,18 @@ public record AdminDto(
         LocalDateTime updatedAt,
         List<RoleDto> roles
 ) {
-    public static AdminDto from(com.aieducenter.admin.domain.aggregate.Admin admin, List<RoleDto> roles) {
+    public static AdminDto from(com.aieducenter.admin.domain.aggregate.AdminUser adminUser, List<RoleDto> roles) {
         return new AdminDto(
-                admin.getId(),
-                admin.getUsername(),
-                admin.getNickname(),
-                admin.getEmail().orElse(null),
-                admin.getPhone().orElse(null),
-                admin.getAvatar().orElse(null),
-                admin.getStatus().name(),
-                admin.isSystem(),
-                admin.getCreatedAt(),   // 继承自 Auditable
-                admin.getUpdatedAt(),   // 继承自 Auditable
+                adminUser.getId(),
+                adminUser.getUsername(),
+                adminUser.getNickname(),
+                adminUser.getEmail().orElse(null),
+                adminUser.getPhone().orElse(null),
+                adminUser.getAvatar().orElse(null),
+                adminUser.getStatus().name(),
+                adminUser.isSystem(),
+                adminUser.getCreatedAt(),   // 继承自 Auditable
+                adminUser.getUpdatedAt(),   // 继承自 Auditable
                 roles
         );
     }

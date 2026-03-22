@@ -1,4 +1,4 @@
-package com.aieducenter.admin.domain.entity;
+package com.aieducenter.admin.domain.aggregate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import com.cartisan.data.jpa.domain.SoftDeletable;
 import jakarta.persistence.*;
 
 /**
- * AdminMenu 实体。
+ * AdminMenu 聚合根。
  *
  * <h3>职责</h3>
  * <ul>

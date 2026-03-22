@@ -1,4 +1,4 @@
-package com.aieducenter.admin.domain.entity;
+package com.aieducenter.admin.domain.aggregate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

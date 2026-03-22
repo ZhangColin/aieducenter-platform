@@ -1,4 +1,4 @@
-package com.aieducenter.admin.domain.entity;
+package com.aieducenter.admin.domain.aggregate;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,7 +10,7 @@ import com.cartisan.data.jpa.domain.SoftDeletable;
 import jakarta.persistence.*;
 
 /**
- * AdminRole 实体。
+ * AdminRole 聚合根。
  *
  * <h3>职责</h3>
  * <ul>
@@ -43,12 +43,12 @@ public class AdminRole extends SoftDeletable implements AggregateRoot<AdminRole>
     // 关联的菜单
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "role_id")
-    private Set<AdminRoleMenu> roleMenus = new HashSet<>();
+    private Set<com.aieducenter.admin.domain.entity.AdminRoleMenu> roleMenus = new HashSet<>();
 
     // 关联的权限
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "role_id")
-    private Set<AdminRolePermission> rolePermissions = new HashSet<>();
+    private Set<com.aieducenter.admin.domain.entity.AdminRolePermission> rolePermissions = new HashSet<>();
 
     /**
      * 创建角色。
@@ -100,21 +100,21 @@ public class AdminRole extends SoftDeletable implements AggregateRoot<AdminRole>
 
     public Set<Long> getMenuIds() {
         return roleMenus.stream()
-                .map(AdminRoleMenu::getMenuId)
+                .map(com.aieducenter.admin.domain.entity.AdminRoleMenu::getMenuId)
                 .collect(Collectors.toSet());
     }
 
     public Set<String> getPermissionCodes() {
         return rolePermissions.stream()
-                .map(AdminRolePermission::getPermissionCode)
+                .map(com.aieducenter.admin.domain.entity.AdminRolePermission::getPermissionCode)
                 .collect(Collectors.toSet());
     }
 
-    public Set<AdminRoleMenu> getRoleMenus() {
+    public Set<com.aieducenter.admin.domain.entity.AdminRoleMenu> getRoleMenus() {
         return roleMenus;
     }
 
-    public Set<AdminRolePermission> getRolePermissions() {
+    public Set<com.aieducenter.admin.domain.entity.AdminRolePermission> getRolePermissions() {
         return rolePermissions;
     }
 
@@ -149,7 +149,7 @@ public class AdminRole extends SoftDeletable implements AggregateRoot<AdminRole>
      * 添加菜单关联。
      */
     public void addMenu(Long menuId) {
-        roleMenus.add(new AdminRoleMenu(this.id, menuId));
+        roleMenus.add(new com.aieducenter.admin.domain.entity.AdminRoleMenu(this.id, menuId));
     }
 
     /**
@@ -163,7 +163,7 @@ public class AdminRole extends SoftDeletable implements AggregateRoot<AdminRole>
      * 添加权限关联。
      */
     public void addPermission(String permissionCode, String permissionName) {
-        rolePermissions.add(new AdminRolePermission(this.id, permissionCode, permissionName));
+        rolePermissions.add(new com.aieducenter.admin.domain.entity.AdminRolePermission(this.id, permissionCode, permissionName));
     }
 
     /**

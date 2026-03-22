@@ -3,27 +3,19 @@ package com.aieducenter.admin.domain.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.aieducenter.admin.domain.entity.AdminRole;
-import com.cartisan.core.stereotype.Port;
-import com.cartisan.core.stereotype.PortType;
+import com.aieducenter.admin.domain.aggregate.AdminRole;
+import com.cartisan.data.jpa.repository.BaseRepository;
 
 /**
  * 角色仓储接口。
  *
  * @since 0.1.0
  */
-@Port(PortType.REPOSITORY)
-public interface AdminRoleRepository {
-
-    Optional<AdminRole> findById(Long id);
+public interface AdminRoleRepository extends BaseRepository<AdminRole, Long> {
 
     Optional<AdminRole> findByCode(String code);
 
     List<AdminRole> findAll();
-
-    AdminRole save(AdminRole role);
-
-    void delete(AdminRole role);
 
     /**
      * 检查角色是否被管理员使用。

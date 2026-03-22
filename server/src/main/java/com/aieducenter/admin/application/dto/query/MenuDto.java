@@ -16,7 +16,7 @@ public record MenuDto(
         Integer sortOrder,
         List<MenuDto> children
 ) {
-    public static MenuDto from(com.aieducenter.admin.domain.entity.AdminMenu menu) {
+    public static MenuDto from(com.aieducenter.admin.domain.aggregate.AdminMenu menu) {
         return new MenuDto(
                 menu.getId(),
                 menu.getName(),
@@ -32,7 +32,7 @@ public record MenuDto(
      * 从所有菜单中构建树形结构的 DTO。
      * 用于 findTree() 方法返回的菜单列表，其中每个根菜单已经包含了其子菜单。
      */
-    public static MenuDto fromTree(com.aieducenter.admin.domain.entity.AdminMenu menu, List<com.aieducenter.admin.domain.entity.AdminMenu> allMenus) {
+    public static MenuDto fromTree(com.aieducenter.admin.domain.aggregate.AdminMenu menu, List<com.aieducenter.admin.domain.aggregate.AdminMenu> allMenus) {
         return new MenuDto(
                 menu.getId(),
                 menu.getName(),

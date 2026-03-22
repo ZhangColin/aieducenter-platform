@@ -17,7 +17,7 @@ import com.aieducenter.admin.domain.error.AdminError;
 import jakarta.persistence.*;
 
 /**
- * Admin 聚合根。
+ * AdminUser 聚合根。
  *
  * <h3>职责</h3>
  * <ul>
@@ -37,7 +37,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "admin_users")
-public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
+public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser> {
 
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
 
@@ -92,7 +92,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
      * @param plainPassword 明文密码
      * @param nickname 昵称
      */
-    public Admin(String username, String plainPassword, String nickname) {
+    public AdminUser(String username, String plainPassword, String nickname) {
         validateUsername(username);
         validatePasswordStrength(plainPassword);
         this.username = username;
@@ -104,7 +104,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
     /**
      * JPA 默认构造函数。
      */
-    protected Admin() {
+    protected AdminUser() {
     }
 
     /**
