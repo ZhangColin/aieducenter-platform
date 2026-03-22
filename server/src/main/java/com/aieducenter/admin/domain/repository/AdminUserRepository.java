@@ -64,9 +64,4 @@ public interface AdminUserRepository {
      * 查询管理员是否拥有指定角色。
      */
     boolean hasRole(Long adminId, String roleCode);
-
-    /**
-     * 分配角色给管理员。
-     */
-    void assignRoles(Long adminId, List<Long> roleIds);
 }
