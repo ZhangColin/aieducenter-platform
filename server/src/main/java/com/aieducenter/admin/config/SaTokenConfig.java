@@ -1,13 +1,13 @@
 package com.aieducenter.admin.config;
 
-import cn.dev33.satoken.stp.StpInterface;
-
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.aieducenter.admin.domain.service.AdminPermissionService;
+import cn.dev33.satoken.stp.StpInterface;
+
+import com.aieducenter.admin.application.AdminPermissionAppService;
 
 /**
  * Sa-Token 配置。
@@ -21,10 +21,10 @@ public class SaTokenConfig {
 
     private static final String ADMIN_LOGIN_TYPE = "admin";
 
-    private final AdminPermissionService adminPermissionService;
+    private final AdminPermissionAppService adminPermissionAppService;
 
-    public SaTokenConfig(AdminPermissionService adminPermissionService) {
-        this.adminPermissionService = adminPermissionService;
+    public SaTokenConfig(AdminPermissionAppService adminPermissionAppService) {
+        this.adminPermissionAppService = adminPermissionAppService;
     }
 
     /**
@@ -37,7 +37,7 @@ public class SaTokenConfig {
             @Override
             public List<String> getPermissionList(Object loginId, String loginType) {
                 if (ADMIN_LOGIN_TYPE.equals(loginType)) {
-                    return adminPermissionService.getPermissions((Long) loginId);
+                    return adminPermissionAppService.getPermissions((Long) loginId);
                 }
                 // TODO: 后续实现租户权限
                 return List.of();
@@ -46,7 +46,7 @@ public class SaTokenConfig {
             @Override
             public List<String> getRoleList(Object loginId, String loginType) {
                 if (ADMIN_LOGIN_TYPE.equals(loginType)) {
-                    return adminPermissionService.getRoles((Long) loginId);
+                    return adminPermissionAppService.getRoleCodes((Long) loginId);
                 }
                 // TODO: 后续实现租户角色
                 return List.of();

@@ -12,6 +12,8 @@
 - [项目结构说明](#二项目结构说明)
 - [开发流程与规范](#三开发流程与规范)
 - [后端开发指南](#四后端开发指南)
+  - [DDD 分层架构原则](#41-ddd-分层架构原则)
+  - [创建 REST 端点](#42-创建新的-rest-端点)
 - [前端开发指南](#五前端开发指南)
 - [API 客户端生成](#六api-客户端生成)
 - [测试与质量要求](#七测试与质量要求)
@@ -202,7 +204,237 @@ Phase 5: Review → 审查归档
 
 ## 四、后端开发指南
 
-### 4.1 创建新的 REST 端点
+### 4.1 DDD 分层架构原则
+
+本平台遵循严格的 DDD 六边形架构，以下是从实践中总结的核心原则。
+
+#### 4.1.1 聚合根设计（小聚合原则）
+
+**原则**：聚合根应保持小而专注，只包含核心业务逻辑和不变量保护。
+
+```java
+// ✅ 正确：聚合根在 aggregate 包中
+domain/aggregate/
+├── AdminUser.java       // 管理员聚合根
+├── AdminRole.java       // 角色聚合根
+└── AdminMenu.java       // 菜单聚合根
+
+// ✅ 正确：关联实体在 entity 包中
+domain/entity/
+├── AdminUserRole.java   // 管理员-角色关联
+├── AdminRoleMenu.java   // 角色-菜单关联
+└── AdminRolePermission.java // 角色-权限关联
+```
+
+**聚合根职责**：
+- 封装业务不变量（如用户名格式、密码强度）
+- 提供业务行为方法（如 `updatePassword()`, `disable()`）
+- 通过 JPA 关联管理内部实体
+
+```java
+@Entity
+public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser> {
+    // 通过 JPA 关联管理角色关系
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "admin_id")
+    private Set<AdminUserRole> userRoles = new HashSet<>();
+
+    // 提供领域方法操作关联
+    public void addRole(Long roleId) {
+        userRoles.add(new AdminUserRole(this.id, roleId));
+    }
+
+    public void clearRoles() {
+        userRoles.clear();
+    }
+
+    public Set<Long> getRoleIds() {
+        return userRoles.stream()
+                .map(AdminUserRole::getRoleId)
+                .collect(Collectors.toSet());
+    }
+}
+```
+
+#### 4.1.2 Repository 接口设计
+
+**原则**：Repository 接口直接继承 `BaseRepository`，不需要单独的 SpringDataJpaXxx 实现。
+
+```java
+// ✅ 正确：直接继承 BaseRepository
+public interface AdminUserRepository extends BaseRepository<AdminUser, Long> {
+    Optional<AdminUser> findByUsername(String username);
+    boolean existsByUsername(String username);
+    boolean hasRole(Long adminId, String roleCode);
+}
+
+// ❌ 错误：不需要单独的 Spring Data JPA 实现
+// public interface SpringDataJpaAdminUserRepository extends JpaRepository<...} { }
+// public class AdminUserRepositoryImpl implements AdminUserRepository { ... }
+```
+
+**理由**：
+- `BaseRepository` 已继承 `JpaRepository` 和 `JpaSpecificationExecutor`
+- Spring Data JPA 自动生成实现，无需手动编写
+- 简化代码结构，减少文件数量
+
+**批量查询支持**：
+```java
+// BaseRepository 提供 findAllById() 方法
+List<AdminRole> roles = adminRoleRepository.findAllById(roleIds);
+```
+
+#### 4.1.3 领域服务 vs 应用服务职责
+
+**领域服务（Domain Service）**：
+- 处理核心领域逻辑
+- **不应包含 SQL 查询**（这是反模式）
+- 不依赖外部框架（EntityManager、Template 等）
+
+```java
+// ❌ 错误：领域服务中写 SQL
+@DomainService
+public class AdminPermissionService {
+    private final EntityManager em;
+
+    public List<String> getPermissions(Long adminId) {
+        // 反模式：领域服务不应写 SQL
+        return em.createQuery("SELECT ...", String.class)
+                .getResultList();
+    }
+}
+```
+
+**应用服务（Application Service）**：
+- 编排用例流程
+- 聚合领域模型数据
+- **是对外的唯一出口**
+
+```java
+// ✅ 正确：应用服务使用领域模型聚合数据
+@Service
+public class AdminPermissionAppService {
+
+    public List<String> getPermissions(Long adminId) {
+        AdminUser adminUser = adminUserRepository.findById(adminId)
+                .orElseThrow();
+
+        // 通过领域模型获取角色 ID
+        Set<Long> roleIds = adminUser.getRoleIds();
+
+        // 批量查询角色
+        return adminRoleRepository.findAllById(roleIds).stream()
+                .flatMap(role -> role.getPermissionCodes().stream())
+                .distinct()
+                .toList();
+    }
+}
+```
+
+#### 4.1.4 分层架构依赖规则
+
+**核心原则**：领域层零外部依赖，只有 AppService 是对外出口。
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Controller / Config                                     │
+│  ↓ 只能调用 AppService                                   │
+├─────────────────────────────────────────────────────────┤
+│  Application Service (AppService)                       │
+│  ← 对外唯一出口                                           │
+│  ↓ 可以调用：Repository + Domain Model                   │
+├─────────────────────────────────────────────────────────┤
+│  Domain Layer                                           │
+│  - Aggregate Root                                       │
+│  - Entity                                               │
+│  - Repository Interface                                │
+│  ← 零外部依赖（不依赖 Spring、EntityManager 等）         │
+├─────────────────────────────────────────────────────────┤
+│  Infrastructure Layer (Spring Data JPA 自动实现)        │
+└─────────────────────────────────────────────────────────┘
+```
+
+**规则表**：
+
+| 调用方向 | 允许？ | 示例 |
+|---------|--------|------|
+| Controller → AppService | ✅ | `adminAuthAppService.login()` |
+| Controller → Repository | ❌ | 违反分层原则 |
+| Controller → Domain Service | ❌ | 违反分层原则 |
+| Config → AppService | ✅ | `SaTokenConfig` 调用 `AdminPermissionAppService` |
+| Config → Repository | ❌ | 违反分层原则 |
+| AppService → Repository | ✅ | `adminUserRepository.findById()` |
+| AppService → Domain Model | ✅ | `adminUser.getRoleIds()` |
+| Domain → Spring | ❌ | 领域层零外部依赖 |
+
+**示例：SaToken 集成**
+
+```java
+// ✅ 正确：Config 通过 AppService 获取权限
+@Configuration
+public class SaTokenConfig {
+    private final AdminPermissionAppService adminPermissionAppService;
+
+    @Bean
+    public StpInterface cartisanStpInterface() {
+        return new StpInterface() {
+            @Override
+            public List<String> getPermissionList(Object loginId, String loginType) {
+                return adminPermissionAppService.getPermissions((Long) loginId);
+            }
+        };
+    }
+}
+
+// ❌ 错误：Config 直接使用 Repository 或领域服务
+@Configuration
+public class SaTokenConfig {
+    private final AdminUserRepository adminUserRepository;  // 错误
+    private final EntityManager em;                          // 错误
+}
+```
+
+#### 4.1.5 C 端 / Q 端查询分离
+
+**C 端（Command）**：使用领域模型 + Repository
+
+```java
+// 写操作或简单查询：走领域模型
+@Service
+public class AdminManagementAppService {
+    @Transactional
+    public void assignRoles(Long adminId, List<Long> roleIds) {
+        AdminUser adminUser = adminUserRepository.findById(adminId).orElseThrow();
+        adminUser.clearRoles();
+        roleIds.forEach(adminUser::addRole);
+        adminUserRepository.save(adminUser);
+    }
+}
+```
+
+**Q 端（Query）**：复杂查询使用 jOOQ
+
+```java
+// 复杂查询：走 Q 端（当 Repository 满足不了或影响性能时）
+@Service
+public class AdminQueryService {
+    private final DSLContext ctx;  // jOOQ
+
+    public Page<AdminSummaryDto> search(AdminSearchCriteria criteria) {
+        // 使用 jOOQ 构建复杂查询
+        // ...
+    }
+}
+```
+
+**判断标准**：
+- 简单 CRUD：使用 Repository + 领域模型
+- 复杂多表查询、报表、聚合统计：考虑使用 jOOQ（Q 端）
+- 性能敏感场景：使用 jOOQ 优化查询
+
+---
+
+### 4.2 创建新的 REST 端点
 
 #### Step 1: 定义接口契约
 
@@ -374,7 +606,7 @@ class ConversationApplicationServiceTest {
 }
 ```
 
-### 4.2 使用 ApiResponse
+### 4.3 使用 ApiResponse
 
 ```java
 // 成功响应
@@ -389,7 +621,7 @@ return ApiResponse.ok(new PageResponse<>(items, total, page, size));
 
 **注意**：`ApiResponse.ok()` 返回的 message 是 "Success"（首字母大写）
 
-### 4.3 参数校验
+### 4.4 参数校验
 
 ```java
 @RestController
@@ -406,7 +638,7 @@ public class MyController {
 }
 ```
 
-### 4.4 依赖注入
+### 4.5 依赖注入
 
 ```java
 // 构造器注入（推荐）
@@ -426,7 +658,7 @@ public class MyService {
 }
 ```
 
-### 4.5 常用注解
+### 4.6 常用注解
 
 | 注解 | 用途 | 位置 |
 |------|------|------|

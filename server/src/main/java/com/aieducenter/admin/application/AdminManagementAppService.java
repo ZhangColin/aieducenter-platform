@@ -1,8 +1,6 @@
 package com.aieducenter.admin.application;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +15,6 @@ import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
-import com.aieducenter.admin.domain.service.AdminPermissionService;
 
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
@@ -34,15 +31,12 @@ public class AdminManagementAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
-    private final AdminPermissionService adminPermissionService;
 
     public AdminManagementAppService(
             AdminUserRepository adminUserRepository,
-            AdminRoleRepository adminRoleRepository,
-            AdminPermissionService adminPermissionService) {
+            AdminRoleRepository adminRoleRepository) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
-        this.adminPermissionService = adminPermissionService;
     }
 
     /**
@@ -80,15 +74,10 @@ public class AdminManagementAppService {
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        // 通过领域服务获取角色 ID，再查询角色
-        List<Long> roleIds = adminPermissionService.getRoleIds(id);
-
-        List<RoleDto> roles = roleIds.stream()
-                .map(roleId -> adminRoleRepository.findById(roleId))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+        // 通过领域模型获取角色 ID，再批量查询角色
+        List<RoleDto> roles = adminRoleRepository.findAllById(adminUser.getRoleIds()).stream()
                 .map(RoleDto::from)
-                .collect(Collectors.toList());
+                .toList();
 
         return AdminDto.from(adminUser, roles);
     }
