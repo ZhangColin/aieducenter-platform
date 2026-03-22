@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 
 import com.aieducenter.admin.domain.entity.AdminRole;
+import com.aieducenter.admin.domain.entity.AdminRoleMenu;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.cartisan.core.stereotype.Adapter;
 import com.cartisan.core.stereotype.PortType;
