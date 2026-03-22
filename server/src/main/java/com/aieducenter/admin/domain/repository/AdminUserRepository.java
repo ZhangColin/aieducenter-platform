@@ -15,17 +15,40 @@ import com.cartisan.core.stereotype.PortType;
 @Port(PortType.REPOSITORY)
 public interface AdminUserRepository {
 
-    Optional<Admin> findById(Long id);
-
-    Optional<Admin> findByUsername(String username);
-
-    boolean existsByUsername(String username);
-
-    List<Admin> findAll();
-
+    /**
+     * 保存管理员。
+     */
     Admin save(Admin admin);
 
+    /**
+     * 根据 ID 查询管理员。
+     */
+    Optional<Admin> findById(Long id);
+
+    /**
+     * 根据用户名查询管理员。
+     */
+    Optional<Admin> findByUsername(String username);
+
+    /**
+     * 检查用户名是否存在。
+     */
+    boolean existsByUsername(String username);
+
+    /**
+     * 查询所有管理员（按创建时间倒序）。
+     */
+    List<Admin> findAll();
+
+    /**
+     * 删除管理员。
+     */
     void delete(Admin admin);
+
+    /**
+     * 查询管理员总数。
+     */
+    long count();
 
     /**
      * 查询管理员的角色编码列表。
@@ -41,11 +64,6 @@ public interface AdminUserRepository {
      * 查询管理员是否拥有指定角色。
      */
     boolean hasRole(Long adminId, String roleCode);
-
-    /**
-     * 查询管理员总数。
-     */
-    long count();
 
     /**
      * 分配角色给管理员。
