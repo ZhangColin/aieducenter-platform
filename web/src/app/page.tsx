@@ -45,27 +45,20 @@ export default function HomePage() {
               <span className="material-symbols-outlined">light_mode</span>
             </button>
             {isAuthenticated ? (
-              <>
-                <span className="hidden sm:flex text-sm text-slate-600">
-                  欢迎, {user?.nickname || user?.userId}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="flex h-10 items-center justify-center rounded-lg border border-slate-200 px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                >
-                  退出
-                </button>
-              </>
+              <button
+                onClick={handleLogout}
+                className="hidden sm:flex h-10 items-center justify-center rounded-lg px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                退出
+              </button>
             ) : (
-              <>
-                <a href="/login" className="hidden sm:flex h-10 items-center justify-center rounded-lg px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
-                  登录
-                </a>
-                <a href="/login" className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-                  立即开始
-                </a>
-              </>
+              <a href="/login" className="hidden sm:flex h-10 items-center justify-center rounded-lg px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                登录
+              </a>
             )}
+            <a href="/login" className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+              立即开始
+            </a>
           </div>
         </div>
       </header>

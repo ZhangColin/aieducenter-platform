@@ -18,7 +18,7 @@ export interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
       user: null,
       isAuthenticated: false,
@@ -28,7 +28,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'aieducenter-auth',
-      partialize: (state) => ({ token: state.token }),  // 只持久化 token
+      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
 )

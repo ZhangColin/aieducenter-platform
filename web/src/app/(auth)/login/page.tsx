@@ -30,10 +30,17 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const [smsCode, setSmsCode] = useState('')
 
-  // 验证码相关
+  // 验证码相关（短信登录用）
+  const [showCaptcha, setShowCaptcha] = useState(false)
   const [captchaId, setCaptchaId] = useState('')
   const [captchaUrl, setCaptchaUrl] = useState('')
   const [captchaCode, setCaptchaCode] = useState('')
+  const [captchaError, setCaptchaError] = useState('')
+
+  // 验证码相关（密码登录用）
+  const [passwordCaptchaId, setPasswordCaptchaId] = useState('')
+  const [passwordCaptchaUrl, setPasswordCaptchaUrl] = useState('')
+  const [passwordCaptchaCode, setPasswordCaptchaCode] = useState('')
 
   // 短信倒计时
   const [countdown, setCountdown] = useState(0)
@@ -42,9 +49,9 @@ export default function LoginPage() {
   // 表单验证错误
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  // 初始化：获取验证码
+  // 初始化：获取密码登录的验证码
   useEffect(() => {
-    fetchCaptcha()
+    fetchPasswordCaptcha()
   }, [])
 
   // 倒计时逻辑
@@ -56,8 +63,19 @@ export default function LoginPage() {
     return () => clearInterval(timer)
   }, [countdown])
 
-  // 获取图形验证码
-  const fetchCaptcha = async () => {
+  // 获取图形验证码（密码登录用）
+  const fetchPasswordCaptcha = async () => {
+    const result = await getCaptcha()
+    if (result) {
+      setPasswordCaptchaId(result.captchaId)
+      setPasswordCaptchaUrl(result.image)
+      setPasswordCaptchaCode('')
+    }
+  }
+
+  // 获取图形验证码（短信登录用）
+  const fetchSmsCaptcha = async () => {
+    setCaptchaError('')
     const result = await getCaptcha()
     if (result) {
       setCaptchaId(result.captchaId)
@@ -72,14 +90,24 @@ export default function LoginPage() {
     if (!phone || phone.length !== 11) {
       return
     }
+    if (!showCaptcha) {
+      setShowCaptcha(true)
+      fetchSmsCaptcha()
+      return
+    }
+
+    if (!captchaCode.trim()) {
+      setCaptchaError('请输入图形验证码')
+      return
+    }
 
     const result = await sendSmsCode(phone, captchaId, captchaCode)
     if (result.success) {
+      setShowCaptcha(false)
       setSmsSent(true)
       setCountdown(60)
     } else {
-      // 验证码可能错误，刷新
-      fetchCaptcha()
+      fetchSmsCaptcha()
     }
   }
 
@@ -99,8 +127,8 @@ export default function LoginPage() {
       if (!password) {
         errors.password = '请输入密码'
       }
-      if (!captchaCode.trim()) {
-        errors.captchaCode = '请输入图形验证码'
+      if (!passwordCaptchaCode.trim()) {
+        errors.passwordCaptchaCode = '请输入图形验证码'
       }
 
       if (Object.keys(errors).length > 0) {
@@ -108,12 +136,12 @@ export default function LoginPage() {
         return
       }
 
-      const result = await loginByPassword({ account, password, captchaId, captchaCode })
+      const result = await loginByPassword({ account, password, captchaId: passwordCaptchaId, captchaCode: passwordCaptchaCode })
       if (result.success) {
         // 登录成功，已在 hook 中处理跳转
       } else {
         // 刷新验证码
-        fetchCaptcha()
+        fetchPasswordCaptcha()
       }
     } else {
       // 短信验证码登录验证
@@ -125,21 +153,18 @@ export default function LoginPage() {
       if (!smsCode.trim()) {
         errors.smsCode = '请输入短信验证码'
       }
-      if (!captchaCode.trim()) {
-        errors.captchaCode = '请输入图形验证码'
-      }
 
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors)
         return
       }
 
-      const result = await loginBySms({ phone, code: smsCode, captchaId, captchaCode })
+      const result = await loginBySms({ phone, code: smsCode })
       if (result.success) {
         // 登录成功，已在 hook 中处理跳转
       } else {
         // 刷新验证码
-        fetchCaptcha()
+        fetchSmsCaptcha()
       }
     }
   }
@@ -281,6 +306,38 @@ export default function LoginPage() {
                       </div>
                       {fieldErrors.password && <p className="text-xs text-red-500">{fieldErrors.password}</p>}
                     </div>
+
+                    {/* 图形验证码 - 密码登录 */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        图形验证码
+                      </label>
+                      <div className="flex gap-3">
+                        <input
+                          type="text"
+                          placeholder="请输入验证码"
+                          value={passwordCaptchaCode}
+                          onChange={(e) => { setPasswordCaptchaCode(e.target.value); setFieldErrors(prev => ({ ...prev, passwordCaptchaCode: '' })) }}
+                          className={`flex-1 px-4 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.passwordCaptchaCode ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
+                        />
+                        <div
+                          className="w-40 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center bg-white dark:bg-slate-800 flex-shrink-0"
+                          onClick={fetchPasswordCaptcha}
+                        >
+                          {passwordCaptchaUrl ? (
+                            <img
+                              src={passwordCaptchaUrl}
+                              alt="验证码"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                          )}
+                        </div>
+                      </div>
+                      {fieldErrors.passwordCaptchaCode && <p className="text-xs text-red-500">{fieldErrors.passwordCaptchaCode}</p>}
+                      <p className="text-xs text-slate-500">点击图片刷新验证码</p>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -305,7 +362,7 @@ export default function LoginPage() {
                       {fieldErrors.phone && <p className="text-xs text-red-500">{fieldErrors.phone}</p>}
                     </div>
 
-                    {/* 短信验证码输入 */}
+                    {/* 短信验证码输入（带内联图形验证码） */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         短信验证码
@@ -330,45 +387,61 @@ export default function LoginPage() {
                           disabled={countdown > 0 || !phone || phone.length !== 11}
                           className="px-4 py-3 whitespace-nowrap rounded-lg border border-primary text-primary font-medium hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
                         >
-                          {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                          {countdown > 0 ? `${countdown}s` : smsSent ? '重新获取' : '获取验证码'}
                         </button>
                       </div>
                       {fieldErrors.smsCode && <p className="text-xs text-red-500">{fieldErrors.smsCode}</p>}
+
+                      {/* 内联图形验证码区域 */}
+                      {showCaptcha && (
+                        <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 animate-fade-in">
+                          <p className="text-xs text-slate-500 mb-2">请输入图形验证码后发送短信验证码</p>
+                          <div className="flex gap-3 items-start">
+                            <div
+                              className="w-40 h-12 rounded border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center bg-white dark:bg-slate-800 flex-shrink-0"
+                              onClick={fetchSmsCaptcha}
+                            >
+                              {captchaUrl ? (
+                                <img
+                                  src={captchaUrl}
+                                  alt="验证码"
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <input
+                                type="text"
+                                placeholder="图形验证码"
+                                className="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-700 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                value={captchaCode}
+                                onChange={(e) => setCaptchaCode(e.target.value)}
+                              />
+                              {captchaError && <p className="text-xs text-red-500">{captchaError}</p>}
+                              <button
+                                type="button"
+                                onClick={handleSendSms}
+                                className="w-full py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                              >
+                                发送验证码
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 成功提示 */}
+                      {smsSent && countdown === 0 && (
+                        <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          验证码已发送，固定为 123456
+                        </p>
+                      )}
                     </div>
                   </>
                 )}
-
-                {/* 图形验证码 */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    图形验证码
-                  </label>
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      placeholder="请输入验证码"
-                      value={captchaCode}
-                      onChange={(e) => { setCaptchaCode(e.target.value); setFieldErrors(prev => ({ ...prev, captchaCode: '' })) }}
-                      className={`flex-1 px-4 py-3 rounded-lg border bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${fieldErrors.captchaCode ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                    />
-                    <div
-                      className="w-40 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center bg-white dark:bg-slate-800 flex-shrink-0"
-                      onClick={fetchCaptcha}
-                    >
-                      {captchaUrl ? (
-                        <img
-                          src={captchaUrl}
-                          alt="验证码"
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                      )}
-                    </div>
-                  </div>
-                  {fieldErrors.captchaCode && <p className="text-xs text-red-500">{fieldErrors.captchaCode}</p>}
-                  <p className="text-xs text-slate-500">点击图片刷新验证码</p>
-                </div>
 
                 <button
                   type="submit"

@@ -73,25 +73,24 @@ public class AccountLoginAppService {
     /**
      * 短信验证码登录。
      *
-     * <p>先校验图形验证码，再校验短信验证码（失败则直接向上抛出），最后查找账号。</p>
+     * <p>图形验证码已在发送短信时校验，这里只校验短信验证码，然后查找账号。</p>
      *
      * @param command 登录命令
      * @return 登录结果（含 token）
      * @throws DomainException ACCOUNT_NOT_FOUND (401)，或 VerificationCodeError（验证码无效/过期/已用）
      */
     public LoginResult loginBySms(LoginBySmsCommand command) {
-        // 1. 验证图形验证码
-        captchaAppService.verifyCaptcha(command.captchaId(), command.captchaCode());
+        // 注意：图形验证码已在发送短信验证码时校验过，这里不再重复校验
 
-        // 2. 校验短信验证码
+        // 1. 校验短信验证码
         verificationCodeAppService.verifyPhoneCode(
             new VerifySmsCodeCommand(command.phone(), command.code(), "LOGIN"));
 
-        // 3. 查找用户
+        // 2. 查找用户
         User user = userRepository.findByPhoneNumber(command.phone())
             .orElseThrow(() -> new DomainException(UserError.ACCOUNT_NOT_FOUND));
 
-        // 4. 生成 Token
+        // 3. 生成 Token
         var tokenInfo = authenticationService.login(user.getId());
         return new LoginResult(tokenInfo.token());
     }

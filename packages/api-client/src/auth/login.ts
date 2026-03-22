@@ -80,7 +80,11 @@ export async function loginBySms(params: LoginBySmsParams): Promise<LoginRespons
   const response = await fetch(`/api/account/login/sms`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
+    body: JSON.stringify({
+      phone: params.phone,
+      code: params.code
+      // 注意：captchaId 和 captchaCode 不再需要，因为已在发送短信时校验
+    })
   })
 
   if (!response.ok) {
