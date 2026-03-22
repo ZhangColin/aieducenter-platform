@@ -1,6 +1,9 @@
 package com.aieducenter.admin.domain.aggregate;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -8,6 +11,7 @@ import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.domain.SoftDeletable;
+import com.aieducenter.admin.domain.entity.AdminUserRole;
 import com.aieducenter.admin.domain.error.AdminError;
 
 import jakarta.persistence.*;
@@ -68,6 +72,10 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
 
     @Column(name = "system", nullable = false)
     private boolean system = false;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "admin_id")
+    private Set<AdminUserRole> userRoles = new HashSet<>();
 
     /**
      * 管理员状态枚举。
@@ -234,6 +242,29 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
      */
     public void checkCanBeDeleted() {
         Assertions.require(!system, AdminError.ADMIN_SYSTEM_CANNOT_DELETE);
+    }
+
+    /**
+     * 添加角色关联。
+     */
+    public void addRole(Long roleId) {
+        userRoles.add(new AdminUserRole(this.id, roleId));
+    }
+
+    /**
+     * 清除所有角色关联。
+     */
+    public void clearRoles() {
+        userRoles.clear();
+    }
+
+    /**
+     * 获取角色 ID 列表。
+     */
+    public Set<Long> getRoleIds() {
+        return userRoles.stream()
+                .map(AdminUserRole::getRoleId)
+                .collect(Collectors.toSet());
     }
 
     // ========== 私有方法 ==========

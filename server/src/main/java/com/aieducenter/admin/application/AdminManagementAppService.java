@@ -11,6 +11,7 @@ import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
 import com.aieducenter.admin.application.dto.query.AdminDto;
 import com.aieducenter.admin.application.dto.query.RoleDto;
 import com.aieducenter.admin.domain.aggregate.Admin;
+import com.aieducenter.admin.domain.entity.AdminRole;
 import com.aieducenter.admin.domain.error.AdminError;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
@@ -156,13 +157,27 @@ public class AdminManagementAppService {
     }
 
     /**
-     * 分配角色。
+     * 为管理员分配角色。
      */
     @Transactional
     public void assignRoles(Long id, AssignRolesCommand command) {
         Admin admin = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        adminUserRepository.assignRoles(id, command.roleIds());
+        // 验证所有角色 ID 存在
+        for (Long roleId : command.roleIds()) {
+            adminRoleRepository.findById(roleId)
+                    .orElseThrow(() -> new ApplicationException(AdminError.ROLE_NOT_FOUND));
+        }
+
+        // 清除现有角色关联
+        admin.clearRoles();
+
+        // 添加新角色关联
+        for (Long roleId : command.roleIds()) {
+            admin.addRole(roleId);
+        }
+
+        adminUserRepository.save(admin);
     }
 }
