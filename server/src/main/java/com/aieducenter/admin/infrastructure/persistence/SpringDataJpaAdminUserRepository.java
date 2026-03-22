@@ -43,25 +43,6 @@ public interface SpringDataJpaAdminUserRepository
     List<Admin> findAll();
 
     /**
-     * 查询管理员的角色编码列表。
-     */
-    @Override
-    @Query("SELECT r.code FROM AdminRole r " +
-           "INNER JOIN AdminUserRole aur ON r.id = aur.roleId " +
-           "WHERE aur.adminId = :adminId AND r.deleted = false")
-    List<String> findRoleCodesByAdminId(@Param("adminId") Long adminId);
-
-    /**
-     * 查询管理员的权限编码列表。
-     */
-    @Override
-    @Query("SELECT DISTINCT p.code FROM AdminPermission p " +
-           "INNER JOIN AdminRolePermission arp ON p.id = arp.permissionId " +
-           "INNER JOIN AdminUserRole aur ON arp.roleId = aur.roleId " +
-           "WHERE aur.adminId = :adminId AND p.deleted = false")
-    List<String> findPermissionCodesByAdminId(@Param("adminId") Long adminId);
-
-    /**
      * 查询管理员是否拥有指定角色。
      */
     @Override

@@ -51,16 +51,6 @@ public interface AdminUserRepository {
     long count();
 
     /**
-     * 查询管理员的角色编码列表。
-     */
-    List<String> findRoleCodesByAdminId(Long adminId);
-
-    /**
-     * 查询管理员的权限编码列表。
-     */
-    List<String> findPermissionCodesByAdminId(Long adminId);
-
-    /**
      * 查询管理员是否拥有指定角色。
      */
     boolean hasRole(Long adminId, String roleCode);

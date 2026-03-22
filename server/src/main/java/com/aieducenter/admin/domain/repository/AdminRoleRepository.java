@@ -21,8 +21,6 @@ public interface AdminRoleRepository {
 
     List<AdminRole> findAll();
 
-    List<AdminRole> findByAdminId(Long adminId);
-
     AdminRole save(AdminRole role);
 
     void delete(AdminRole role);

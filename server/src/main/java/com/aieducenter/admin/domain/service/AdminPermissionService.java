@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityManager;
 
 import com.aieducenter.admin.domain.entity.AdminMenu;
 import com.aieducenter.admin.domain.entity.AdminRole;
@@ -29,14 +33,17 @@ public class AdminPermissionService {
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
     private final AdminMenuRepository adminMenuRepository;
+    private final EntityManager em;
 
     public AdminPermissionService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
-            AdminMenuRepository adminMenuRepository) {
+            AdminMenuRepository adminMenuRepository,
+            EntityManager em) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
         this.adminMenuRepository = adminMenuRepository;
+        this.em = em;
     }
 
     /**
@@ -47,14 +54,27 @@ public class AdminPermissionService {
         if (hasSuperAdminRole(adminId)) {
             return List.of();
         }
-        return adminUserRepository.findPermissionCodesByAdminId(adminId);
+        // 通过跨表查询获取权限编码
+        return em.createQuery(
+                "SELECT DISTINCT p.code FROM AdminPermission p " +
+                "INNER JOIN AdminRolePermission arp ON p.id = arp.permissionId " +
+                "INNER JOIN AdminUserRole aur ON arp.roleId = aur.roleId " +
+                "WHERE aur.adminId = :adminId AND p.deleted = false", String.class)
+                .setParameter("adminId", adminId)
+                .getResultList();
     }
 
     /**
      * 获取管理员的角色编码列表。
      */
     public List<String> getRoles(Long adminId) {
-        return adminUserRepository.findRoleCodesByAdminId(adminId);
+        // 通过跨表查询获取角色编码
+        return em.createQuery(
+                "SELECT r.code FROM AdminRole r " +
+                "INNER JOIN AdminUserRole aur ON r.id = aur.roleId " +
+                "WHERE aur.adminId = :adminId AND r.deleted = false", String.class)
+                .setParameter("adminId", adminId)
+                .getResultList();
     }
 
     /**
@@ -65,7 +85,22 @@ public class AdminPermissionService {
             return buildMenuTree(null);  // null 表示获取所有菜单
         }
 
-        List<AdminRole> roles = adminRoleRepository.findByAdminId(adminId);
+        // 通过跨表查询获取角色 ID，再查询角色
+        List<Long> roleIds = em.createQuery(
+                "SELECT aur.roleId FROM AdminUserRole aur WHERE aur.adminId = :adminId", Long.class)
+                .setParameter("adminId", adminId)
+                .getResultList();
+
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<AdminRole> roles = roleIds.stream()
+                .map(roleId -> adminRoleRepository.findById(roleId))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
         if (roles.isEmpty()) {
             return List.of();
         }

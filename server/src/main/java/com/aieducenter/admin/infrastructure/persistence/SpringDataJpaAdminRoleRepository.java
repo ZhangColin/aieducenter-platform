@@ -26,13 +26,6 @@ public interface SpringDataJpaAdminRoleRepository extends BaseRepository<AdminRo
     List<AdminRole> findAll();
 
     @Override
-    @Query("SELECT r FROM AdminRole r " +
-           "INNER JOIN AdminUserRole aur ON r.id = aur.roleId " +
-           "WHERE aur.adminId = :adminId AND r.deleted = false " +
-           "ORDER BY r.sortOrder")
-    List<AdminRole> findByAdminId(@Param("adminId") Long adminId);
-
-    @Override
     @Query("SELECT CASE WHEN COUNT(aur) > 0 THEN true ELSE false END " +
            "FROM AdminUserRole aur WHERE aur.roleId = :roleId")
     boolean isUsedByAnyAdmin(@Param("roleId") Long roleId);

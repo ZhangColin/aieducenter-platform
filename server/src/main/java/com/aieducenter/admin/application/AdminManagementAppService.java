@@ -1,6 +1,10 @@
 package com.aieducenter.admin.application;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityManager;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +35,15 @@ public class AdminManagementAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
+    private final EntityManager em;
 
     public AdminManagementAppService(
             AdminUserRepository adminUserRepository,
-            AdminRoleRepository adminRoleRepository) {
+            AdminRoleRepository adminRoleRepository,
+            EntityManager em) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
+        this.em = em;
     }
 
     /**
@@ -74,9 +81,18 @@ public class AdminManagementAppService {
         Admin admin = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
 
-        List<RoleDto> roles = adminRoleRepository.findByAdminId(id).stream()
+        // 通过跨表查询获取角色 ID，再查询角色
+        List<Long> roleIds = em.createQuery(
+                "SELECT aur.roleId FROM AdminUserRole aur WHERE aur.adminId = :adminId", Long.class)
+                .setParameter("adminId", id)
+                .getResultList();
+
+        List<RoleDto> roles = roleIds.stream()
+                .map(roleId -> adminRoleRepository.findById(roleId))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .map(RoleDto::from)
-                .toList();
+                .collect(Collectors.toList());
 
         return AdminDto.from(admin, roles);
     }
