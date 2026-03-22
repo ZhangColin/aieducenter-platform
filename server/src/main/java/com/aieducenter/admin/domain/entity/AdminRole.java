@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.data.jpa.domain.SoftDeletable;
 
 import jakarta.persistence.*;
@@ -21,7 +22,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "admin_roles")
-public class AdminRole extends SoftDeletable {
+public class AdminRole extends SoftDeletable implements AggregateRoot<AdminRole> {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)

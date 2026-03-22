@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import com.aieducenter.admin.domain.aggregate.Admin;
+import com.aieducenter.admin.domain.entity.AdminUserRole;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.cartisan.core.stereotype.Adapter;
 import com.cartisan.core.stereotype.PortType;

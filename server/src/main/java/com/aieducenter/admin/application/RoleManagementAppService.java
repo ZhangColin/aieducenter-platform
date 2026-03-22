@@ -115,7 +115,7 @@ public class RoleManagementAppService {
     @Transactional
     public void assignMenus(Long roleId, AssignMenusCommand command) {
         // 验证角色存在
-        findById(roleId);
+        AdminRole role = findById(roleId);
 
         // 验证所有菜单 ID 存在
         for (Long menuId : command.menuIds()) {
@@ -124,7 +124,12 @@ public class RoleManagementAppService {
             }
         }
 
-        roleRepository.assignMenus(roleId, command.menuIds());
+        // 清除现有菜单并添加新菜单
+        role.clearMenus();
+        for (Long menuId : command.menuIds()) {
+            role.addMenu(menuId);
+        }
+        roleRepository.save(role);
     }
 
     /**
@@ -133,12 +138,17 @@ public class RoleManagementAppService {
     @Transactional
     public void assignPermissions(Long roleId, AssignPermissionsCommand command) {
         // 验证角色存在
-        findById(roleId);
+        AdminRole role = findById(roleId);
 
         // TODO: 通过 PermissionScanner 验证权限 codes 有效性
         // 暂时不验证，直接存储
 
-        roleRepository.assignPermissions(roleId, command.permissionCodes());
+        // 清除现有权限并添加新权限
+        role.clearPermissions();
+        for (String permissionCode : command.permissionCodes()) {
+            role.addPermission(permissionCode, null);
+        }
+        roleRepository.save(role);
     }
 
     // ========== DTO 返回方法 ==========

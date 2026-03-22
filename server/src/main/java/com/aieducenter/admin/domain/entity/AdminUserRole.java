@@ -1,4 +1,4 @@
-package com.aieducenter.admin.infrastructure.persistence;
+package com.aieducenter.admin.domain.entity;
 
 import jakarta.persistence.*;
 
