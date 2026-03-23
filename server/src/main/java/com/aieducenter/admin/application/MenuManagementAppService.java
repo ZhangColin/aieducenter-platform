@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.domain.aggregate.AdminMenu;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminMessage;
-import com.aieducenter.admin.application.dto.query.MenuDto;
+import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -193,18 +193,18 @@ public class MenuManagementAppService {
     /**
      * 获取菜单树（DTO）。
      */
-    public List<MenuDto> findTreeAsDto() {
+    public List<MenuResponse> findTreeAsDto() {
         List<AdminMenu> menus = findTree();
         return menus.stream()
-                .map(menu -> MenuDto.fromTree(menu, menus))
+                .map(menu -> MenuResponse.fromTree(menu, menus))
                 .collect(Collectors.toList());
     }
 
     /**
      * 根据 ID 获取菜单详情（DTO）。
      */
-    public MenuDto findByIdAsDto(Long id) {
+    public MenuResponse findByIdAsDto(Long id) {
         AdminMenu menu = findById(id);
-        return MenuDto.from(menu);
+        return MenuResponse.from(menu);
     }
 }

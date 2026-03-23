@@ -10,7 +10,7 @@ import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
 import com.aieducenter.admin.application.dto.command.CreateRoleCommand;
 import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
-import com.aieducenter.admin.application.dto.query.RoleDto;
+import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.ApiResponse;
@@ -42,7 +42,7 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "查询角色列表")
-    public ApiResponse<List<RoleDto>> findAll() {
+    public ApiResponse<List<RoleResponse>> findAll() {
         return ApiResponse.ok(roleManagementAppService.findAllAsDto());
     }
 
@@ -54,7 +54,7 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "查询角色详情")
-    public ApiResponse<RoleDto> findById(@PathVariable Long id) {
+    public ApiResponse<RoleResponse> findById(@PathVariable Long id) {
         return ApiResponse.ok(roleManagementAppService.findByIdAsDto(id));
     }
 

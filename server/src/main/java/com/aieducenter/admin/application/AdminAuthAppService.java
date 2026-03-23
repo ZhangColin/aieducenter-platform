@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.application.dto.command.AdminLoginCommand;
 import com.aieducenter.admin.application.dto.query.AdminDto;
 import com.aieducenter.admin.application.dto.query.LoginResult;
-import com.aieducenter.admin.application.dto.query.MenuDto;
-import com.aieducenter.admin.application.dto.query.RoleDto;
+import com.aieducenter.admin.application.dto.response.MenuResponse;
+import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.cartisan.core.exception.ApplicationException;
@@ -70,11 +70,11 @@ public class AdminAuthAppService {
         // 获取角色、菜单、权限
         List<String> roleCodes = adminPermissionAppService.getRoleCodes(adminUser.getId());
         List<String> permissionCodes = adminPermissionAppService.getPermissions(adminUser.getId());
-        List<MenuDto> menus = adminPermissionAppService.getMenus(adminUser.getId());
+        List<MenuResponse> menus = adminPermissionAppService.getMenus(adminUser.getId());
 
         // 构建 DTO
-        List<RoleDto> roles = roleCodes.stream()
-                .map(code -> new RoleDto(null, null, code, null, null, null, null))
+        List<RoleResponse> roles = roleCodes.stream()
+                .map(code -> new RoleResponse(null, null, code, null, null, null, null))
                 .toList();
         AdminDto adminDto = AdminDto.from(adminUser, roles);
 
@@ -113,11 +113,11 @@ public class AdminAuthAppService {
         // 获取角色、菜单、权限
         List<String> roleCodes = adminPermissionAppService.getRoleCodes(adminId);
         List<String> permissionCodes = adminPermissionAppService.getPermissions(adminId);
-        List<MenuDto> menus = adminPermissionAppService.getMenus(adminId);
+        List<MenuResponse> menus = adminPermissionAppService.getMenus(adminId);
 
         // 构建 DTO
-        List<RoleDto> roles = roleCodes.stream()
-                .map(code -> new RoleDto(null, null, code, null, null, null, null))
+        List<RoleResponse> roles = roleCodes.stream()
+                .map(code -> new RoleResponse(null, null, code, null, null, null, null))
                 .toList();
         AdminDto adminDto = AdminDto.from(adminUser, roles);
 

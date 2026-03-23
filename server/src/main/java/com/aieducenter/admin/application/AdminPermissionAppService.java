@@ -11,7 +11,7 @@ import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
-import com.aieducenter.admin.application.dto.query.MenuDto;
+import com.aieducenter.admin.application.dto.response.MenuResponse;
 
 /**
  * 管理员权限应用服务。
@@ -95,7 +95,7 @@ public class AdminPermissionAppService {
      * @param adminId 管理员 ID
      * @return 菜单 DTO 列表
      */
-    public List<MenuDto> getMenus(Long adminId) {
+    public List<MenuResponse> getMenus(Long adminId) {
         // 超级管理员返回所有菜单
         if (adminUserRepository.hasRole(adminId, "SUPER_ADMIN")) {
             return buildMenuTree(null);
@@ -125,7 +125,7 @@ public class AdminPermissionAppService {
     /**
      * 构建菜单树。
      */
-    private List<MenuDto> buildMenuTree(Set<Long> menuIds) {
+    private List<MenuResponse> buildMenuTree(Set<Long> menuIds) {
         List<AdminMenu> allMenus = adminMenuRepository.findAll();
         Map<Long, AdminMenu> menuMap = new HashMap<>();
         List<AdminMenu> roots = new ArrayList<>();
@@ -151,7 +151,7 @@ public class AdminPermissionAppService {
 
         // 转换为 DTO
         return roots.stream()
-                .map(MenuDto::from)
+                .map(MenuResponse::from)
                 .toList();
     }
 

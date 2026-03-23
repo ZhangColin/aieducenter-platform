@@ -3,6 +3,9 @@ package com.aieducenter.admin.application.dto.query;
 import java.time.Instant;
 import java.util.List;
 
+import com.aieducenter.admin.application.dto.response.MenuResponse;
+import com.aieducenter.admin.application.dto.response.RoleResponse;
+
 /**
  * 登录结果 DTO。
  *
@@ -12,8 +15,8 @@ public record LoginResult(
         String token,
         Instant expireTime,
         AdminDto admin,
-        List<RoleDto> roles,
-        List<MenuDto> menus,
+        List<RoleResponse> roles,
+        List<MenuResponse> menus,
         List<String> permissions
 ) {
 }

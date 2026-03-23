@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.aieducenter.admin.application.MenuManagementAppService;
 import com.aieducenter.admin.application.dto.command.CreateMenuCommand;
 import com.aieducenter.admin.application.dto.command.UpdateMenuCommand;
-import com.aieducenter.admin.application.dto.query.MenuDto;
+import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.ApiResponse;
@@ -40,7 +40,7 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "查询菜单列表（树形）")
-    public ApiResponse<List<MenuDto>> findTree() {
+    public ApiResponse<List<MenuResponse>> findTree() {
         return ApiResponse.ok(menuManagementAppService.findTreeAsDto());
     }
 
@@ -52,7 +52,7 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "查询菜单详情")
-    public ApiResponse<MenuDto> findById(@PathVariable Long id) {
+    public ApiResponse<MenuResponse> findById(@PathVariable Long id) {
         return ApiResponse.ok(menuManagementAppService.findByIdAsDto(id));
     }
 

@@ -13,7 +13,7 @@ import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
-import com.aieducenter.admin.application.dto.query.RoleDto;
+import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -156,16 +156,16 @@ public class RoleManagementAppService {
     /**
      * 获取所有角色列表（DTO）。
      */
-    public List<RoleDto> findAllAsDto() {
+    public List<RoleResponse> findAllAsDto() {
         List<AdminRole> roles = roleRepository.findAll();
-        return roles.stream().map(RoleDto::from).collect(Collectors.toList());
+        return roles.stream().map(RoleResponse::from).collect(Collectors.toList());
     }
 
     /**
      * 根据 ID 获取角色详情（DTO）。
      */
-    public RoleDto findByIdAsDto(Long id) {
+    public RoleResponse findByIdAsDto(Long id) {
         AdminRole role = findById(id);
-        return RoleDto.from(role);
+        return RoleResponse.from(role);
     }
 }

@@ -3,6 +3,8 @@ package com.aieducenter.admin.application.dto.query;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.aieducenter.admin.application.dto.response.RoleResponse;
+
 /**
  * 管理员 DTO。
  *
@@ -18,9 +20,9 @@ public record AdminDto(
         String status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        List<RoleDto> roles
+        List<RoleResponse> roles
 ) {
-    public static AdminDto from(com.aieducenter.admin.domain.aggregate.AdminUser adminUser, List<RoleDto> roles) {
+    public static AdminDto from(com.aieducenter.admin.domain.aggregate.AdminUser adminUser, List<RoleResponse> roles) {
         return new AdminDto(
                 adminUser.getId(),
                 adminUser.getUsername(),

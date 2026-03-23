@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.PermissionScanAppService;
-import com.aieducenter.admin.application.dto.query.PermissionDto;
+import com.aieducenter.admin.application.dto.response.PermissionResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.ApiResponse;
@@ -35,7 +35,7 @@ public class PermissionController {
         scope = "admin"
     )
     @Operation(summary = "查询权限列表（扫描结果）")
-    public ApiResponse<List<PermissionDto>> scanPermissions(
+    public ApiResponse<List<PermissionResponse>> scanPermissions(
             @RequestParam(defaultValue = "admin") String scope) {
         return ApiResponse.ok(permissionScanAppService.scanByScope(scope));
     }
