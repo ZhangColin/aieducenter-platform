@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
+import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
@@ -187,7 +188,7 @@ public class AdminUserManagementAppService {
      * 重置管理员密码。
      */
     @Transactional
-    public void resetPassword(Long id, String newPassword) {
-        adminUserAuthAppService.resetPassword(id, newPassword);
+    public void resetPassword(Long id, ResetPasswordCommand command) {
+        adminUserAuthAppService.resetPassword(id, command);
     }
 }

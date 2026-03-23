@@ -13,6 +13,8 @@ import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
+import com.aieducenter.admin.application.dto.command.CreateRoleCommand;
+import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.core.exception.DomainException;
 
@@ -50,13 +52,13 @@ public class RoleManagementAppService {
      * 创建角色。
      */
     @Transactional
-    public AdminRole create(String name, String code, String description, Integer sortOrder) {
+    public AdminRole create(CreateRoleCommand command) {
         // 检查 code 唯一性
-        if (roleRepository.findByCode(code).isPresent()) {
+        if (roleRepository.findByCode(command.code()).isPresent()) {
             throw new DomainException(AdminMessage.ROLE_CODE_ALREADY_EXISTS);
         }
 
-        AdminRole role = new AdminRole(name, code, description, sortOrder);
+        AdminRole role = new AdminRole(command.name(), command.code(), command.description(), command.sortOrder());
         return roleRepository.save(role);
     }
 
@@ -64,28 +66,28 @@ public class RoleManagementAppService {
      * 创建角色并返回 ID。
      */
     @Transactional
-    public Long createAndReturnId(String name, String code, String description, Integer sortOrder) {
-        return create(name, code, description, sortOrder).getId();
+    public Long createAndReturnId(CreateRoleCommand command) {
+        return create(command).getId();
     }
 
     /**
      * 修改角色。
      */
     @Transactional
-    public AdminRole update(Long id, String name, String code, String description, Integer sortOrder) {
+    public AdminRole update(Long id, UpdateRoleCommand command) {
         AdminRole role = findById(id);
 
         // 如果修改 code，检查唯一性
-        if (!Objects.equals(role.getCode(), code)) {
-            roleRepository.findByCode(code).ifPresent(existing -> {
+        if (!Objects.equals(role.getCode(), command.code())) {
+            roleRepository.findByCode(command.code()).ifPresent(existing -> {
                 throw new DomainException(AdminMessage.ROLE_CODE_ALREADY_EXISTS);
             });
         }
 
-        role.setName(name);
-        role.setCode(code);
-        role.setDescription(description);
-        role.setSortOrder(sortOrder);
+        role.setName(command.name());
+        role.setCode(command.code());
+        role.setDescription(command.description());
+        role.setSortOrder(command.sortOrder());
         return roleRepository.save(role);
     }
 

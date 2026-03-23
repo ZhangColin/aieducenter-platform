@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
+import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
+import com.aieducenter.admin.application.dto.command.UpdatePasswordCommand;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
@@ -144,9 +146,10 @@ class AdminUserAuthAppServiceTest {
         // Given
         AdminUser adminUser = new AdminUser("admin", "Test1234", "管理员");
         when(adminUserRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+        UpdatePasswordCommand command = new UpdatePasswordCommand("Test1234", "NewPass56");
 
         // When
-        adminAuthAppService.updatePassword(1L, "Test1234", "NewPass56");
+        adminAuthAppService.updatePassword(1L, command);
 
         // Then
         assertThat(adminUser.matchesPassword("NewPass56")).isTrue();
@@ -157,9 +160,10 @@ class AdminUserAuthAppServiceTest {
     void given_nonexistent_user_when_updatePassword_then_throw_admin_not_found_exception() {
         // Given
         when(adminUserRepository.findById(999L)).thenReturn(Optional.empty());
+        UpdatePasswordCommand command = new UpdatePasswordCommand("Test1234", "NewPass56");
 
         // When & Then
-        assertThatThrownBy(() -> adminAuthAppService.updatePassword(999L, "Test1234", "NewPass56"))
+        assertThatThrownBy(() -> adminAuthAppService.updatePassword(999L, command))
             .isInstanceOf(ApplicationException.class)
             .hasMessageContaining(AdminMessage.ADMIN_NOT_FOUND.message());
     }
@@ -169,9 +173,10 @@ class AdminUserAuthAppServiceTest {
         // Given
         AdminUser adminUser = new AdminUser("admin", "Test1234", "管理员");
         when(adminUserRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+        UpdatePasswordCommand command = new UpdatePasswordCommand("WrongPass123", "NewPass56");
 
         // When & Then
-        assertThatThrownBy(() -> adminAuthAppService.updatePassword(1L, "WrongPass123", "NewPass56"))
+        assertThatThrownBy(() -> adminAuthAppService.updatePassword(1L, command))
             .isInstanceOf(DomainException.class)
             .hasMessageContaining(AdminMessage.PASSWORD_INCORRECT.message());
     }
@@ -183,9 +188,10 @@ class AdminUserAuthAppServiceTest {
         // Given
         AdminUser adminUser = new AdminUser("admin", "Test1234", "管理员");
         when(adminUserRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+        ResetPasswordCommand command = new ResetPasswordCommand("NewReset56");
 
         // When
-        adminAuthAppService.resetPassword(1L, "NewReset56");
+        adminAuthAppService.resetPassword(1L, command);
 
         // Then
         assertThat(adminUser.matchesPassword("NewReset56")).isTrue();
@@ -196,9 +202,10 @@ class AdminUserAuthAppServiceTest {
     void given_nonexistent_user_when_resetPassword_then_throw_admin_not_found_exception() {
         // Given
         when(adminUserRepository.findById(999L)).thenReturn(Optional.empty());
+        ResetPasswordCommand command = new ResetPasswordCommand("NewReset56");
 
         // When & Then
-        assertThatThrownBy(() -> adminAuthAppService.resetPassword(999L, "NewReset56"))
+        assertThatThrownBy(() -> adminAuthAppService.resetPassword(999L, command))
             .isInstanceOf(ApplicationException.class)
             .hasMessageContaining(AdminMessage.ADMIN_NOT_FOUND.message());
     }

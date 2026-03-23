@@ -65,13 +65,7 @@ public class AdminMenuController {
     )
     @Operation(summary = "创建菜单")
     public ApiResponse<Long> create(@Valid @RequestBody CreateMenuCommand command) {
-        Long id = menuManagementAppService.createAndReturnId(
-            command.name(),
-            command.path(),
-            command.icon(),
-            command.parentId(),
-            command.sortOrder()
-        );
+        Long id = menuManagementAppService.createAndReturnId(command);
         return ApiResponse.ok(id);
     }
 
@@ -86,14 +80,7 @@ public class AdminMenuController {
     public ApiResponse<Void> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateMenuCommand command) {
-        menuManagementAppService.update(
-            id,
-            command.name(),
-            command.path(),
-            command.icon(),
-            command.parentId(),
-            command.sortOrder()
-        );
+        menuManagementAppService.update(id, command);
         return ApiResponse.ok();
     }
 

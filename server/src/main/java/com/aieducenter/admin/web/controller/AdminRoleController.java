@@ -67,12 +67,7 @@ public class AdminRoleController {
     )
     @Operation(summary = "创建角色")
     public ApiResponse<Long> create(@Valid @RequestBody CreateRoleCommand command) {
-        Long id = roleManagementAppService.createAndReturnId(
-            command.name(),
-            command.code(),
-            command.description(),
-            command.sortOrder()
-        );
+        Long id = roleManagementAppService.createAndReturnId(command);
         return ApiResponse.ok(id);
     }
 
@@ -87,13 +82,7 @@ public class AdminRoleController {
     public ApiResponse<Void> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateRoleCommand command) {
-        roleManagementAppService.update(
-            id,
-            command.name(),
-            command.code(),
-            command.description(),
-            command.sortOrder()
-        );
+        roleManagementAppService.update(id, command);
         return ApiResponse.ok();
     }
 

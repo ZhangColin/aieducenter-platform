@@ -77,11 +77,11 @@ public class AdminUserAuthAppService {
      * 修改当前管理员密码。
      */
     @Transactional
-    public void updatePassword(Long userId, String oldPassword, String newPassword) {
+    public void updatePassword(Long userId, UpdatePasswordCommand command) {
         AdminUser adminUser = adminUserRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        adminUser.updatePassword(oldPassword, newPassword);
+        adminUser.updatePassword(command.oldPassword(), command.newPassword());
         adminUserRepository.save(adminUser);
     }
 
@@ -89,11 +89,11 @@ public class AdminUserAuthAppService {
      * 重置管理员密码（管理员操作）。
      */
     @Transactional
-    public void resetPassword(Long userId, String newPassword) {
+    public void resetPassword(Long userId, ResetPasswordCommand command) {
         AdminUser adminUser = adminUserRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        adminUser.resetPassword(newPassword);
+        adminUser.resetPassword(command.newPassword());
         adminUserRepository.save(adminUser);
     }
 

@@ -141,7 +141,7 @@ public class AdminUserController {
     public ApiResponse<Void> resetPassword(
             @PathVariable Long id,
             @Valid @RequestBody ResetPasswordCommand command) {
-        adminManagementAppService.resetPassword(id, command.newPassword());
+        adminManagementAppService.resetPassword(id, command);
         return ApiResponse.ok();
     }
 }

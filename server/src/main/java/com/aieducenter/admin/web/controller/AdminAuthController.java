@@ -57,7 +57,7 @@ public class AdminAuthController {
     public ApiResponse<Void> updatePassword(
             @CurrentUser Long userId,
             @Valid @RequestBody UpdatePasswordCommand command) {
-        adminAuthAppService.updatePassword(userId, command.oldPassword(), command.newPassword());
+        adminAuthAppService.updatePassword(userId, command);
         return ApiResponse.ok();
     }
 }

@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.domain.aggregate.AdminMenu;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.error.AdminMessage;
+import com.aieducenter.admin.application.dto.command.CreateMenuCommand;
+import com.aieducenter.admin.application.dto.command.UpdateMenuCommand;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.cartisan.core.exception.DomainException;
 
@@ -67,19 +69,19 @@ public class MenuManagementAppService {
      * 创建菜单。
      */
     @Transactional
-    public AdminMenu create(String name, String path, String icon, Long parentId, Integer sortOrder) {
+    public AdminMenu create(CreateMenuCommand command) {
         // 验证父菜单
-        if (parentId != null) {
-            findById(parentId);
+        if (command.parentId() != null) {
+            findById(command.parentId());
 
             // 检查层级（最多3级）- 通过计算父菜单的层级
-            int parentDepth = calculateDepth(parentId);
+            int parentDepth = calculateDepth(command.parentId());
             if (parentDepth >= AdminMenu.MAX_DEPTH - 1) {
                 throw new DomainException(AdminMessage.MENU_DEPTH_EXCEEDED);
             }
         }
 
-        AdminMenu menu = new AdminMenu(name, path, icon, parentId, sortOrder);
+        AdminMenu menu = new AdminMenu(command.name(), command.path(), command.icon(), command.parentId(), command.sortOrder());
         return menuRepository.save(menu);
     }
 
@@ -87,25 +89,25 @@ public class MenuManagementAppService {
      * 创建菜单并返回 ID。
      */
     @Transactional
-    public Long createAndReturnId(String name, String path, String icon, Long parentId, Integer sortOrder) {
-        return create(name, path, icon, parentId, sortOrder).getId();
+    public Long createAndReturnId(CreateMenuCommand command) {
+        return create(command).getId();
     }
 
     /**
      * 修改菜单。
      */
     @Transactional
-    public AdminMenu update(Long id, String name, String path, String icon, Long parentId, Integer sortOrder) {
+    public AdminMenu update(Long id, UpdateMenuCommand command) {
         AdminMenu menu = findById(id);
 
         // 如果修改父菜单，验证新父菜单
-        if (parentId != null && !parentId.equals(menu.getParentId())) {
+        if (command.parentId() != null && !command.parentId().equals(menu.getParentId())) {
             // 不允许将菜单设置为自己的父级
-            if (parentId.equals(id)) {
+            if (command.parentId().equals(id)) {
                 throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
 
-            AdminMenu parent = findById(parentId);
+            AdminMenu parent = findById(command.parentId());
 
             // 检查层级
             int parentDepth = calculateDepth(parent.getId());
@@ -114,16 +116,16 @@ public class MenuManagementAppService {
             }
 
             // 不允许将菜单设置为自己的后代
-            if (isDescendant(menu.getId(), parentId)) {
+            if (isDescendant(menu.getId(), command.parentId())) {
                 throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
         }
 
-        menu.setName(name);
-        menu.setPath(path);
-        menu.setIcon(icon);
-        menu.setParentId(parentId);
-        menu.setSortOrder(sortOrder);
+        menu.setName(command.name());
+        menu.setPath(command.path());
+        menu.setIcon(command.icon());
+        menu.setParentId(command.parentId());
+        menu.setSortOrder(command.sortOrder());
         return menuRepository.save(menu);
     }
 

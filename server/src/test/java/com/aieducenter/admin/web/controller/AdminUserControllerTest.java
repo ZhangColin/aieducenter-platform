@@ -109,7 +109,7 @@ class AdminUserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(adminUserManagementAppService).resetPassword(1L, "NewPass56");
+        verify(adminUserManagementAppService).resetPassword(1L, command);
     }
 
     @Test
