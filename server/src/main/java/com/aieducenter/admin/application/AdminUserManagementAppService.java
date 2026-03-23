@@ -127,10 +127,14 @@ public class AdminUserManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
+        // 检查是否是最后一个管理员
+        if (adminUserRepository.count() <= 1) {
+            throw new ApplicationException(AdminMessage.LAST_ADMIN_CANNOT_DELETE);
+        }
+
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        adminUser.checkCanBeDeleted();
         adminUserRepository.delete(adminUser);
     }
 
