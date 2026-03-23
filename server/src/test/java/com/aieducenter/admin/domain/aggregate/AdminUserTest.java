@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.error.AdminMessage;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -30,7 +30,7 @@ class AdminUserTest {
         // When & Then
         assertThatThrownBy(() -> new AdminUser("invalid user", "Test1234", "测试用户"))
                 .isInstanceOf(DomainException.class)
-                .hasMessageContaining(AdminError.USERNAME_INVALID.message());
+                .hasMessageContaining(AdminMessage.USERNAME_INVALID.message());
     }
 
     @Test
@@ -38,7 +38,7 @@ class AdminUserTest {
         // When & Then
         assertThatThrownBy(() -> new AdminUser("testuser", "weak", "测试用户"))
                 .isInstanceOf(DomainException.class)
-                .hasMessageContaining(AdminError.PASSWORD_WEAK.message());
+                .hasMessageContaining(AdminMessage.PASSWORD_WEAK.message());
     }
 
     @Test
@@ -81,7 +81,7 @@ class AdminUserTest {
         // When & Then
         assertThatThrownBy(() -> adminUser.updatePassword("WrongPass", "NewPass567"))
                 .isInstanceOf(DomainException.class)
-                .hasMessageContaining(AdminError.PASSWORD_INCORRECT.message());
+                .hasMessageContaining(AdminMessage.PASSWORD_INCORRECT.message());
     }
 
     @Test

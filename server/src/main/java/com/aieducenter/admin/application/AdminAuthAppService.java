@@ -14,7 +14,7 @@ import com.aieducenter.admin.application.dto.query.RoleDto;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.cartisan.core.exception.ApplicationException;
-import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.error.AdminMessage;
 
 import cn.dev33.satoken.stp.StpLogic;
 
@@ -49,14 +49,14 @@ public class AdminAuthAppService {
     public LoginResult login(AdminLoginCommand command) {
         // 验证用户名和密码
         AdminUser adminUser = adminUserRepository.findByUsername(command.username())
-                .orElseThrow(() -> new ApplicationException(AdminError.LOGIN_FAILED));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.LOGIN_FAILED));
 
         if (!adminUser.isActive()) {
-            throw new ApplicationException(AdminError.ADMIN_DISABLED);
+            throw new ApplicationException(AdminMessage.ADMIN_DISABLED);
         }
 
         if (!adminUser.matchesPassword(command.password())) {
-            throw new ApplicationException(AdminError.LOGIN_FAILED);
+            throw new ApplicationException(AdminMessage.LOGIN_FAILED);
         }
 
         // 登录 Sa-Token（使用 admin loginType 隔离会话）
@@ -95,7 +95,7 @@ public class AdminAuthAppService {
     public void updatePassword(String oldPassword, String newPassword) {
         Long adminId = adminStpLogic.getLoginIdAsLong();
         AdminUser adminUser = adminUserRepository.findById(adminId)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         adminUser.updatePassword(oldPassword, newPassword);
         adminUserRepository.save(adminUser);
@@ -108,7 +108,7 @@ public class AdminAuthAppService {
     public LoginResult getCurrentAdmin() {
         Long adminId = adminStpLogic.getLoginIdAsLong();
         AdminUser adminUser = adminUserRepository.findById(adminId)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         // 获取角色、菜单、权限
         List<String> roleCodes = adminPermissionAppService.getRoleCodes(adminId);

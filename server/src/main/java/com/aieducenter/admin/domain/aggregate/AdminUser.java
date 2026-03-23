@@ -12,7 +12,7 @@ import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.domain.SoftDeletable;
 import com.aieducenter.admin.domain.entity.AdminUserRole;
-import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.error.AdminMessage;
 
 import jakarta.persistence.*;
 
@@ -172,7 +172,7 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
      * 修改密码。
      */
     public void updatePassword(String oldPassword, String newPassword) {
-        Assertions.require(matchesPassword(oldPassword), AdminError.PASSWORD_INCORRECT);
+        Assertions.require(matchesPassword(oldPassword), AdminMessage.PASSWORD_INCORRECT);
         validatePasswordStrength(newPassword);
         this.password = PASSWORD_ENCODER.encode(newPassword);
     }
@@ -241,7 +241,7 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
      * 检查是否可以删除。
      */
     public void checkCanBeDeleted() {
-        Assertions.require(!system, AdminError.ADMIN_SYSTEM_CANNOT_DELETE);
+        Assertions.require(!system, AdminMessage.LAST_ADMIN_CANNOT_DELETE);
     }
 
     /**
@@ -271,13 +271,13 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
 
     private void validateUsername(String username) {
         if (username == null || !username.matches(USERNAME_PATTERN)) {
-            throw new DomainException(AdminError.USERNAME_INVALID);
+            throw new DomainException(AdminMessage.USERNAME_INVALID);
         }
     }
 
     private void validatePasswordStrength(String plainPassword) {
         if (plainPassword == null || !plainPassword.matches(PASSWORD_PATTERN)) {
-            throw new DomainException(AdminError.PASSWORD_WEAK);
+            throw new DomainException(AdminMessage.PASSWORD_WEAK);
         }
     }
 }

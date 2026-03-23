@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
-import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
 import com.aieducenter.admin.application.dto.query.RoleDto;
@@ -43,7 +43,7 @@ public class RoleManagementAppService {
      */
     public AdminRole findById(Long id) {
         return roleRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminError.ROLE_NOT_FOUND));
+                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
     }
 
     /**
@@ -53,7 +53,7 @@ public class RoleManagementAppService {
     public AdminRole create(String name, String code, String description, Integer sortOrder) {
         // 检查 code 唯一性
         if (roleRepository.findByCode(code).isPresent()) {
-            throw new DomainException(AdminError.ROLE_CODE_ALREADY_EXISTS);
+            throw new DomainException(AdminMessage.ROLE_CODE_ALREADY_EXISTS);
         }
 
         AdminRole role = new AdminRole(name, code, description, sortOrder);
@@ -78,7 +78,7 @@ public class RoleManagementAppService {
         // 如果修改 code，检查唯一性
         if (!Objects.equals(role.getCode(), code)) {
             roleRepository.findByCode(code).ifPresent(existing -> {
-                throw new DomainException(AdminError.ROLE_CODE_ALREADY_EXISTS);
+                throw new DomainException(AdminMessage.ROLE_CODE_ALREADY_EXISTS);
             });
         }
 
@@ -98,12 +98,12 @@ public class RoleManagementAppService {
 
         // 超级管理员角色不能删除
         if (role.isSuperAdmin()) {
-            throw new DomainException(AdminError.SUPER_ADMIN_CANNOT_DELETE);
+            throw new DomainException(AdminMessage.SUPER_ADMIN_CANNOT_DELETE);
         }
 
         // 检查是否有管理员使用该角色
         if (roleRepository.isUsedByAnyAdmin(id)) {
-            throw new DomainException(AdminError.ROLE_IN_USE);
+            throw new DomainException(AdminMessage.ROLE_IN_USE);
         }
 
         roleRepository.delete(role);
@@ -120,7 +120,7 @@ public class RoleManagementAppService {
         // 验证所有菜单 ID 存在
         for (Long menuId : command.menuIds()) {
             if (menuRepository.findById(menuId).isEmpty()) {
-                throw new DomainException(AdminError.MENU_NOT_FOUND);
+                throw new DomainException(AdminMessage.MENU_NOT_FOUND);
             }
         }
 

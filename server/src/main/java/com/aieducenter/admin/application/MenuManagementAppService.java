@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.admin.domain.aggregate.AdminMenu;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
-import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.application.dto.query.MenuDto;
 import com.cartisan.core.exception.DomainException;
 
@@ -60,7 +60,7 @@ public class MenuManagementAppService {
      */
     public AdminMenu findById(Long id) {
         return menuRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminError.MENU_NOT_FOUND));
+                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
     }
 
     /**
@@ -75,7 +75,7 @@ public class MenuManagementAppService {
             // 检查层级（最多3级）- 通过计算父菜单的层级
             int parentDepth = calculateDepth(parentId);
             if (parentDepth >= AdminMenu.MAX_DEPTH - 1) {
-                throw new DomainException(AdminError.MENU_DEPTH_EXCEEDED);
+                throw new DomainException(AdminMessage.MENU_DEPTH_EXCEEDED);
             }
         }
 
@@ -102,7 +102,7 @@ public class MenuManagementAppService {
         if (parentId != null && !parentId.equals(menu.getParentId())) {
             // 不允许将菜单设置为自己的父级
             if (parentId.equals(id)) {
-                throw new DomainException(AdminError.MENU_INVALID_PARENT);
+                throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
 
             AdminMenu parent = findById(parentId);
@@ -110,12 +110,12 @@ public class MenuManagementAppService {
             // 检查层级
             int parentDepth = calculateDepth(parent.getId());
             if (parentDepth >= AdminMenu.MAX_DEPTH - 1) {
-                throw new DomainException(AdminError.MENU_DEPTH_EXCEEDED);
+                throw new DomainException(AdminMessage.MENU_DEPTH_EXCEEDED);
             }
 
             // 不允许将菜单设置为自己的后代
             if (isDescendant(menu.getId(), parentId)) {
-                throw new DomainException(AdminError.MENU_INVALID_PARENT);
+                throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
         }
 
@@ -136,7 +136,7 @@ public class MenuManagementAppService {
 
         // 有子菜单的不能删除
         if (hasChildren(id)) {
-            throw new DomainException(AdminError.MENU_HAS_CHILDREN);
+            throw new DomainException(AdminMessage.MENU_HAS_CHILDREN);
         }
 
         menuRepository.delete(menu);

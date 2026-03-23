@@ -12,7 +12,7 @@ import com.aieducenter.admin.application.dto.query.AdminDto;
 import com.aieducenter.admin.application.dto.query.RoleDto;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
-import com.aieducenter.admin.domain.error.AdminError;
+import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 
@@ -72,7 +72,7 @@ public class AdminManagementAppService {
     @Transactional(readOnly = true)
     public AdminDto findById(Long id) {
         AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         // 通过领域模型获取角色 ID，再批量查询角色
         List<RoleDto> roles = adminRoleRepository.findAllById(adminUser.getRoleIds()).stream()
@@ -89,7 +89,7 @@ public class AdminManagementAppService {
     public Long create(CreateAdminCommand command) {
         Assertions.require(
                 !adminUserRepository.existsByUsername(command.username()),
-                AdminError.USERNAME_ALREADY_EXISTS
+                AdminMessage.USERNAME_ALREADY_EXISTS
         );
 
         AdminUser adminUser = new AdminUser(command.username(), command.password(), command.nickname());
@@ -110,7 +110,7 @@ public class AdminManagementAppService {
     @Transactional
     public void update(Long id, UpdateAdminCommand command) {
         AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         if (command.nickname() != null) {
             adminUser.updateNickname(command.nickname());
@@ -134,7 +134,7 @@ public class AdminManagementAppService {
     @Transactional
     public void delete(Long id) {
         AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         adminUser.checkCanBeDeleted();
         adminUserRepository.delete(adminUser);
@@ -146,7 +146,7 @@ public class AdminManagementAppService {
     @Transactional
     public void updateStatus(Long id, String status) {
         AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         if ("ACTIVE".equals(status)) {
             adminUser.enable();
@@ -163,12 +163,12 @@ public class AdminManagementAppService {
     @Transactional
     public void assignRoles(Long id, AssignRolesCommand command) {
         AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminError.ADMIN_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         // 验证所有角色 ID 存在
         for (Long roleId : command.roleIds()) {
             adminRoleRepository.findById(roleId)
-                    .orElseThrow(() -> new ApplicationException(AdminError.ROLE_NOT_FOUND));
+                    .orElseThrow(() -> new ApplicationException(AdminMessage.ROLE_NOT_FOUND));
         }
 
         // 清除现有角色关联
