@@ -3,12 +3,14 @@ package com.aieducenter.admin.web.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.aieducenter.admin.application.AdminUserAuthAppService;
 import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
 import com.aieducenter.admin.application.dto.command.UpdatePasswordCommand;
+import com.aieducenter.admin.application.dto.response.AdminUserResponse;
+import com.aieducenter.admin.application.dto.response.CurrentUserResponse;
+import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.cartisan.security.authentication.AuthenticationService;
 import com.cartisan.security.authentication.TokenInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -137,5 +142,24 @@ class AdminAuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(command)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void given_authenticated_user_when_getCurrentAdmin_then_return_user_info() throws Exception {
+        // Given
+        AdminUser adminUser = new AdminUser("admin", "Test1234", "管理员");
+        AdminUserResponse userResponse = AdminUserResponse.from(adminUser);
+        CurrentUserResponse response = new CurrentUserResponse(
+                userResponse, List.of("ADMIN"), List.of(), List.of("admin:user:read")
+        );
+        when(adminAuthAppService.getCurrentAdmin(null)).thenReturn(response);
+
+        // When & Then
+        // Note: @WebMvcTest doesn't load the full context, so @CurrentUser resolver is not active
+        // The @RequireAuth annotation is also ignored, so the test passes without authentication
+        mockMvc.perform(get("/api/v1/admin/auth/current")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user.username").value("admin"));
     }
 }
