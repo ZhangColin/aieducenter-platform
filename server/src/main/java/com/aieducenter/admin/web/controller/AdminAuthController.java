@@ -5,8 +5,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.AdminUserAuthAppService;
 import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
-import com.aieducenter.admin.application.dto.query.LoginResult;
+import com.aieducenter.admin.application.dto.response.CurrentUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
+import com.cartisan.security.authentication.AuthenticationService;
+import com.cartisan.security.authentication.TokenInfo;
 import com.cartisan.web.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,14 +25,18 @@ import jakarta.validation.Valid;
 public class AdminAuthController {
 
     private final AdminUserAuthAppService adminAuthAppService;
+    private final AuthenticationService authenticationService;
 
-    public AdminAuthController(AdminUserAuthAppService adminAuthAppService) {
+    public AdminAuthController(
+            AdminUserAuthAppService adminAuthAppService,
+            AuthenticationService authenticationService) {
         this.adminAuthAppService = adminAuthAppService;
+        this.authenticationService = authenticationService;
     }
 
     @PostMapping("/login")
     @Operation(summary = "管理员登录")
-    public ApiResponse<LoginResult> login(@Valid @RequestBody AdminUserLoginCommand command) {
+    public ApiResponse<TokenInfo> login(@Valid @RequestBody AdminUserLoginCommand command) {
         return ApiResponse.ok(adminAuthAppService.login(command));
     }
 
@@ -44,8 +50,10 @@ public class AdminAuthController {
     @GetMapping("/current")
     @RequireAuth
     @Operation(summary = "获取当前管理员信息")
-    public ApiResponse<LoginResult> getCurrentAdmin() {
-        return ApiResponse.ok(adminAuthAppService.getCurrentAdmin());
+    public ApiResponse<CurrentUserResponse> getCurrentAdmin() {
+        Long userId = authenticationService.getCurrentUserId()
+                .orElseThrow(() -> new IllegalStateException("User not authenticated"));
+        return ApiResponse.ok(adminAuthAppService.getCurrentAdmin(userId));
     }
 
     @PutMapping("/current/password")
@@ -54,7 +62,9 @@ public class AdminAuthController {
     public ApiResponse<Void> updatePassword(
             @RequestParam String oldPassword,
             @RequestParam String newPassword) {
-        adminAuthAppService.updatePassword(oldPassword, newPassword);
+        Long userId = authenticationService.getCurrentUserId()
+                .orElseThrow(() -> new IllegalStateException("User not authenticated"));
+        adminAuthAppService.updatePassword(userId, oldPassword, newPassword);
         return ApiResponse.ok();
     }
 }
