@@ -3,7 +3,7 @@ package com.aieducenter.admin.web.controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.aieducenter.admin.application.AdminAuthAppService;
+import com.aieducenter.admin.application.AdminUserAuthAppService;
 import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
 import com.aieducenter.admin.application.dto.query.LoginResult;
 import com.cartisan.security.annotation.RequireAuth;
@@ -22,9 +22,9 @@ import jakarta.validation.Valid;
 @Tag(name = "Admin Auth", description = "管理员认证")
 public class AdminAuthController {
 
-    private final AdminAuthAppService adminAuthAppService;
+    private final AdminUserAuthAppService adminAuthAppService;
 
-    public AdminAuthController(AdminAuthAppService adminAuthAppService) {
+    public AdminAuthController(AdminUserAuthAppService adminAuthAppService) {
         this.adminAuthAppService = adminAuthAppService;
     }
 

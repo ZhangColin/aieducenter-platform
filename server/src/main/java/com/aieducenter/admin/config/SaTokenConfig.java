@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import cn.dev33.satoken.stp.StpInterface;
 
-import com.aieducenter.admin.application.AdminPermissionAppService;
+import com.aieducenter.admin.application.AdminUserPermissionAppService;
 
 /**
  * Sa-Token 配置。
@@ -21,9 +21,9 @@ public class SaTokenConfig {
 
     private static final String ADMIN_LOGIN_TYPE = "admin";
 
-    private final AdminPermissionAppService adminPermissionAppService;
+    private final AdminUserPermissionAppService adminPermissionAppService;
 
-    public SaTokenConfig(AdminPermissionAppService adminPermissionAppService) {
+    public SaTokenConfig(AdminUserPermissionAppService adminPermissionAppService) {
         this.adminPermissionAppService = adminPermissionAppService;
     }
 

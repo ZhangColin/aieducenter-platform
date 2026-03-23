@@ -25,13 +25,13 @@ import com.aieducenter.admin.application.dto.response.MenuResponse;
  * @since 0.1.0
  */
 @Service
-public class AdminPermissionAppService {
+public class AdminUserPermissionAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
     private final AdminMenuRepository adminMenuRepository;
 
-    public AdminPermissionAppService(
+    public AdminUserPermissionAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
             AdminMenuRepository adminMenuRepository) {

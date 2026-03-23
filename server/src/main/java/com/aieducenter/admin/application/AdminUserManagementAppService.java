@@ -26,12 +26,12 @@ import com.cartisan.web.response.PageResponse;
  * @since 0.1.0
  */
 @Service
-public class AdminManagementAppService {
+public class AdminUserManagementAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
 
-    public AdminManagementAppService(
+    public AdminUserManagementAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository) {
         this.adminUserRepository = adminUserRepository;

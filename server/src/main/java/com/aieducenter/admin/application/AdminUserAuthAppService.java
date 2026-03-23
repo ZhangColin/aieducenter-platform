@@ -24,21 +24,21 @@ import cn.dev33.satoken.stp.StpLogic;
  * @since 0.1.0
  */
 @Service
-public class AdminAuthAppService {
+public class AdminUserAuthAppService {
 
     private static final long DEFAULT_TIMEOUT = 86400; // 24 小时
     private static final long REMEMBER_TIMEOUT = 604800; // 7 天
 
     private final AdminUserRepository adminUserRepository;
-    private final AdminPermissionAppService adminPermissionAppService;
+    private final AdminUserPermissionAppService adminUserPermissionAppService;
     private final StpLogic adminStpLogic;
 
-    public AdminAuthAppService(
+    public AdminUserAuthAppService(
             AdminUserRepository adminUserRepository,
-            AdminPermissionAppService adminPermissionAppService,
+            AdminUserPermissionAppService adminUserPermissionAppService,
             StpLogic adminStpLogic) {
         this.adminUserRepository = adminUserRepository;
-        this.adminPermissionAppService = adminPermissionAppService;
+        this.adminUserPermissionAppService = adminUserPermissionAppService;
         this.adminStpLogic = adminStpLogic;
     }
 
@@ -68,9 +68,9 @@ public class AdminAuthAppService {
         Instant expireTime = Instant.now().plusSeconds(timeout);
 
         // 获取角色、菜单、权限
-        List<String> roleCodes = adminPermissionAppService.getRoleCodes(adminUser.getId());
-        List<String> permissionCodes = adminPermissionAppService.getPermissions(adminUser.getId());
-        List<MenuResponse> menus = adminPermissionAppService.getMenus(adminUser.getId());
+        List<String> roleCodes = adminUserPermissionAppService.getRoleCodes(adminUser.getId());
+        List<String> permissionCodes = adminUserPermissionAppService.getPermissions(adminUser.getId());
+        List<MenuResponse> menus = adminUserPermissionAppService.getMenus(adminUser.getId());
 
         // 构建 DTO
         List<RoleResponse> roles = roleCodes.stream()
@@ -111,9 +111,9 @@ public class AdminAuthAppService {
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         // 获取角色、菜单、权限
-        List<String> roleCodes = adminPermissionAppService.getRoleCodes(adminId);
-        List<String> permissionCodes = adminPermissionAppService.getPermissions(adminId);
-        List<MenuResponse> menus = adminPermissionAppService.getMenus(adminId);
+        List<String> roleCodes = adminUserPermissionAppService.getRoleCodes(adminId);
+        List<String> permissionCodes = adminUserPermissionAppService.getPermissions(adminId);
+        List<MenuResponse> menus = adminUserPermissionAppService.getMenus(adminId);
 
         // 构建 DTO
         List<RoleResponse> roles = roleCodes.stream()

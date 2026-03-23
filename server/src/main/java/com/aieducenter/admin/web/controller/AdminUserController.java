@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.aieducenter.admin.application.AdminManagementAppService;
+import com.aieducenter.admin.application.AdminUserManagementAppService;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
@@ -27,9 +27,9 @@ import jakarta.validation.Valid;
 @Tag(name = "Admin Users", description = "管理员管理")
 public class AdminUserController {
 
-    private final AdminManagementAppService adminManagementAppService;
+    private final AdminUserManagementAppService adminManagementAppService;
 
-    public AdminUserController(AdminManagementAppService adminManagementAppService) {
+    public AdminUserController(AdminUserManagementAppService adminManagementAppService) {
         this.adminManagementAppService = adminManagementAppService;
     }
 
