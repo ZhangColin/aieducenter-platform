@@ -30,12 +30,15 @@ public class AdminUserManagementAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
+    private final AdminUserAuthAppService adminUserAuthAppService;
 
     public AdminUserManagementAppService(
             AdminUserRepository adminUserRepository,
-            AdminRoleRepository adminRoleRepository) {
+            AdminRoleRepository adminRoleRepository,
+            AdminUserAuthAppService adminUserAuthAppService) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
+        this.adminUserAuthAppService = adminUserAuthAppService;
     }
 
     /**
@@ -178,5 +181,13 @@ public class AdminUserManagementAppService {
         }
 
         adminUserRepository.save(adminUser);
+    }
+
+    /**
+     * 重置管理员密码。
+     */
+    @Transactional
+    public void resetPassword(Long id, String newPassword) {
+        adminUserAuthAppService.resetPassword(id, newPassword);
     }
 }

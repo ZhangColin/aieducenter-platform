@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.aieducenter.admin.application.AdminUserManagementAppService;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
+import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
@@ -126,6 +127,21 @@ public class AdminUserController {
             @PathVariable Long id,
             @Valid @RequestBody AssignRolesCommand command) {
         adminManagementAppService.assignRoles(id, command);
+        return ApiResponse.ok();
+    }
+
+    @PutMapping("/{id}/password")
+    @RequireAuth
+    @RequirePermission(
+        value = "admin:user:write",
+        name = "平台管理 / 用户管理 / 编辑",
+        scope = "admin"
+    )
+    @Operation(summary = "重置管理员密码")
+    public ApiResponse<Void> resetPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody ResetPasswordCommand command) {
+        adminManagementAppService.resetPassword(id, command.newPassword());
         return ApiResponse.ok();
     }
 }
