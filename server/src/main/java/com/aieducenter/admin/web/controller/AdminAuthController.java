@@ -5,9 +5,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.AdminUserAuthAppService;
 import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
+import com.aieducenter.admin.application.dto.command.UpdatePasswordCommand;
 import com.aieducenter.admin.application.dto.response.CurrentUserResponse;
+import com.cartisan.security.annotation.CurrentUser;
 import com.cartisan.security.annotation.RequireAuth;
-import com.cartisan.security.authentication.AuthenticationService;
 import com.cartisan.security.authentication.TokenInfo;
 import com.cartisan.web.response.ApiResponse;
 
@@ -25,13 +26,9 @@ import jakarta.validation.Valid;
 public class AdminAuthController {
 
     private final AdminUserAuthAppService adminAuthAppService;
-    private final AuthenticationService authenticationService;
 
-    public AdminAuthController(
-            AdminUserAuthAppService adminAuthAppService,
-            AuthenticationService authenticationService) {
+    public AdminAuthController(AdminUserAuthAppService adminAuthAppService) {
         this.adminAuthAppService = adminAuthAppService;
-        this.authenticationService = authenticationService;
     }
 
     @PostMapping("/login")
@@ -50,9 +47,7 @@ public class AdminAuthController {
     @GetMapping("/current")
     @RequireAuth
     @Operation(summary = "获取当前管理员信息")
-    public ApiResponse<CurrentUserResponse> getCurrentAdmin() {
-        Long userId = authenticationService.getCurrentUserId()
-                .orElseThrow(() -> new IllegalStateException("User not authenticated"));
+    public ApiResponse<CurrentUserResponse> getCurrentAdmin(@CurrentUser Long userId) {
         return ApiResponse.ok(adminAuthAppService.getCurrentAdmin(userId));
     }
 
@@ -60,11 +55,9 @@ public class AdminAuthController {
     @RequireAuth
     @Operation(summary = "修改当前管理员密码")
     public ApiResponse<Void> updatePassword(
-            @RequestParam String oldPassword,
-            @RequestParam String newPassword) {
-        Long userId = authenticationService.getCurrentUserId()
-                .orElseThrow(() -> new IllegalStateException("User not authenticated"));
-        adminAuthAppService.updatePassword(userId, oldPassword, newPassword);
+            @CurrentUser Long userId,
+            @Valid @RequestBody UpdatePasswordCommand command) {
+        adminAuthAppService.updatePassword(userId, command.oldPassword(), command.newPassword());
         return ApiResponse.ok();
     }
 }
