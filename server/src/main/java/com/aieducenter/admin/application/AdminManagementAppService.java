@@ -8,8 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
-import com.aieducenter.admin.application.dto.query.AdminDto;
-import com.aieducenter.admin.application.dto.query.RoleDto;
+import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
@@ -43,7 +42,7 @@ public class AdminManagementAppService {
      * 查询管理员列表（分页）。
      */
     @Transactional(readOnly = true)
-    public PageResponse<AdminDto> findAll(int page, int size) {
+    public PageResponse<AdminUserResponse> findAll(int page, int size) {
         // 参数校验
         if (page < 1) {
             page = 1;
@@ -57,10 +56,10 @@ public class AdminManagementAppService {
         long total = adminUserRepository.count();
         long offset = (long) (page - 1) * size;
 
-        List<AdminDto> items = adminUserRepository.findAll().stream()
+        List<AdminUserResponse> items = adminUserRepository.findAll().stream()
                 .skip(offset)
                 .limit(size)
-                .map(admin -> AdminDto.from(admin, List.of()))
+                .map(AdminUserResponse::from)
                 .toList();
 
         return new PageResponse<>(items, total, page, size);
@@ -70,16 +69,11 @@ public class AdminManagementAppService {
      * 查询管理员详情。
      */
     @Transactional(readOnly = true)
-    public AdminDto findById(Long id) {
+    public AdminUserResponse findById(Long id) {
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        // 通过领域模型获取角色 ID，再批量查询角色
-        List<RoleDto> roles = adminRoleRepository.findAllById(adminUser.getRoleIds()).stream()
-                .map(RoleDto::from)
-                .toList();
-
-        return AdminDto.from(adminUser, roles);
+        return AdminUserResponse.from(adminUser);
     }
 
     /**

@@ -9,7 +9,7 @@ import com.aieducenter.admin.application.AdminManagementAppService;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
-import com.aieducenter.admin.application.dto.query.AdminDto;
+import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.ApiResponse;
@@ -41,7 +41,7 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "查询管理员列表（分页）")
-    public ApiResponse<com.cartisan.web.response.PageResponse<AdminDto>> findAll(
+    public ApiResponse<com.cartisan.web.response.PageResponse<AdminUserResponse>> findAll(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ApiResponse.ok(adminManagementAppService.findAll(page, size));
@@ -55,7 +55,7 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "查询管理员详情")
-    public ApiResponse<AdminDto> findById(@PathVariable Long id) {
+    public ApiResponse<AdminUserResponse> findById(@PathVariable Long id) {
         return ApiResponse.ok(adminManagementAppService.findById(id));
     }
 
