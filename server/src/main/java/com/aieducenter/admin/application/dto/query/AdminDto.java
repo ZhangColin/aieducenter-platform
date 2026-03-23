@@ -16,7 +16,6 @@ public record AdminDto(
         String phone,
         String avatar,
         String status,
-        boolean system,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         List<RoleDto> roles
@@ -30,7 +29,6 @@ public record AdminDto(
                 adminUser.getPhone().orElse(null),
                 adminUser.getAvatar().orElse(null),
                 adminUser.getStatus().name(),
-                adminUser.isSystem(),
                 adminUser.getCreatedAt(),   // 继承自 Auditable
                 adminUser.getUpdatedAt(),   // 继承自 Auditable
                 roles

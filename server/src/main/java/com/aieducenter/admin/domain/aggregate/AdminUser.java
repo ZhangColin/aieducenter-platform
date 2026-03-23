@@ -30,7 +30,6 @@ import jakarta.persistence.*;
  * <ul>
  *   <li>用户名不能为空且格式正确</li>
  *   <li>密码必须加密存储</li>
- *   <li>系统内置管理员不能被删除</li>
  * </ul>
  *
  * @since 0.1.0
@@ -69,9 +68,6 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private AdminStatus status;
-
-    @Column(name = "system", nullable = false)
-    private boolean system = false;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "admin_id")
@@ -149,10 +145,6 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
 
     public AdminStatus getStatus() {
         return status;
-    }
-
-    public boolean isSystem() {
-        return system;
     }
 
     public boolean isActive() {
@@ -241,7 +233,7 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
      * 检查是否可以删除。
      */
     public void checkCanBeDeleted() {
-        Assertions.require(!system, AdminMessage.LAST_ADMIN_CANNOT_DELETE);
+        // 删除保护逻辑移至 Application Service 层
     }
 
     /**

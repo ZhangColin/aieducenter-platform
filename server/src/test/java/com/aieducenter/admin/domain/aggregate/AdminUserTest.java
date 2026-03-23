@@ -22,7 +22,6 @@ class AdminUserTest {
         assertThat(adminUser.getUsername()).isEqualTo("testuser");
         assertThat(adminUser.getNickname()).isEqualTo("测试用户");
         assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
-        assertThat(adminUser.isSystem()).isFalse();
     }
 
     @Test
