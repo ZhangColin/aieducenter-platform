@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.AdminUserManagementAppService;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
-import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
+import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
-import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
+import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
@@ -68,7 +68,7 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "创建管理员")
-    public ApiResponse<Long> create(@Valid @RequestBody CreateAdminCommand command) {
+    public ApiResponse<Long> create(@Valid @RequestBody CreateAdminUserCommand command) {
         return ApiResponse.ok(adminManagementAppService.create(command));
     }
 
@@ -82,7 +82,7 @@ public class AdminUserController {
     @Operation(summary = "更新管理员")
     public ApiResponse<Void> update(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateAdminCommand command) {
+            @Valid @RequestBody UpdateAdminUserCommand command) {
         adminManagementAppService.update(id, command);
         return ApiResponse.ok();
     }

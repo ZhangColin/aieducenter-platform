@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
-import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
-import com.aieducenter.admin.application.dto.command.UpdateAdminCommand;
+import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
+import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
@@ -83,7 +83,7 @@ public class AdminUserManagementAppService {
      * 创建管理员。
      */
     @Transactional
-    public Long create(CreateAdminCommand command) {
+    public Long create(CreateAdminUserCommand command) {
         Assertions.require(
                 !adminUserRepository.existsByUsername(command.username()),
                 AdminMessage.USERNAME_ALREADY_EXISTS
@@ -105,7 +105,7 @@ public class AdminUserManagementAppService {
      * 更新管理员。
      */
     @Transactional
-    public void update(Long id, UpdateAdminCommand command) {
+    public void update(Long id, UpdateAdminUserCommand command) {
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 

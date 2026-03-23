@@ -26,7 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     properties = {
         "cartisan.security.interceptor.path-patterns[0]=/api/**",
         "cartisan.security.interceptor.path-patterns[1]=/admin/**",
-        "cartisan.security.interceptor.path-patterns[2]=/test/**"
+        "cartisan.security.interceptor.path-patterns[2]=/test/**",
+        "sa-token.token-name=Authorization"
     }
 )
 @AutoConfigureMockMvc

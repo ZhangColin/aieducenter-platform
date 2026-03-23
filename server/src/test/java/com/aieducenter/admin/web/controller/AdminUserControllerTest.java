@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.aieducenter.admin.application.AdminUserManagementAppService;
-import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
+import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,10 +45,10 @@ class AdminUserControllerTest {
     @Test
     void given_valid_input_when_createAdminUser_then_return_id() throws Exception {
         // Given
-        CreateAdminCommand command = new CreateAdminCommand(
+        CreateAdminUserCommand command = new CreateAdminUserCommand(
             "testuser", "Test1234", "测试用户", "test@example.com", null
         );
-        when(adminUserManagementAppService.create(any(CreateAdminCommand.class))).thenReturn(1L);
+        when(adminUserManagementAppService.create(any(CreateAdminUserCommand.class))).thenReturn(1L);
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/users")
@@ -62,7 +62,7 @@ class AdminUserControllerTest {
     @Test
     void given_invalid_username_when_createAdminUser_then_return_error() throws Exception {
         // Given - invalid username (starts with number)
-        CreateAdminCommand command = new CreateAdminCommand(
+        CreateAdminUserCommand command = new CreateAdminUserCommand(
             "123user", "Test1234", "测试用户", "test@example.com", null
         );
 
@@ -76,7 +76,7 @@ class AdminUserControllerTest {
     @Test
     void given_invalid_password_when_createAdminUser_then_return_error() throws Exception {
         // Given - weak password
-        CreateAdminCommand command = new CreateAdminCommand(
+        CreateAdminUserCommand command = new CreateAdminUserCommand(
             "testuser", "weak", "测试用户", "test@example.com", null
         );
 

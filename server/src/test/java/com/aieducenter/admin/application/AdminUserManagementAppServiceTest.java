@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.aieducenter.admin.application.dto.command.CreateAdminCommand;
+import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
@@ -48,7 +48,7 @@ class AdminUserManagementAppServiceTest {
     @Test
     void given_valid_input_when_createAdminUser_then_success() {
         // Given
-        CreateAdminCommand command = new CreateAdminCommand(
+        CreateAdminUserCommand command = new CreateAdminUserCommand(
             "testuser", "Test1234", "测试用户", "test@example.com", null
         );
         when(adminUserRepository.existsByUsername("testuser")).thenReturn(false);
@@ -73,7 +73,7 @@ class AdminUserManagementAppServiceTest {
     @Test
     void given_duplicate_username_when_createAdminUser_then_throw_exception() {
         // Given
-        CreateAdminCommand command = new CreateAdminCommand(
+        CreateAdminUserCommand command = new CreateAdminUserCommand(
             "testuser", "Test1234", "测试用户", null, null
         );
         when(adminUserRepository.existsByUsername("testuser")).thenReturn(true);
