@@ -4,7 +4,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.AdminAuthAppService;
-import com.aieducenter.admin.application.dto.command.AdminLoginCommand;
+import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
 import com.aieducenter.admin.application.dto.query.LoginResult;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.web.response.ApiResponse;
@@ -30,7 +30,7 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     @Operation(summary = "管理员登录")
-    public ApiResponse<LoginResult> login(@Valid @RequestBody AdminLoginCommand command) {
+    public ApiResponse<LoginResult> login(@Valid @RequestBody AdminUserLoginCommand command) {
         return ApiResponse.ok(adminAuthAppService.login(command));
     }
 

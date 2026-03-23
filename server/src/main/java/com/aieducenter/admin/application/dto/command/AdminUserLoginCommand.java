@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
  *
  * @since 0.1.0
  */
-public record AdminLoginCommand(
+public record AdminUserLoginCommand(
 
         @NotBlank(message = "用户名不能为空")
         String username,

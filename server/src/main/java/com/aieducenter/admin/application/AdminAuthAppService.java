@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.aieducenter.admin.application.dto.command.AdminLoginCommand;
+import com.aieducenter.admin.application.dto.command.AdminUserLoginCommand;
 import com.aieducenter.admin.application.dto.query.AdminDto;
 import com.aieducenter.admin.application.dto.query.LoginResult;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
@@ -46,7 +46,7 @@ public class AdminAuthAppService {
      * 管理员登录。
      */
     @Transactional
-    public LoginResult login(AdminLoginCommand command) {
+    public LoginResult login(AdminUserLoginCommand command) {
         // 验证用户名和密码
         AdminUser adminUser = adminUserRepository.findByUsername(command.username())
                 .orElseThrow(() -> new ApplicationException(AdminMessage.LOGIN_FAILED));
