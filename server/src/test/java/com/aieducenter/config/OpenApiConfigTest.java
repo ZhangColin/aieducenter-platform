@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import com.cartisan.security.authentication.AuthenticationService;
+import com.cartisan.security.permission.PermissionScanner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,6 +22,9 @@ class OpenApiConfigTest {
 
     @MockBean
     private AuthenticationService authenticationService;
+
+    @MockBean
+    private PermissionScanner permissionScanner;
 
     @Autowired
     private OpenAPI openAPI;
