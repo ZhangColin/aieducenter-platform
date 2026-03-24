@@ -11,7 +11,6 @@ import com.aieducenter.admin.application.dto.command.UpdateMenuCommand;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
-import com.cartisan.web.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,8 +39,8 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "查询菜单列表（树形）")
-    public ApiResponse<List<MenuResponse>> findTree() {
-        return ApiResponse.ok(menuManagementAppService.findTreeAsDto());
+    public List<MenuResponse> findTree() {
+        return menuManagementAppService.findTreeAsDto();
     }
 
     @GetMapping("/{id}")
@@ -52,8 +51,8 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "查询菜单详情")
-    public ApiResponse<MenuResponse> findById(@PathVariable Long id) {
-        return ApiResponse.ok(menuManagementAppService.findByIdAsDto(id));
+    public MenuResponse findById(@PathVariable Long id) {
+        return menuManagementAppService.findByIdAsDto(id);
     }
 
     @PostMapping
@@ -64,9 +63,8 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "创建菜单")
-    public ApiResponse<Long> create(@Valid @RequestBody CreateMenuCommand command) {
-        Long id = menuManagementAppService.createAndReturnId(command);
-        return ApiResponse.ok(id);
+    public Long create(@Valid @RequestBody CreateMenuCommand command) {
+        return menuManagementAppService.createAndReturnId(command);
     }
 
     @PutMapping("/{id}")
@@ -77,11 +75,10 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "更新菜单")
-    public ApiResponse<Void> update(
+    public void update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateMenuCommand command) {
         menuManagementAppService.update(id, command);
-        return ApiResponse.ok();
     }
 
     @DeleteMapping("/{id}")
@@ -92,8 +89,7 @@ public class AdminMenuController {
         scope = "admin"
     )
     @Operation(summary = "删除菜单")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         menuManagementAppService.delete(id);
-        return ApiResponse.ok();
     }
 }

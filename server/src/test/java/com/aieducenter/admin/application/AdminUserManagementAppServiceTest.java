@@ -19,6 +19,7 @@ import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
+import com.aieducenter.admin.application.mapper.AdminUserMapper;
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.exception.DomainException;
 
@@ -34,6 +35,9 @@ class AdminUserManagementAppServiceTest {
     @Mock
     private AdminUserAuthAppService adminUserAuthAppService;
 
+    @Mock
+    private AdminUserMapper adminUserMapper;
+
     private AdminUserManagementAppService adminUserManagementAppService;
 
     @BeforeEach
@@ -41,7 +45,8 @@ class AdminUserManagementAppServiceTest {
         adminUserManagementAppService = new AdminUserManagementAppService(
             adminUserRepository,
             adminRoleRepository,
-            adminUserAuthAppService
+            adminUserAuthAppService,
+            adminUserMapper
         );
     }
 

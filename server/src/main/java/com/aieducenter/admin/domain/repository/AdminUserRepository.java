@@ -20,8 +20,6 @@ public interface AdminUserRepository extends BaseRepository<AdminUser, Long> {
 
     boolean existsByUsername(String username);
 
-    List<AdminUser> findAll();
-
     /**
      * 查询管理员是否拥有指定角色。
      */

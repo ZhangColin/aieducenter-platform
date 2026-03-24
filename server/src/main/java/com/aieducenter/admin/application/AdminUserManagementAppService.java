@@ -14,6 +14,7 @@ import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
+import com.aieducenter.admin.application.mapper.AdminUserMapper;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
@@ -37,14 +38,17 @@ public class AdminUserManagementAppService {
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
     private final AdminUserAuthAppService adminUserAuthAppService;
+    private final AdminUserMapper adminUserMapper;
 
     public AdminUserManagementAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
-            AdminUserAuthAppService adminUserAuthAppService) {
+            AdminUserAuthAppService adminUserAuthAppService,
+            AdminUserMapper adminUserMapper) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
         this.adminUserAuthAppService = adminUserAuthAppService;
+        this.adminUserMapper = adminUserMapper;
     }
 
     /**
@@ -56,7 +60,7 @@ public class AdminUserManagementAppService {
         Page<AdminUser> page = adminUserRepository.findAll(spec, pageable);
 
         return new PageResponse<>(
-                page.getContent().stream().map(AdminUserResponse::from).toList(),
+                adminUserMapper.convertList(page.getContent()),
                 page.getTotalElements(),
                 pageable.getPageNumber() + 1,
                 pageable.getPageSize()
@@ -71,7 +75,7 @@ public class AdminUserManagementAppService {
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        return AdminUserResponse.from(adminUser);
+        return adminUserMapper.toDto(adminUser);
     }
 
     /**

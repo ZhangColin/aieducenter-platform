@@ -45,6 +45,9 @@ cartisan:
         - "/api/health"
         - "/swagger-ui/**"
         - "/api-docs/**"
+  web:
+    auto-response:
+      enabled: true
 
 # Sa-Token 配置
 sa-token:

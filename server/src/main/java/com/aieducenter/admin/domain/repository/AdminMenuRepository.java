@@ -13,8 +13,6 @@ import com.cartisan.data.jpa.repository.BaseRepository;
  */
 public interface AdminMenuRepository extends BaseRepository<AdminMenu, Long> {
 
-    List<AdminMenu> findAll();
-
     List<AdminMenu> findByParentId(Long parentId);
 
     boolean existsByParentId(Long parentId);

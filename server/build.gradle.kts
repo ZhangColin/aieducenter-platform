@@ -44,6 +44,11 @@ dependencies {
     // Hutool (for validation)
     implementation("cn.hutool:hutool-core:5.8.29")
 
+    // MapStruct (DomainMapper)
+    implementation("org.mapstruct:mapstruct:1.6.0")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.0")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+
     // SpringDoc OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 

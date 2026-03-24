@@ -11,6 +11,7 @@ import com.aieducenter.admin.application.dto.command.UpdatePasswordCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.application.dto.response.CurrentUserResponse;
+import com.aieducenter.admin.application.mapper.AdminUserMapper;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
@@ -34,14 +35,17 @@ public class AdminUserAuthAppService {
     private final AdminUserRepository adminUserRepository;
     private final AdminUserPermissionAppService adminPermissionAppService;
     private final AuthenticationService authenticationService;
+    private final AdminUserMapper adminUserMapper;
 
     public AdminUserAuthAppService(
             AdminUserRepository adminUserRepository,
             AdminUserPermissionAppService adminPermissionAppService,
-            AuthenticationService authenticationService) {
+            AuthenticationService authenticationService,
+            AdminUserMapper adminUserMapper) {
         this.adminUserRepository = adminUserRepository;
         this.adminPermissionAppService = adminPermissionAppService;
         this.authenticationService = authenticationService;
+        this.adminUserMapper = adminUserMapper;
     }
 
     /**
@@ -110,7 +114,7 @@ public class AdminUserAuthAppService {
         List<String> permissionCodes = adminPermissionAppService.getPermissions(userId);
         List<MenuResponse> menus = adminPermissionAppService.getMenus(userId);
 
-        AdminUserResponse user = AdminUserResponse.from(adminUser);
+        AdminUserResponse user = adminUserMapper.toDto(adminUser);
 
         return new CurrentUserResponse(user, roleCodes, menus, permissionCodes);
     }

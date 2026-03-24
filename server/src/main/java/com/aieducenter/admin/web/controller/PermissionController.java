@@ -8,7 +8,6 @@ import com.aieducenter.admin.application.PermissionScanAppService;
 import com.aieducenter.admin.application.dto.response.PermissionResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
-import com.cartisan.web.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,8 +34,8 @@ public class PermissionController {
         scope = "admin"
     )
     @Operation(summary = "查询权限列表（扫描结果）")
-    public ApiResponse<List<PermissionResponse>> scanPermissions(
+    public List<PermissionResponse> scanPermissions(
             @RequestParam(defaultValue = "admin") String scope) {
-        return ApiResponse.ok(permissionScanAppService.scanByScope(scope));
+        return permissionScanAppService.scanByScope(scope);
     }
 }

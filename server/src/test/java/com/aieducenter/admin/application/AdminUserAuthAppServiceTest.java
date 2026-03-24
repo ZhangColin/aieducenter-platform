@@ -25,6 +25,7 @@ import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.security.authentication.AuthenticationService;
+import com.aieducenter.admin.application.mapper.AdminUserMapper;
 import com.cartisan.security.authentication.TokenInfo;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +40,9 @@ class AdminUserAuthAppServiceTest {
     @Mock
     private AuthenticationService authenticationService;
 
+    @Mock
+    private AdminUserMapper adminUserMapper;
+
     private AdminUserAuthAppService adminAuthAppService;
 
     @BeforeEach
@@ -46,7 +50,8 @@ class AdminUserAuthAppServiceTest {
         adminAuthAppService = new AdminUserAuthAppService(
             adminUserRepository,
             adminPermissionAppService,
-            authenticationService
+            authenticationService,
+            adminUserMapper
         );
     }
 

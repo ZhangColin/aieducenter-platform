@@ -18,8 +18,6 @@ public interface AdminRoleRepository extends BaseRepository<AdminRole, Long> {
 
     Optional<AdminRole> findByCode(String code);
 
-    List<AdminRole> findAll();
-
     /**
      * 检查角色是否被管理员使用。
      */

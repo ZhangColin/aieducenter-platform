@@ -20,6 +20,7 @@ import com.aieducenter.admin.application.dto.command.CreateRoleCommand;
 import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
 import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
+import com.aieducenter.admin.application.mapper.AdminRoleMapper;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
 import com.cartisan.web.response.PageResponse;
@@ -32,11 +33,14 @@ public class RoleManagementAppService {
 
     private final AdminRoleRepository roleRepository;
     private final AdminMenuRepository menuRepository;
+    private final AdminRoleMapper adminRoleMapper;
 
     public RoleManagementAppService(AdminRoleRepository roleRepository,
-                                     AdminMenuRepository menuRepository) {
+                                     AdminMenuRepository menuRepository,
+                                     AdminRoleMapper adminRoleMapper) {
         this.roleRepository = roleRepository;
         this.menuRepository = menuRepository;
+        this.adminRoleMapper = adminRoleMapper;
     }
 
     /**
@@ -48,7 +52,7 @@ public class RoleManagementAppService {
         Page<AdminRole> page = roleRepository.findAll(spec, pageable);
 
         return new PageResponse<>(
-                page.getContent().stream().map(RoleResponse::from).toList(),
+                adminRoleMapper.convertList(page.getContent()),
                 page.getTotalElements(),
                 pageable.getPageNumber() + 1,
                 pageable.getPageSize()
@@ -182,7 +186,7 @@ public class RoleManagementAppService {
      */
     public List<RoleResponse> findAllAsDto() {
         List<AdminRole> roles = roleRepository.findAll();
-        return roles.stream().map(RoleResponse::from).collect(Collectors.toList());
+        return adminRoleMapper.convertList(roles);
     }
 
     /**
@@ -190,6 +194,6 @@ public class RoleManagementAppService {
      */
     public RoleResponse findByIdAsDto(Long id) {
         AdminRole role = findById(id);
-        return RoleResponse.from(role);
+        return adminRoleMapper.convert(role);
     }
 }

@@ -1,7 +1,6 @@
 package com.aieducenter.admin.application.dto.response;
 
 import java.time.LocalDateTime;
-import com.aieducenter.admin.domain.aggregate.AdminUser;
 
 /**
  * 管理员响应 DTO。
@@ -18,18 +17,4 @@ public record AdminUserResponse(
         String status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
-) {
-    public static AdminUserResponse from(AdminUser adminUser) {
-        return new AdminUserResponse(
-                adminUser.getId(),
-                adminUser.getUsername(),
-                adminUser.getNickname(),
-                adminUser.getEmail().orElse(null),
-                adminUser.getPhone().orElse(null),
-                adminUser.getAvatar().orElse(null),
-                adminUser.getStatus().name(),
-                adminUser.getCreatedAt(),
-                adminUser.getUpdatedAt()
-        );
-    }
-}
+) {}

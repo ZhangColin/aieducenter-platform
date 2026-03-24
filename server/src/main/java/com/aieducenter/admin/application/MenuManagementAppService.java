@@ -15,6 +15,7 @@ import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.application.dto.command.CreateMenuCommand;
 import com.aieducenter.admin.application.dto.command.UpdateMenuCommand;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
+import com.aieducenter.admin.application.mapper.AdminMenuMapper;
 import com.cartisan.core.exception.DomainException;
 
 /**
@@ -24,9 +25,12 @@ import com.cartisan.core.exception.DomainException;
 public class MenuManagementAppService {
 
     private final AdminMenuRepository menuRepository;
+    private final AdminMenuMapper adminMenuMapper;
 
-    public MenuManagementAppService(AdminMenuRepository menuRepository) {
+    public MenuManagementAppService(AdminMenuRepository menuRepository,
+                                     AdminMenuMapper adminMenuMapper) {
         this.menuRepository = menuRepository;
+        this.adminMenuMapper = adminMenuMapper;
     }
 
     /**
@@ -197,9 +201,7 @@ public class MenuManagementAppService {
      */
     public List<MenuResponse> findTreeAsDto() {
         List<AdminMenu> menus = findTree();
-        return menus.stream()
-                .map(menu -> MenuResponse.fromTree(menu, menus))
-                .collect(Collectors.toList());
+        return adminMenuMapper.convertList(menus);
     }
 
     /**
@@ -207,6 +209,6 @@ public class MenuManagementAppService {
      */
     public MenuResponse findByIdAsDto(Long id) {
         AdminMenu menu = findById(id);
-        return MenuResponse.from(menu);
+        return adminMenuMapper.convert(menu);
     }
 }

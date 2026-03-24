@@ -2,8 +2,6 @@ package com.aieducenter.admin.application.dto.response;
 
 import java.util.Set;
 
-import com.aieducenter.admin.domain.aggregate.AdminRole;
-
 /**
  * 角色 Response。
  *
@@ -17,17 +15,4 @@ public record RoleResponse(
         Integer sortOrder,
         Set<Long> menuIds,
         Set<String> permissionCodes
-) {
-
-    public static RoleResponse from(AdminRole role) {
-        return new RoleResponse(
-                role.getId(),
-                role.getName(),
-                role.getCode(),
-                role.getDescription(),
-                role.getSortOrder(),
-                role.getMenuIds(),
-                role.getPermissionCodes()
-        );
-    }
-}
+) {}

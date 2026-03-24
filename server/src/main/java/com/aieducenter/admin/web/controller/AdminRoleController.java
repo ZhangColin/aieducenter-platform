@@ -16,7 +16,6 @@ import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
-import com.cartisan.web.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,10 +44,10 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "查询角色列表（分页）")
-    public ApiResponse<com.cartisan.web.response.PageResponse<RoleResponse>> findAll(
+    public com.cartisan.web.response.PageResponse<RoleResponse> findAll(
             AdminRoleQuery query,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResponse.ok(roleManagementAppService.findAll(query, pageable));
+        return roleManagementAppService.findAll(query, pageable);
     }
 
     @GetMapping("/{id}")
@@ -59,8 +58,8 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "查询角色详情")
-    public ApiResponse<RoleResponse> findById(@PathVariable Long id) {
-        return ApiResponse.ok(roleManagementAppService.findByIdAsDto(id));
+    public RoleResponse findById(@PathVariable Long id) {
+        return roleManagementAppService.findByIdAsDto(id);
     }
 
     @PostMapping
@@ -71,9 +70,8 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "创建角色")
-    public ApiResponse<Long> create(@Valid @RequestBody CreateRoleCommand command) {
-        Long id = roleManagementAppService.createAndReturnId(command);
-        return ApiResponse.ok(id);
+    public Long create(@Valid @RequestBody CreateRoleCommand command) {
+        return roleManagementAppService.createAndReturnId(command);
     }
 
     @PutMapping("/{id}")
@@ -84,11 +82,10 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "更新角色")
-    public ApiResponse<Void> update(
+    public void update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateRoleCommand command) {
         roleManagementAppService.update(id, command);
-        return ApiResponse.ok();
     }
 
     @DeleteMapping("/{id}")
@@ -99,9 +96,8 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "删除角色")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         roleManagementAppService.delete(id);
-        return ApiResponse.ok();
     }
 
     @PutMapping("/{id}/menus")
@@ -112,11 +108,10 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "分配菜单")
-    public ApiResponse<Void> assignMenus(
+    public void assignMenus(
             @PathVariable Long id,
             @Valid @RequestBody AssignMenusCommand command) {
         roleManagementAppService.assignMenus(id, command);
-        return ApiResponse.ok();
     }
 
     @PutMapping("/{id}/permissions")
@@ -127,10 +122,9 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "分配权限")
-    public ApiResponse<Void> assignPermissions(
+    public void assignPermissions(
             @PathVariable Long id,
             @Valid @RequestBody AssignPermissionsCommand command) {
         roleManagementAppService.assignPermissions(id, command);
-        return ApiResponse.ok();
     }
 }

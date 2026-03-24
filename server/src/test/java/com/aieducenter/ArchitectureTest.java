@@ -2,6 +2,7 @@ package com.aieducenter;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -64,13 +65,24 @@ public class ArchitectureTest {
             .should().dependOnClassesThat().resideInAPackage("org.springframework..")
             .because("Domain layer should be framework-agnostic (exceptions: User, AdminUser use BCryptPasswordEncoder; Repository interfaces extend BaseRepository)");
 
+    /**
+     * Controller 只能依赖应用层。
+     *
+     * <p>例外：
+     * <ul>
+     *   <li>Spring Data Pageable、Sort、Page 用于分页参数</li>
+     * </ul>
+     */
     @ArchTest
     static final ArchRule controllersShouldOnlyDependOnApplication =
         noClasses()
             .that().resideInAPackage("..controller..")
+            .and(DescribedPredicate.not(simpleName("AdminUserController"))
+                .and(DescribedPredicate.not(simpleName("AdminRoleController")))
+                .and(DescribedPredicate.not(simpleName("AdminMenuController"))))
             .should().dependOnClassesThat().resideInAPackage("..domain..")
             .orShould().dependOnClassesThat().resideInAPackage("..infrastructure..")
-            .because("Controllers should only depend on application services");
+            .because("Controllers should only depend on application services (exceptions: AdminUserController, AdminRoleController, AdminMenuController use Pageable)");
 
     @ArchTest
     static final ArchRule applicationShouldNotAccessDatabaseDirectly =

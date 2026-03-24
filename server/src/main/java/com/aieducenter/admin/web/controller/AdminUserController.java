@@ -16,7 +16,6 @@ import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
-import com.cartisan.web.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,10 +44,10 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "查询管理员列表（分页）")
-    public ApiResponse<com.cartisan.web.response.PageResponse<AdminUserResponse>> findAll(
+    public com.cartisan.web.response.PageResponse<AdminUserResponse> findAll(
             AdminUserQuery query,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResponse.ok(adminManagementAppService.findAll(query, pageable));
+        return adminManagementAppService.findAll(query, pageable);
     }
 
     @GetMapping("/{id}")
@@ -59,8 +58,8 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "查询管理员详情")
-    public ApiResponse<AdminUserResponse> findById(@PathVariable Long id) {
-        return ApiResponse.ok(adminManagementAppService.findById(id));
+    public AdminUserResponse findById(@PathVariable Long id) {
+        return adminManagementAppService.findById(id);
     }
 
     @PostMapping
@@ -71,8 +70,8 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "创建管理员")
-    public ApiResponse<Long> create(@Valid @RequestBody CreateAdminUserCommand command) {
-        return ApiResponse.ok(adminManagementAppService.create(command));
+    public Long create(@Valid @RequestBody CreateAdminUserCommand command) {
+        return adminManagementAppService.create(command);
     }
 
     @PutMapping("/{id}")
@@ -83,11 +82,10 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "更新管理员")
-    public ApiResponse<Void> update(
+    public void update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateAdminUserCommand command) {
         adminManagementAppService.update(id, command);
-        return ApiResponse.ok();
     }
 
     @DeleteMapping("/{id}")
@@ -98,9 +96,8 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "删除管理员")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         adminManagementAppService.delete(id);
-        return ApiResponse.ok();
     }
 
     @PutMapping("/{id}/status")
@@ -111,11 +108,10 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "修改管理员状态")
-    public ApiResponse<Void> updateStatus(
+    public void updateStatus(
             @PathVariable Long id,
             @RequestParam String status) {
         adminManagementAppService.updateStatus(id, status);
-        return ApiResponse.ok();
     }
 
     @PutMapping("/{id}/roles")
@@ -126,11 +122,10 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "分配角色")
-    public ApiResponse<Void> assignRoles(
+    public void assignRoles(
             @PathVariable Long id,
             @Valid @RequestBody AssignRolesCommand command) {
         adminManagementAppService.assignRoles(id, command);
-        return ApiResponse.ok();
     }
 
     @PutMapping("/{id}/password")
@@ -141,10 +136,9 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "重置管理员密码")
-    public ApiResponse<Void> resetPassword(
+    public void resetPassword(
             @PathVariable Long id,
             @Valid @RequestBody ResetPasswordCommand command) {
         adminManagementAppService.resetPassword(id, command);
-        return ApiResponse.ok();
     }
 }

@@ -12,6 +12,7 @@ import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
+import com.aieducenter.admin.application.mapper.AdminMenuMapper;
 
 /**
  * 管理员权限应用服务。
@@ -30,14 +31,17 @@ public class AdminUserPermissionAppService {
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
     private final AdminMenuRepository adminMenuRepository;
+    private final AdminMenuMapper adminMenuMapper;
 
     public AdminUserPermissionAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
-            AdminMenuRepository adminMenuRepository) {
+            AdminMenuRepository adminMenuRepository,
+            AdminMenuMapper adminMenuMapper) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
         this.adminMenuRepository = adminMenuRepository;
+        this.adminMenuMapper = adminMenuMapper;
     }
 
     /**
@@ -150,9 +154,7 @@ public class AdminUserPermissionAppService {
         }
 
         // 转换为 DTO
-        return roots.stream()
-                .map(MenuResponse::from)
-                .toList();
+        return adminMenuMapper.convertList(roots);
     }
 
     /**

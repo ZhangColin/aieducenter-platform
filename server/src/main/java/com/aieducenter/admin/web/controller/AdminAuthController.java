@@ -10,7 +10,6 @@ import com.aieducenter.admin.application.dto.response.CurrentUserResponse;
 import com.cartisan.security.annotation.CurrentUser;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.authentication.TokenInfo;
-import com.cartisan.web.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,31 +32,29 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     @Operation(summary = "管理员登录")
-    public ApiResponse<TokenInfo> login(@Valid @RequestBody AdminUserLoginCommand command) {
-        return ApiResponse.ok(adminAuthAppService.login(command));
+    public TokenInfo login(@Valid @RequestBody AdminUserLoginCommand command) {
+        return adminAuthAppService.login(command);
     }
 
     @PostMapping("/logout")
     @Operation(summary = "管理员登出")
-    public ApiResponse<Void> logout() {
+    public void logout() {
         adminAuthAppService.logout();
-        return ApiResponse.ok();
     }
 
     @GetMapping("/current")
     @RequireAuth
     @Operation(summary = "获取当前管理员信息")
-    public ApiResponse<CurrentUserResponse> getCurrentAdmin(@CurrentUser Long userId) {
-        return ApiResponse.ok(adminAuthAppService.getCurrentAdmin(userId));
+    public CurrentUserResponse getCurrentAdmin(@CurrentUser Long userId) {
+        return adminAuthAppService.getCurrentAdmin(userId);
     }
 
     @PutMapping("/current/password")
     @RequireAuth
     @Operation(summary = "修改当前管理员密码")
-    public ApiResponse<Void> updatePassword(
+    public void updatePassword(
             @CurrentUser Long userId,
             @Valid @RequestBody UpdatePasswordCommand command) {
         adminAuthAppService.updatePassword(userId, command);
-        return ApiResponse.ok();
     }
 }
