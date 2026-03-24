@@ -2,6 +2,8 @@ package com.aieducenter.admin.web.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,6 +12,7 @@ import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
+import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
@@ -43,9 +46,9 @@ public class AdminUserController {
     )
     @Operation(summary = "查询管理员列表（分页）")
     public ApiResponse<com.cartisan.web.response.PageResponse<AdminUserResponse>> findAll(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.ok(adminManagementAppService.findAll(page, size));
+            AdminUserQuery query,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.ok(adminManagementAppService.findAll(query, pageable));
     }
 
     @GetMapping("/{id}")

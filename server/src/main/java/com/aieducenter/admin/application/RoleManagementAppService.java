@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,8 +18,11 @@ import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
 import com.aieducenter.admin.application.dto.command.CreateRoleCommand;
 import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
+import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.core.exception.DomainException;
+import com.cartisan.data.jpa.specification.ConditionSpecifications;
+import com.cartisan.web.response.PageResponse;
 
 /**
  * 角色管理应用服务。
@@ -34,7 +40,23 @@ public class RoleManagementAppService {
     }
 
     /**
-     * 获取所有角色列表。
+     * 查询角色列表（分页）。
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<RoleResponse> findAll(AdminRoleQuery query, Pageable pageable) {
+        Specification<AdminRole> spec = ConditionSpecifications.fromAnnotation(query);
+        Page<AdminRole> page = roleRepository.findAll(spec, pageable);
+
+        return new PageResponse<>(
+                page.getContent().stream().map(RoleResponse::from).toList(),
+                page.getTotalElements(),
+                pageable.getPageNumber() + 1,
+                pageable.getPageSize()
+        );
+    }
+
+    /**
+     * 获取所有角色列表（不分页）。
      */
     public List<AdminRole> findAll() {
         return roleRepository.findAll();

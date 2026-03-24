@@ -2,6 +2,9 @@ package com.aieducenter.admin.application;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +12,7 @@ import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
 import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
+import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
@@ -18,6 +22,7 @@ import com.aieducenter.admin.domain.repository.AdminUserRepository;
 
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
+import com.cartisan.data.jpa.specification.ConditionSpecifications;
 
 import com.cartisan.web.response.PageResponse;
 
@@ -46,27 +51,16 @@ public class AdminUserManagementAppService {
      * 查询管理员列表（分页）。
      */
     @Transactional(readOnly = true)
-    public PageResponse<AdminUserResponse> findAll(int page, int size) {
-        // 参数校验
-        if (page < 1) {
-            page = 1;
-        }
-        if (size < 1) {
-            size = 20;
-        } else if (size > 100) {
-            size = 100;
-        }
+    public PageResponse<AdminUserResponse> findAll(AdminUserQuery query, Pageable pageable) {
+        Specification<AdminUser> spec = ConditionSpecifications.fromAnnotation(query);
+        Page<AdminUser> page = adminUserRepository.findAll(spec, pageable);
 
-        long total = adminUserRepository.count();
-        long offset = (long) (page - 1) * size;
-
-        List<AdminUserResponse> items = adminUserRepository.findAll().stream()
-                .skip(offset)
-                .limit(size)
-                .map(AdminUserResponse::from)
-                .toList();
-
-        return new PageResponse<>(items, total, page, size);
+        return new PageResponse<>(
+                page.getContent().stream().map(AdminUserResponse::from).toList(),
+                page.getTotalElements(),
+                pageable.getPageNumber() + 1,
+                pageable.getPageSize()
+        );
     }
 
     /**

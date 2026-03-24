@@ -2,6 +2,8 @@ package com.aieducenter.admin.web.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,6 +12,7 @@ import com.aieducenter.admin.application.dto.command.AssignMenusCommand;
 import com.aieducenter.admin.application.dto.command.AssignPermissionsCommand;
 import com.aieducenter.admin.application.dto.command.CreateRoleCommand;
 import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
+import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
@@ -41,9 +44,11 @@ public class AdminRoleController {
         name = "平台管理 / 角色管理 / 查看",
         scope = "admin"
     )
-    @Operation(summary = "查询角色列表")
-    public ApiResponse<List<RoleResponse>> findAll() {
-        return ApiResponse.ok(roleManagementAppService.findAllAsDto());
+    @Operation(summary = "查询角色列表（分页）")
+    public ApiResponse<com.cartisan.web.response.PageResponse<RoleResponse>> findAll(
+            AdminRoleQuery query,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.ok(roleManagementAppService.findAll(query, pageable));
     }
 
     @GetMapping("/{id}")
