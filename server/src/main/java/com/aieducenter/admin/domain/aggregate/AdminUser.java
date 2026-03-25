@@ -13,6 +13,7 @@ import com.cartisan.core.domain.BaseEnum;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.stereotype.Aggregate;
 import com.cartisan.core.util.Assertions;
+import com.cartisan.data.jpa.annotation.EnumConvert;
 import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
 import com.cartisan.data.jpa.id.TsidGenerator;
 import com.aieducenter.admin.domain.entity.AdminUserRole;
@@ -76,8 +77,8 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     private String avatar;
 
     @Getter
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @EnumConvert(AdminStatus.class)
+    @Column(name = "status", nullable = false)
     private AdminStatus status;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
