@@ -16,6 +16,7 @@ import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
+import com.cartisan.web.response.PageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,7 +45,7 @@ public class AdminUserController {
         scope = "admin"
     )
     @Operation(summary = "查询管理员列表（分页）")
-    public com.cartisan.web.response.PageResponse<AdminUserResponse> findAll(
+    public PageResponse<AdminUserResponse> findAll(
             AdminUserQuery query,
             @PageableDefault(size = 20) Pageable pageable) {
         return adminManagementAppService.findAll(query, pageable);

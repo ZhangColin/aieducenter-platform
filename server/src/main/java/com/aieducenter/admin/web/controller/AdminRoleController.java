@@ -16,6 +16,7 @@ import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
+import com.cartisan.web.response.PageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,7 +45,7 @@ public class AdminRoleController {
         scope = "admin"
     )
     @Operation(summary = "查询角色列表（分页）")
-    public com.cartisan.web.response.PageResponse<RoleResponse> findAll(
+    public PageResponse<RoleResponse> findAll(
             AdminRoleQuery query,
             @PageableDefault(size = 20) Pageable pageable) {
         return roleManagementAppService.findAll(query, pageable);
