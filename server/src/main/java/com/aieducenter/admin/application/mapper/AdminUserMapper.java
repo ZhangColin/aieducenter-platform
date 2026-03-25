@@ -3,6 +3,8 @@ package com.aieducenter.admin.application.mapper;
 import java.util.Optional;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
@@ -16,17 +18,22 @@ import com.cartisan.web.mapper.DomainMapper;
 @Mapper(componentModel = "spring")
 public interface AdminUserMapper extends DomainMapper<AdminUser, AdminUserResponse> {
 
+    @Override
+    @Mapping(target = "statusName", source = "status", qualifiedByName = "getStatusName")
+    AdminUserResponse convert(AdminUser source);
+
     /**
      * 将 Optional&lt;String&gt; 转换为 String（null 处理）。
      */
-    default String mapOptionalString(Optional<String> optional) {
+    default String map(Optional<String> optional) {
         return optional.orElse(null);
     }
 
     /**
-     * 将 AdminStatus 转换为字符串。
+     * 获取枚举显示名称。
      */
-    default String mapStatus(AdminUser.AdminStatus status) {
-        return status != null ? status.name() : null;
+    @Named("getStatusName")
+    default String getStatusName(AdminUser.AdminStatus status) {
+        return status != null ? status.getName() : null;
     }
 }
