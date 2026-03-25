@@ -5,14 +5,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.aieducenter.admin.domain.aggregate.AdminMenu;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
-import com.aieducenter.admin.domain.repository.AdminMenuRepository;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
-import com.aieducenter.admin.application.mapper.AdminMenuMapper;
 
 /**
  * 管理员权限应用服务。
@@ -30,18 +27,15 @@ public class AdminUserPermissionAppService {
 
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
-    private final AdminMenuRepository adminMenuRepository;
-    private final AdminMenuMapper adminMenuMapper;
+    private final MenuManagementAppService menuManagementAppService;
 
     public AdminUserPermissionAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
-            AdminMenuRepository adminMenuRepository,
-            AdminMenuMapper adminMenuMapper) {
+            MenuManagementAppService menuManagementAppService) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
-        this.adminMenuRepository = adminMenuRepository;
-        this.adminMenuMapper = adminMenuMapper;
+        this.menuManagementAppService = menuManagementAppService;
     }
 
     /**
@@ -102,7 +96,7 @@ public class AdminUserPermissionAppService {
     public List<MenuResponse> getMenus(Long adminId) {
         // 超级管理员返回所有菜单
         if (adminUserRepository.hasRole(adminId, "SUPER_ADMIN")) {
-            return buildMenuTree(null);
+            return menuManagementAppService.findTree(null);
         }
 
         AdminUser adminUser = adminUserRepository.findById(adminId)
@@ -123,38 +117,7 @@ public class AdminUserPermissionAppService {
             return List.of();
         }
 
-        return buildMenuTree(menuIds);
-    }
-
-    /**
-     * 构建菜单树。
-     */
-    private List<MenuResponse> buildMenuTree(Set<Long> menuIds) {
-        List<AdminMenu> allMenus = adminMenuRepository.findAll();
-        Map<Long, AdminMenu> menuMap = new HashMap<>();
-        List<AdminMenu> roots = new ArrayList<>();
-
-        // 构建映射（如果 menuIds 为 null，则包含所有菜单）
-        for (AdminMenu menu : allMenus) {
-            if (menuIds == null || menuIds.contains(menu.getId())) {
-                menuMap.put(menu.getId(), menu);
-            }
-        }
-
-        // 建立父子关系（使用领域模型的 addChild 方法）
-        for (AdminMenu menu : menuMap.values()) {
-            if (menu.getParentId() == null) {
-                roots.add(menu);
-            } else {
-                AdminMenu parent = menuMap.get(menu.getParentId());
-                if (parent != null) {
-                    parent.addChild(menu);
-                }
-            }
-        }
-
-        // 转换为 DTO
-        return adminMenuMapper.convertList(roots);
+        return menuManagementAppService.findTree(menuIds);
     }
 
     /**

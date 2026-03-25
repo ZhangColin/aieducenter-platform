@@ -2,6 +2,7 @@ package com.aieducenter.admin.application;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -23,6 +24,8 @@ import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.application.mapper.AdminRoleMapper;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
+import com.cartisan.security.permission.Permission;
+import com.cartisan.security.permission.PermissionScanner;
 import com.cartisan.web.response.PageResponse;
 
 /**
@@ -34,13 +37,16 @@ public class RoleManagementAppService {
     private final AdminRoleRepository roleRepository;
     private final AdminMenuRepository menuRepository;
     private final AdminRoleMapper adminRoleMapper;
+    private final PermissionScanner permissionScanner;
 
     public RoleManagementAppService(AdminRoleRepository roleRepository,
                                      AdminMenuRepository menuRepository,
-                                     AdminRoleMapper adminRoleMapper) {
+                                     AdminRoleMapper adminRoleMapper,
+                                     PermissionScanner permissionScanner) {
         this.roleRepository = roleRepository;
         this.menuRepository = menuRepository;
         this.adminRoleMapper = adminRoleMapper;
+        this.permissionScanner = permissionScanner;
     }
 
     /**
@@ -150,8 +156,16 @@ public class RoleManagementAppService {
         AdminRole role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
 
-        // TODO: 通过 PermissionScanner 验证权限 codes 有效性
-        // 暂时不验证，直接存储
+        // 验证权限 codes 有效性（通过 PermissionScanner 扫描代码中定义的权限）
+        Set<String> validPermissionCodes = permissionScanner.scanByScope("admin").stream()
+                .map(Permission::code)
+                .collect(Collectors.toSet());
+
+        for (String permissionCode : command.permissionCodes()) {
+            if (!validPermissionCodes.contains(permissionCode)) {
+                throw new DomainException(AdminMessage.PERMISSION_NOT_FOUND);
+            }
+        }
 
         // 清除现有权限并添加新权限
         role.clearPermissions();

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -34,22 +35,27 @@ public class MenuManagementAppService {
     }
 
     /**
-     * 获取菜单树（3层）。
+     * 构建菜单树（支持按 menuIds 过滤）。
+     *
+     * @param menuIds 菜单 ID 集合，null 表示全部菜单
+     * @return 菜单 DTO 列表
      */
-    private List<AdminMenu> buildTree() {
+    public List<MenuResponse> findTree(Set<Long> menuIds) {
         List<AdminMenu> allMenus = menuRepository.findAll();
 
-        // 组装树形结构
+        // 构建映射（如果 menuIds 为 null，则包含所有菜单）
         Map<Long, AdminMenu> menuMap = new HashMap<>();
-        List<AdminMenu> rootMenus = new ArrayList<>();
-
         for (AdminMenu menu : allMenus) {
-            menuMap.put(menu.getId(), menu);
+            if (menuIds == null || menuIds.contains(menu.getId())) {
+                menuMap.put(menu.getId(), menu);
+            }
         }
 
-        for (AdminMenu menu : allMenus) {
+        // 建立父子关系
+        List<AdminMenu> roots = new ArrayList<>();
+        for (AdminMenu menu : menuMap.values()) {
             if (menu.getParentId() == null) {
-                rootMenus.add(menu);
+                roots.add(menu);
             } else {
                 AdminMenu parent = menuMap.get(menu.getParentId());
                 if (parent != null) {
@@ -58,7 +64,7 @@ public class MenuManagementAppService {
             }
         }
 
-        return rootMenus;
+        return adminMenuMapper.convertList(roots);
     }
 
     /**
@@ -187,11 +193,10 @@ public class MenuManagementAppService {
     // ========== DTO 返回方法 ==========
 
     /**
-     * 获取菜单树。
+     * 获取所有菜单树。
      */
     public List<MenuResponse> findTree() {
-        List<AdminMenu> menus = buildTree();
-        return adminMenuMapper.convertList(menus);
+        return findTree(null);
     }
 
     /**
