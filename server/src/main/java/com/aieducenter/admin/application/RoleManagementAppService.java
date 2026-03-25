@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollUtil;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +25,7 @@ import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.application.mapper.AdminRoleMapper;
 import com.cartisan.core.exception.DomainException;
+import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
 import com.cartisan.security.permission.Permission;
 import com.cartisan.security.permission.PermissionScanner;
@@ -85,8 +88,10 @@ public class RoleManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateRoleCommand command) {
-        AdminRole role = roleRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
+        AdminRole role = Assertions.requirePresent(
+                roleRepository.findById(id),
+                AdminMessage.ROLE_NOT_FOUND
+        );
 
         // 如果修改 code，检查唯一性
         if (!Objects.equals(role.getCode(), command.code())) {
@@ -107,8 +112,10 @@ public class RoleManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        AdminRole role = roleRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
+        AdminRole role = Assertions.requirePresent(
+                roleRepository.findById(id),
+                AdminMessage.ROLE_NOT_FOUND
+        );
 
         // 超级管理员角色不能删除
         if (role.isSuperAdmin()) {
@@ -129,14 +136,17 @@ public class RoleManagementAppService {
     @Transactional
     public void assignMenus(Long roleId, AssignMenusCommand command) {
         // 验证角色存在
-        AdminRole role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
+        AdminRole role = Assertions.requirePresent(
+                roleRepository.findById(roleId),
+                AdminMessage.ROLE_NOT_FOUND
+        );
 
         // 验证所有菜单 ID 存在
         for (Long menuId : command.menuIds()) {
-            if (menuRepository.findById(menuId).isEmpty()) {
-                throw new DomainException(AdminMessage.MENU_NOT_FOUND);
-            }
+            Assertions.requirePresent(
+                    menuRepository.findById(menuId),
+                    AdminMessage.MENU_NOT_FOUND
+            );
         }
 
         // 清除现有菜单并添加新菜单
@@ -153,8 +163,10 @@ public class RoleManagementAppService {
     @Transactional
     public void assignPermissions(Long roleId, AssignPermissionsCommand command) {
         // 验证角色存在
-        AdminRole role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
+        AdminRole role = Assertions.requirePresent(
+                roleRepository.findById(roleId),
+                AdminMessage.ROLE_NOT_FOUND
+        );
 
         // 验证权限 codes 有效性（通过 PermissionScanner 扫描代码中定义的权限）
         Set<String> validPermissionCodes = permissionScanner.scanByScope("admin").stream()
@@ -179,8 +191,10 @@ public class RoleManagementAppService {
      * 根据 ID 获取角色详情。
      */
     public RoleResponse findById(Long id) {
-        AdminRole role = roleRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
+        AdminRole role = Assertions.requirePresent(
+                roleRepository.findById(id),
+                AdminMessage.ROLE_NOT_FOUND
+        );
         return adminRoleMapper.convert(role);
     }
 }
