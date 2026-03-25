@@ -60,48 +60,27 @@ public class RoleManagementAppService {
     }
 
     /**
-     * 获取所有角色列表（不分页）。
-     */
-    public List<AdminRole> findAll() {
-        return roleRepository.findAll();
-    }
-
-    /**
-     * 根据 ID 获取角色详情。
-     */
-    public AdminRole findById(Long id) {
-        return roleRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
-    }
-
-    /**
-     * 创建角色。
+     * 创建角色并返回 ID。
      */
     @Transactional
-    public AdminRole create(CreateRoleCommand command) {
+    public Long createAndReturnId(CreateRoleCommand command) {
         // 检查 code 唯一性
         if (roleRepository.findByCode(command.code()).isPresent()) {
             throw new DomainException(AdminMessage.ROLE_CODE_ALREADY_EXISTS);
         }
 
         AdminRole role = new AdminRole(command.name(), command.code(), command.description(), command.sortOrder());
-        return roleRepository.save(role);
-    }
-
-    /**
-     * 创建角色并返回 ID。
-     */
-    @Transactional
-    public Long createAndReturnId(CreateRoleCommand command) {
-        return create(command).getId();
+        AdminRole saved = roleRepository.save(role);
+        return saved.getId();
     }
 
     /**
      * 修改角色。
      */
     @Transactional
-    public AdminRole update(Long id, UpdateRoleCommand command) {
-        AdminRole role = findById(id);
+    public void update(Long id, UpdateRoleCommand command) {
+        AdminRole role = roleRepository.findById(id)
+                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
 
         // 如果修改 code，检查唯一性
         if (!Objects.equals(role.getCode(), command.code())) {
@@ -114,7 +93,7 @@ public class RoleManagementAppService {
         role.setCode(command.code());
         role.setDescription(command.description());
         role.setSortOrder(command.sortOrder());
-        return roleRepository.save(role);
+        roleRepository.save(role);
     }
 
     /**
@@ -122,7 +101,8 @@ public class RoleManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        AdminRole role = findById(id);
+        AdminRole role = roleRepository.findById(id)
+                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
 
         // 超级管理员角色不能删除
         if (role.isSuperAdmin()) {
@@ -143,7 +123,8 @@ public class RoleManagementAppService {
     @Transactional
     public void assignMenus(Long roleId, AssignMenusCommand command) {
         // 验证角色存在
-        AdminRole role = findById(roleId);
+        AdminRole role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
 
         // 验证所有菜单 ID 存在
         for (Long menuId : command.menuIds()) {
@@ -166,7 +147,8 @@ public class RoleManagementAppService {
     @Transactional
     public void assignPermissions(Long roleId, AssignPermissionsCommand command) {
         // 验证角色存在
-        AdminRole role = findById(roleId);
+        AdminRole role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
 
         // TODO: 通过 PermissionScanner 验证权限 codes 有效性
         // 暂时不验证，直接存储
@@ -178,8 +160,6 @@ public class RoleManagementAppService {
         }
         roleRepository.save(role);
     }
-
-    // ========== DTO 返回方法 ==========
 
     /**
      * 获取所有角色列表（DTO）。
@@ -193,7 +173,8 @@ public class RoleManagementAppService {
      * 根据 ID 获取角色详情（DTO）。
      */
     public RoleResponse findByIdAsDto(Long id) {
-        AdminRole role = findById(id);
+        AdminRole role = roleRepository.findById(id)
+                .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
         return adminRoleMapper.convert(role);
     }
 }

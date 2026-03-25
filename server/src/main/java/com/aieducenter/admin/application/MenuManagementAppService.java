@@ -36,7 +36,7 @@ public class MenuManagementAppService {
     /**
      * 获取菜单树（3层）。
      */
-    public List<AdminMenu> findTree() {
+    private List<AdminMenu> buildTree() {
         List<AdminMenu> allMenus = menuRepository.findAll();
 
         // 组装树形结构
@@ -62,21 +62,15 @@ public class MenuManagementAppService {
     }
 
     /**
-     * 根据 ID 获取菜单详情。
-     */
-    public AdminMenu findById(Long id) {
-        return menuRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
-    }
-
-    /**
-     * 创建菜单。
+     * 创建菜单并返回 ID。
      */
     @Transactional
-    public AdminMenu create(CreateMenuCommand command) {
+    public Long createAndReturnId(CreateMenuCommand command) {
         // 验证父菜单
         if (command.parentId() != null) {
-            findById(command.parentId());
+            if (menuRepository.findById(command.parentId()).isEmpty()) {
+                throw new DomainException(AdminMessage.MENU_NOT_FOUND);
+            }
 
             // 检查层级（最多3级）- 通过计算父菜单的层级
             int parentDepth = calculateDepth(command.parentId());
@@ -86,23 +80,17 @@ public class MenuManagementAppService {
         }
 
         AdminMenu menu = new AdminMenu(command.name(), command.path(), command.icon(), command.parentId(), command.sortOrder());
-        return menuRepository.save(menu);
-    }
-
-    /**
-     * 创建菜单并返回 ID。
-     */
-    @Transactional
-    public Long createAndReturnId(CreateMenuCommand command) {
-        return create(command).getId();
+        AdminMenu saved = menuRepository.save(menu);
+        return saved.getId();
     }
 
     /**
      * 修改菜单。
      */
     @Transactional
-    public AdminMenu update(Long id, UpdateMenuCommand command) {
-        AdminMenu menu = findById(id);
+    public void update(Long id, UpdateMenuCommand command) {
+        AdminMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
 
         // 如果修改父菜单，验证新父菜单
         if (command.parentId() != null && !command.parentId().equals(menu.getParentId())) {
@@ -111,7 +99,8 @@ public class MenuManagementAppService {
                 throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
 
-            AdminMenu parent = findById(command.parentId());
+            AdminMenu parent = menuRepository.findById(command.parentId())
+                    .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
 
             // 检查层级
             int parentDepth = calculateDepth(parent.getId());
@@ -130,7 +119,7 @@ public class MenuManagementAppService {
         menu.setIcon(command.icon());
         menu.setParentId(command.parentId());
         menu.setSortOrder(command.sortOrder());
-        return menuRepository.save(menu);
+        menuRepository.save(menu);
     }
 
     /**
@@ -138,7 +127,8 @@ public class MenuManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        AdminMenu menu = findById(id);
+        AdminMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
 
         // 有子菜单的不能删除
         if (hasChildren(id)) {
@@ -200,7 +190,7 @@ public class MenuManagementAppService {
      * 获取菜单树（DTO）。
      */
     public List<MenuResponse> findTreeAsDto() {
-        List<AdminMenu> menus = findTree();
+        List<AdminMenu> menus = buildTree();
         return adminMenuMapper.convertList(menus);
     }
 
@@ -208,7 +198,8 @@ public class MenuManagementAppService {
      * 根据 ID 获取菜单详情（DTO）。
      */
     public MenuResponse findByIdAsDto(Long id) {
-        AdminMenu menu = findById(id);
+        AdminMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
         return adminMenuMapper.convert(menu);
     }
 }
