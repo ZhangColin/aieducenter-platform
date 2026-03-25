@@ -13,7 +13,7 @@
 ## 文件结构
 
 ### 新增文件
-- `server/src/main/resources/db/migration/V1__admin_enum_alignment.sql` - 数据库迁移脚本
+- `server/src/main/resources/db/migration/V10__admin_enum_alignment.sql` - 数据库迁移脚本
 
 ### 修改文件
 - `server/src/main/java/com/aieducenter/admin/domain/aggregate/AdminUser.java` - AdminStatus 枚举 + @EnumConvert
@@ -22,11 +22,12 @@
 - `server/src/main/java/com/aieducenter/admin/application/dto/response/AdminUserResponse.java` - status 字段类型
 - `server/src/main/java/com/aieducenter/admin/application/dto/query/AdminUserQuery.java` - status 字段类型
 - `server/src/main/java/com/aieducenter/admin/application/mapper/AdminUserMapper.java` - 移除手动方法
-- `server/src/main/java/com/aieducenter/admin/application/AdminUserManagementAppService.java` - orElseThrow → requirePresent
+- `server/src/main/java/com/aieducenter/admin/application/AdminUserManagementAppService.java` - orElseThrow → requirePresent + updateStatus 参数
 - `server/src/main/java/com/aieducenter/admin/application/AdminUserPermissionAppService.java` - orElseThrow → requirePresent
 - `server/src/main/java/com/aieducenter/admin/application/RoleManagementAppService.java` - orElseThrow → requirePresent
 - `server/src/main/java/com/aieducenter/admin/application/MenuManagementAppService.java` - orElseThrow → requirePresent
 - `server/src/main/java/com/aieducenter/admin/application/AdminUserAuthAppService.java` - orElseThrow → requirePresent
+- `server/src/main/java/com/aieducenter/admin/web/controller/AdminUserController.java` - updateStatus 参数类型
 - `server/src/main/java/com/aieducenter/admin/package-info.java` - 添加 @BoundedContext
 
 ---
@@ -291,6 +292,8 @@ public record AdminUserResponse(
 Run: `cd server && ./gradlew compileJava`
 Expected: BUILD SUCCESSFUL
 
+**说明**：MapStruct 会自动将 `BaseEnum.getName()` 映射到 `statusName` 字段，无需额外配置。
+
 - [ ] **Step 4: 提交**
 
 ```bash
@@ -325,7 +328,7 @@ public record AdminUserQuery(
 ) {}
 ```
 
-**注意**：类型实际上保持不变，只是确认引用路径正确（AdminUser.AdminStatus → AdminStatus，如果枚举变为独立类需要调整）。
+**说明**：AdminStatus 保持为 `AdminUser` 的内部枚举，因此 `AdminUserQuery` 无需修改。前端传参时传整型 code（如 `1`），Jackson 会自动反序列化为 `AdminStatus.ACTIVE`。
 
 - [ ] **Step 2: 编译验证**
 
@@ -366,7 +369,7 @@ git commit -m "refactor: confirm AdminUserQuery.status uses enum type"
     }
 ```
 
-保留 `mapOptionalString` 方法（如果 AdminUserResponse 中还有 Optional 字段需要映射），否则也删除。
+**说明**：AdminUserResponse 中所有字段都是 `String` 类型，无 `Optional` 字段，因此 `mapOptionalString` 方法也应删除。
 
 - [ ] **Step 2: 编译验证**
 
@@ -382,7 +385,119 @@ git commit -m "refactor: remove manual mapStatus method, MapStruct handles BaseE
 
 ---
 
-## Task 8: AdminUserManagementAppService 使用 Assertions.requirePresent
+## Task 8: AdminUserManagementAppService.updateStatus 方法参数类型修改
+
+**Files:**
+- Modify: `server/src/main/java/com/aieducenter/admin/application/AdminUserManagementAppService.java`
+- Modify: `server/src/main/java/com/aieducenter/admin/web/controller/AdminUserController.java`
+
+- [ ] **Step 1: 修改 updateStatus 方法签名**
+
+将（约在第 147-162 行）：
+
+```java
+    /**
+     * 修改管理员状态。
+     *
+     * @param id 管理员 ID
+     * @param status 状态字符串（ACTIVE/DISABLED）
+     */
+    @Transactional
+    public void updateStatus(Long id, String status) {
+        AdminUser adminUser = adminUserRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
+
+        AdminUser.AdminStatus statusEnum = AdminUser.AdminStatus.fromString(status);
+        if (statusEnum == AdminUser.AdminStatus.ACTIVE) {
+            adminUser.enable();
+        } else {
+            adminUser.disable();
+        }
+
+        adminUserRepository.save(adminUser);
+    }
+```
+
+替换为：
+
+```java
+    /**
+     * 修改管理员状态。
+     *
+     * @param id 管理员 ID
+     * @param status 状态枚举
+     */
+    @Transactional
+    public void updateStatus(Long id, AdminUser.AdminStatus status) {
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(id),
+                AdminMessage.ADMIN_NOT_FOUND
+        );
+
+        if (status == AdminUser.AdminStatus.ACTIVE) {
+            adminUser.enable();
+        } else {
+            adminUser.disable();
+        }
+
+        adminUserRepository.save(adminUser);
+    }
+```
+
+- [ ] **Step 2: 修改 Controller 方法参数**
+
+修改 `AdminUserController.updateStatus()` 方法（约在第 112-115 行）：
+
+```java
+// 修改前
+@PutMapping("/{id}/status")
+@RequireAuth
+@RequirePermission(
+    value = "admin:user:write",
+    name = "平台管理 / 用户管理 / 编辑",
+    scope = "admin"
+)
+@Operation(summary = "修改管理员状态")
+public void updateStatus(
+        @PathVariable Long id,
+        @RequestParam String status) {
+    adminManagementAppService.updateStatus(id, status);
+}
+
+// 修改后
+@PutMapping("/{id}/status")
+@RequireAuth
+@RequirePermission(
+    value = "admin:user:write",
+    name = "平台管理 / 用户管理 / 编辑",
+    scope = "admin"
+)
+@Operation(summary = "修改管理员状态")
+public void updateStatus(
+        @PathVariable Long id,
+        @RequestParam AdminUser.AdminStatus status) {
+    adminManagementAppService.updateStatus(id, status);
+}
+```
+
+**说明**：Jackson 会自动将前端传的整型 code（如 `1`）反序列化为 `AdminStatus.ACTIVE`。
+
+- [ ] **Step 3: 编译验证**
+
+Run: `cd server && ./gradlew compileJava`
+Expected: BUILD SUCCESSFUL
+
+- [ ] **Step 4: 提交**
+
+```bash
+git add server/src/main/java/com/aieducenter/admin/application/AdminUserManagementAppService.java
+git add server/src/main/java/com/aieducenter/admin/web/controller/AdminUserController.java
+git commit -m "refactor: updateStatus accepts enum instead of string"
+```
+
+---
+
+## Task 9: AdminUserManagementAppService 使用 Assertions.requirePresent
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/application/AdminUserManagementAppService.java`
@@ -507,7 +622,7 @@ git commit -m "refactor: use Assertions.requirePresent in AdminUserManagementApp
 
 ---
 
-## Task 9: AdminUserPermissionAppService 使用 Assertions.requirePresent
+## Task 10: AdminUserPermissionAppService 使用 Assertions.requirePresent
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/application/AdminUserPermissionAppService.java`
@@ -592,7 +707,7 @@ git commit -m "refactor: use Assertions.requirePresent in AdminUserPermissionApp
 
 ---
 
-## Task 10: RoleManagementAppService 使用 Assertions.requirePresent
+## Task 11: RoleManagementAppService 使用 Assertions.requirePresent
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/application/RoleManagementAppService.java`
@@ -726,7 +841,7 @@ git commit -m "refactor: use Assertions.requirePresent in RoleManagementAppServi
 
 ---
 
-## Task 11: MenuManagementAppService 使用 Assertions.requirePresent
+## Task 12: MenuManagementAppService 使用 Assertions.requirePresent
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/application/MenuManagementAppService.java`
@@ -833,7 +948,7 @@ git commit -m "refactor: use Assertions.requirePresent in MenuManagementAppServi
 
 ---
 
-## Task 12: AdminUserAuthAppService 使用 Assertions.requirePresent
+## Task 13: AdminUserAuthAppService 使用 Assertions.requirePresent
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/application/AdminUserAuthAppService.java`
@@ -923,7 +1038,7 @@ git commit -m "refactor: use Assertions.requirePresent in AdminUserAuthAppServic
 
 ---
 
-## Task 13: 添加 @BoundedContext 注解
+## Task 14: 添加 @BoundedContext 注解
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/package-info.java`
@@ -977,14 +1092,14 @@ git commit -m "refactor: add @BoundedContext annotation to admin package"
 
 ---
 
-## Task 14: 创建 Flyway 迁移脚本
+## Task 15: 创建 Flyway 迁移脚本
 
 **Files:**
-- Create: `server/src/main/resources/db/migration/V1__admin_enum_alignment.sql`
+- Create: `server/src/main/resources/db/migration/V10__admin_enum_alignment.sql`
 
 - [ ] **Step 1: 创建迁移脚本**
 
-创建文件 `server/src/main/resources/db/migration/V1__admin_enum_alignment.sql`：
+创建文件 `server/src/main/resources/db/migration/V10__admin_enum_alignment.sql`：
 
 ```sql
 -- 修改 sys_admin_users.status 列：VARCHAR(20) → INTEGER
@@ -997,6 +1112,10 @@ ALTER TABLE sys_admin_users
     END
   );
 
+-- 修改 sys_admin_users.status 默认值
+ALTER TABLE sys_admin_users
+  ALTER COLUMN status SET DEFAULT 1;
+
 -- 修改 sys_admin_menus.type 列：VARCHAR(20) → INTEGER
 ALTER TABLE sys_admin_menus
   ALTER COLUMN type TYPE INTEGER USING (
@@ -1007,9 +1126,13 @@ ALTER TABLE sys_admin_menus
       ELSE 1
     END
   );
+
+-- 修改 sys_admin_menus.type 默认值
+ALTER TABLE sys_admin_menus
+  ALTER COLUMN type SET DEFAULT 1;
 ```
 
-**注意**：版本号 V1 需要根据现有迁移版本调整，避免冲突。
+**注意**：版本号 V10 是基于现有迁移版本 V9 的后续版本。如果已有 V10 或更高版本，需要相应调整。
 
 - [ ] **Step 2: 验证迁移脚本语法**
 
@@ -1019,13 +1142,13 @@ Expected: SUCCESS (或根据现有配置输出)
 - [ ] **Step 3: 提交**
 
 ```bash
-git add server/src/main/resources/db/migration/V1__admin_enum_alignment.sql
+git add server/src/main/resources/db/migration/V10__admin_enum_alignment.sql
 git commit -m "refactor: add Flyway migration for enum alignment (VARCHAR to INTEGER)"
 ```
 
 ---
 
-## Task 15: 全量测试和验证
+## Task 16: 全量测试和验证
 
 **Files:**
 - Test: All modified files
