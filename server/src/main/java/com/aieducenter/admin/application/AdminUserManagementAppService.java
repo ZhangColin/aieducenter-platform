@@ -75,7 +75,7 @@ public class AdminUserManagementAppService {
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        return adminUserMapper.toDto(adminUser);
+        return adminUserMapper.convert(adminUser);
     }
 
     /**

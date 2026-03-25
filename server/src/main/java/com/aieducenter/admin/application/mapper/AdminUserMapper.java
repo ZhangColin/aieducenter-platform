@@ -3,7 +3,6 @@ package com.aieducenter.admin.application.mapper;
 import java.util.Optional;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
@@ -16,12 +15,6 @@ import com.cartisan.web.mapper.DomainMapper;
  */
 @Mapper(componentModel = "spring")
 public interface AdminUserMapper extends DomainMapper<AdminUser, AdminUserResponse> {
-
-    @Mapping(target = "email", source = "email")
-    @Mapping(target = "phone", source = "phone")
-    @Mapping(target = "avatar", source = "avatar")
-    @Mapping(target = "status", source = "status")
-    AdminUserResponse toDto(AdminUser adminUser);
 
     /**
      * 将 Optional&lt;String&gt; 转换为 String（null 处理）。

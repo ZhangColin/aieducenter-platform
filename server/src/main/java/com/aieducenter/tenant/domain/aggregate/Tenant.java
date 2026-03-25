@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 
 import com.aieducenter.tenant.domain.model.TenantType;
 import com.cartisan.core.domain.AggregateRoot;
-import com.cartisan.data.jpa.domain.SoftDeletable;
+import com.cartisan.core.stereotype.Aggregate;
+import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
+import com.cartisan.data.jpa.id.TsidGenerator;
+
+import lombok.Getter;
 
 /**
  * Tenant 聚合根。
@@ -19,19 +23,24 @@ import com.cartisan.data.jpa.domain.SoftDeletable;
  */
 @Entity
 @Table(name = "tenants")
-public class Tenant extends SoftDeletable implements AggregateRoot<Tenant> {
+@Aggregate
+public class Tenant extends AuditableSoftDeletable implements AggregateRoot<Tenant> {
 
+    @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
+    @Getter
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 20)
     private TenantType type;
 
+    @Getter
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
 
@@ -54,25 +63,7 @@ public class Tenant extends SoftDeletable implements AggregateRoot<Tenant> {
     @PrePersist
     void prePersist() {
         if (id == null) {
-            this.id = com.cartisan.data.jpa.id.TsidGenerator.newInstance().generate();
+            this.id = TsidGenerator.newInstance().generate();
         }
-    }
-
-    // ========== Getter ==========
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public TenantType getType() {
-        return type;
-    }
-
-    public Long getOwnerId() {
-        return ownerId;
     }
 }

@@ -9,12 +9,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.exception.DomainException;
+import com.cartisan.core.stereotype.Aggregate;
 import com.cartisan.core.util.Assertions;
-import com.cartisan.data.jpa.domain.SoftDeletable;
+import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
+import com.cartisan.data.jpa.id.TsidGenerator;
 import com.aieducenter.admin.domain.entity.AdminUserRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 /**
  * AdminUser 聚合根。
@@ -35,24 +38,28 @@ import jakarta.persistence.*;
  * @since 0.1.0
  */
 @Entity
-@Table(name = "admin_users")
-public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser> {
+@Table(name = "sys_admin_users")
+@Aggregate
+public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<AdminUser> {
 
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
 
     private static final String USERNAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]{2,19}$";
     private static final String PASSWORD_PATTERN = "^(?=.*[a-zA-Z])(?=.*\\d).{8,20}$";
 
+    @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
+    @Getter
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Getter
     @Column(name = "nickname", nullable = false, length = 50)
     private String nickname;
 
@@ -65,6 +72,7 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
     @Column(name = "avatar", length = 512)
     private String avatar;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private AdminStatus status;
@@ -109,26 +117,14 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
     @PrePersist
     void prePersist() {
         if (id == null) {
-            this.id = com.cartisan.data.jpa.id.TsidGenerator.newInstance().generate();
+            this.id = TsidGenerator.newInstance().generate();
         }
     }
 
     // ========== Getter ==========
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
     public String getPassword() {
         return password;
-    }
-
-    public String getNickname() {
-        return nickname;
     }
 
     public Optional<String> getEmail() {
@@ -141,10 +137,6 @@ public class AdminUser extends SoftDeletable implements AggregateRoot<AdminUser>
 
     public Optional<String> getAvatar() {
         return Optional.ofNullable(avatar);
-    }
-
-    public AdminStatus getStatus() {
-        return status;
     }
 
     public boolean isActive() {

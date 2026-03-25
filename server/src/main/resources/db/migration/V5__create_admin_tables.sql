@@ -3,7 +3,7 @@
 -- ========================================================================
 
 -- 管理员表
-CREATE TABLE admin_users (
+CREATE TABLE sys_admin_users (
     id              BIGINT PRIMARY KEY,
     username        VARCHAR(50) NOT NULL UNIQUE,
     password        VARCHAR(255) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE admin_users (
 );
 
 -- 角色表
-CREATE TABLE admin_roles (
+CREATE TABLE sys_admin_roles (
     id              BIGINT PRIMARY KEY,
     name            VARCHAR(50) NOT NULL UNIQUE,
     code            VARCHAR(50) NOT NULL UNIQUE,
@@ -33,7 +33,7 @@ CREATE TABLE admin_roles (
 );
 
 -- 菜单表
-CREATE TABLE admin_menus (
+CREATE TABLE sys_admin_menus (
     id              BIGINT PRIMARY KEY,
     name            VARCHAR(50) NOT NULL,
     path            VARCHAR(255),
@@ -47,21 +47,21 @@ CREATE TABLE admin_menus (
 );
 
 -- 管理员-角色关联表
-CREATE TABLE admin_user_roles (
+CREATE TABLE sys_admin_user_roles (
     admin_id        BIGINT NOT NULL,
     role_id         BIGINT NOT NULL,
     PRIMARY KEY (admin_id, role_id)
 );
 
 -- 角色-菜单关联表
-CREATE TABLE admin_role_menus (
+CREATE TABLE sys_admin_role_menus (
     role_id         BIGINT NOT NULL,
     menu_id         BIGINT NOT NULL,
     PRIMARY KEY (role_id, menu_id)
 );
 
 -- 角色-权限表（存储权限快照）
-CREATE TABLE admin_role_permissions (
+CREATE TABLE sys_admin_role_permissions (
     role_id            BIGINT NOT NULL,
     permission_code    VARCHAR(100) NOT NULL,
     permission_name    VARCHAR(255),
@@ -69,22 +69,22 @@ CREATE TABLE admin_role_permissions (
 );
 
 -- 索引
-CREATE INDEX idx_admin_users_username ON admin_users(username) WHERE deleted = FALSE;
-CREATE INDEX idx_admin_menus_parent_id ON admin_menus(parent_id) WHERE deleted = FALSE;
+CREATE INDEX idx_sys_admin_users_username ON sys_admin_users(username) WHERE deleted = FALSE;
+CREATE INDEX idx_sys_admin_menus_parent_id ON sys_admin_menus(parent_id) WHERE deleted = FALSE;
 
 -- 外键
-ALTER TABLE admin_menus ADD CONSTRAINT fk_admin_menus_parent
-    FOREIGN KEY (parent_id) REFERENCES admin_menus(id);
+ALTER TABLE sys_admin_menus ADD CONSTRAINT fk_sys_admin_menus_parent
+    FOREIGN KEY (parent_id) REFERENCES sys_admin_menus(id);
 
-ALTER TABLE admin_user_roles ADD CONSTRAINT fk_admin_user_roles_admin
-    FOREIGN KEY (admin_id) REFERENCES admin_users(id);
-ALTER TABLE admin_user_roles ADD CONSTRAINT fk_admin_user_roles_role
-    FOREIGN KEY (role_id) REFERENCES admin_roles(id);
+ALTER TABLE sys_admin_user_roles ADD CONSTRAINT fk_sys_admin_user_roles_admin
+    FOREIGN KEY (admin_id) REFERENCES sys_admin_users(id);
+ALTER TABLE sys_admin_user_roles ADD CONSTRAINT fk_sys_admin_user_roles_role
+    FOREIGN KEY (role_id) REFERENCES sys_admin_roles(id);
 
-ALTER TABLE admin_role_menus ADD CONSTRAINT fk_admin_role_menus_role
-    FOREIGN KEY (role_id) REFERENCES admin_roles(id);
-ALTER TABLE admin_role_menus ADD CONSTRAINT fk_admin_role_menus_menu
-    FOREIGN KEY (menu_id) REFERENCES admin_menus(id);
+ALTER TABLE sys_admin_role_menus ADD CONSTRAINT fk_sys_admin_role_menus_role
+    FOREIGN KEY (role_id) REFERENCES sys_admin_roles(id);
+ALTER TABLE sys_admin_role_menus ADD CONSTRAINT fk_sys_admin_role_menus_menu
+    FOREIGN KEY (menu_id) REFERENCES sys_admin_menus(id);
 
-ALTER TABLE admin_role_permissions ADD CONSTRAINT fk_admin_role_permissions_role
-    FOREIGN KEY (role_id) REFERENCES admin_roles(id);
+ALTER TABLE sys_admin_role_permissions ADD CONSTRAINT fk_sys_admin_role_permissions_role
+    FOREIGN KEY (role_id) REFERENCES sys_admin_roles(id);

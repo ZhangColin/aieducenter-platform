@@ -4,9 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cartisan.core.domain.AggregateRoot;
-import com.cartisan.data.jpa.domain.SoftDeletable;
+import com.cartisan.core.stereotype.Aggregate;
+import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
+import com.cartisan.data.jpa.id.TsidGenerator;
+import com.aieducenter.admin.domain.entity.MenuType;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * AdminMenu 聚合根。
@@ -20,29 +25,45 @@ import jakarta.persistence.*;
  * @since 0.1.0
  */
 @Entity
-@Table(name = "admin_menus")
-public class AdminMenu extends SoftDeletable implements AggregateRoot<AdminMenu> {
+@Table(name = "sys_admin_menus")
+@Aggregate
+public class AdminMenu extends AuditableSoftDeletable implements AggregateRoot<AdminMenu> {
 
     public static final int MAX_DEPTH = 3;
 
+    @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
+    @Setter
+    @Getter
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
+    @Setter
+    @Getter
     @Column(name = "path", length = 255)
     private String path;
 
+    @Setter
+    @Getter
     @Column(name = "icon", length = 50)
     private String icon;
 
+    @Setter
+    @Getter
     @Column(name = "parent_id")
     private Long parentId;
 
+    @Setter
+    @Getter
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 20)
+    private MenuType type = MenuType.MENU;
 
     // 子菜单（不持久化，查询时组装）
     @Transient
@@ -71,35 +92,11 @@ public class AdminMenu extends SoftDeletable implements AggregateRoot<AdminMenu>
     @PrePersist
     void prePersist() {
         if (id == null) {
-            this.id = com.cartisan.data.jpa.id.TsidGenerator.newInstance().generate();
+            this.id = TsidGenerator.newInstance().generate();
         }
     }
 
     // ========== Getter ==========
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public Long getParentId() {
-        return parentId;
-    }
-
-    public Integer getSortOrder() {
-        return sortOrder;
-    }
 
     public List<AdminMenu> getChildren() {
         return children;
@@ -107,24 +104,8 @@ public class AdminMenu extends SoftDeletable implements AggregateRoot<AdminMenu>
 
     // ========== Setter ==========
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
-    }
-
-    public void setSortOrder(Integer sortOrder) {
-        this.sortOrder = sortOrder;
+    public void setType(MenuType type) {
+        this.type = type != null ? type : MenuType.MENU;
     }
 
     public void setChildren(List<AdminMenu> children) {

@@ -114,7 +114,7 @@ public class AdminUserAuthAppService {
         List<String> permissionCodes = adminPermissionAppService.getPermissions(userId);
         List<MenuResponse> menus = adminPermissionAppService.getMenus(userId);
 
-        AdminUserResponse user = adminUserMapper.toDto(adminUser);
+        AdminUserResponse user = adminUserMapper.convert(adminUser);
 
         return new CurrentUserResponse(user, roleCodes, menus, permissionCodes);
     }

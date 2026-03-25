@@ -8,7 +8,7 @@ import jakarta.persistence.*;
  * @since 0.1.0
  */
 @Entity
-@Table(name = "admin_user_roles")
+@Table(name = "sys_admin_user_roles")
 @IdClass(AdminUserRoleId.class)
 public class AdminUserRole {
 

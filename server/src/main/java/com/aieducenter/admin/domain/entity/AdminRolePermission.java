@@ -11,7 +11,7 @@ import java.util.Objects;
  * @since 0.1.0
  */
 @Entity
-@Table(name = "admin_role_permissions")
+@Table(name = "sys_admin_role_permissions")
 public class AdminRolePermission {
 
     @Id

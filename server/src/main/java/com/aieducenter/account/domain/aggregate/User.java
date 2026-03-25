@@ -1,6 +1,5 @@
 package com.aieducenter.account.domain.aggregate;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import jakarta.persistence.*;
@@ -10,8 +9,12 @@ import cn.hutool.core.lang.Validator;
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
-import com.cartisan.data.jpa.domain.SoftDeletable;
+import com.cartisan.core.stereotype.Aggregate;
+import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
+import com.cartisan.data.jpa.id.TsidGenerator;
 import com.aieducenter.account.domain.error.UserError;
+
+import lombok.Getter;
 
 /**
  * User 聚合根。
@@ -35,7 +38,8 @@ import com.aieducenter.account.domain.error.UserError;
  */
 @Entity
 @Table(name = "users")
-public class User extends SoftDeletable implements AggregateRoot<User> {
+@Aggregate
+public class User extends AuditableSoftDeletable implements AggregateRoot<User> {
 
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
 
@@ -52,10 +56,12 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
         }
     }
 
+    @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
+    @Getter
     @Column(name = "username", nullable = false, length = 20, unique = true)
     private String username;
 
@@ -68,11 +74,13 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    @Getter
     @Column(name = "nickname", length = 50)
     private String nickname;
 
     @Column(name = "avatar", length = 512)
     private String avatar;
+
 
     /**
      * 创建新用户。
@@ -117,7 +125,7 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
     @PrePersist
     void prePersist() {
         if (id == null) {
-            this.id = com.cartisan.data.jpa.id.TsidGenerator.newInstance().generate();
+            this.id = TsidGenerator.newInstance().generate();
         }
     }
 
@@ -171,24 +179,12 @@ public class User extends SoftDeletable implements AggregateRoot<User> {
 
     // ========== Getter ==========
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
     public Optional<String> getEmail() {
         return Optional.ofNullable(email);
     }
 
     public Optional<String> getPhoneNumber() {
         return Optional.ofNullable(phoneNumber);
-    }
-
-    public String getNickname() {
-        return nickname;
     }
 
     public Optional<String> getAvatar() {

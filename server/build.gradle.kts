@@ -47,6 +47,10 @@ dependencies {
     // MapStruct (DomainMapper)
     implementation("org.mapstruct:mapstruct:1.6.0")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.0")
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
     // SpringDoc OpenAPI
@@ -79,4 +83,8 @@ pitest {
     threads = 2
     timeoutFactor = BigDecimal("2.0")
     timeoutConstInMillis = 10000
+}
+
+tasks.bootRun {
+    jvmArgs("--enable-preview")
 }
