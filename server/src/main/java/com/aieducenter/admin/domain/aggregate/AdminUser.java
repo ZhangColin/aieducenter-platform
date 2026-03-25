@@ -1,13 +1,15 @@
 package com.aieducenter.admin.domain.aggregate;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollUtil;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.cartisan.core.domain.AggregateRoot;
+import com.cartisan.core.domain.BaseEnum;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.stereotype.Aggregate;
 import com.cartisan.core.util.Assertions;
@@ -17,6 +19,7 @@ import com.aieducenter.admin.domain.entity.AdminUserRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -79,14 +82,26 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "admin_id")
-    private Set<AdminUserRole> userRoles = new HashSet<>();
+    private Set<AdminUserRole> userRoles = CollUtil.newHashSet();
 
     /**
      * 管理员状态枚举。
      */
-    public enum AdminStatus {
-        ACTIVE,
-        DISABLED
+    @Getter
+    @AllArgsConstructor
+    public enum AdminStatus implements BaseEnum<AdminStatus> {
+        /**
+         * 激活。
+         */
+        ACTIVE(1, "激活"),
+
+        /**
+         * 禁用。
+         */
+        DISABLED(0, "禁用");
+
+        private final Integer code;
+        private final String name;
     }
 
     /**
