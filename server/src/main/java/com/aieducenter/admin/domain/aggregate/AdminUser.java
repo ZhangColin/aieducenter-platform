@@ -88,8 +88,6 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     /**
      * 管理员状态枚举。
      */
-    @Getter
-    @AllArgsConstructor
     public enum AdminStatus implements BaseEnum<AdminStatus> {
         /**
          * 激活。
@@ -103,6 +101,21 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
 
         private final Integer code;
         private final String name;
+
+        AdminStatus(Integer code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+
+        @Override
+        public Integer getCode() {
+            return code;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
     }
 
     /**

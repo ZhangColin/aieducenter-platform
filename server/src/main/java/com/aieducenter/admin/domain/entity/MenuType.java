@@ -1,16 +1,12 @@
 package com.aieducenter.admin.domain.entity;
 
 import com.cartisan.core.domain.BaseEnum;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 /**
  * 菜单类型枚举。
  *
  * @since 0.1.0
  */
-@Getter
-@AllArgsConstructor
 public enum MenuType implements BaseEnum<MenuType> {
     /**
      * 普通菜单（可点击，有路由）。
@@ -29,4 +25,19 @@ public enum MenuType implements BaseEnum<MenuType> {
 
     private final Integer code;
     private final String name;
+
+    MenuType(Integer code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    @Override
+    public Integer getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }
