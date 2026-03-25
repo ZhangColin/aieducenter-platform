@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.AdminUserManagementAppService;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
+import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
@@ -111,7 +112,7 @@ public class AdminUserController {
     @Operation(summary = "修改管理员状态")
     public void updateStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam AdminUser.AdminStatus status) {
         adminManagementAppService.updateStatus(id, status);
     }
 

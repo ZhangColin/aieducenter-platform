@@ -144,15 +144,16 @@ public class AdminUserManagementAppService {
      * 修改管理员状态。
      *
      * @param id 管理员 ID
-     * @param status 状态字符串（ACTIVE/DISABLED）
+     * @param status 状态枚举
      */
     @Transactional
-    public void updateStatus(Long id, String status) {
-        AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
+    public void updateStatus(Long id, AdminUser.AdminStatus status) {
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(id),
+                AdminMessage.ADMIN_NOT_FOUND
+        );
 
-        AdminUser.AdminStatus statusEnum = AdminUser.AdminStatus.valueOf(status);
-        if (statusEnum == AdminUser.AdminStatus.ACTIVE) {
+        if (status == AdminUser.AdminStatus.ACTIVE) {
             adminUser.enable();
         } else {
             adminUser.disable();
