@@ -21,7 +21,6 @@ import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 
-import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
 
@@ -72,8 +71,10 @@ public class AdminUserManagementAppService {
      */
     @Transactional(readOnly = true)
     public AdminUserResponse findById(Long id) {
-        AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(id),
+                AdminMessage.ADMIN_NOT_FOUND
+        );
 
         return adminUserMapper.convert(adminUser);
     }
@@ -105,8 +106,10 @@ public class AdminUserManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateAdminUserCommand command) {
-        AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(id),
+                AdminMessage.ADMIN_NOT_FOUND
+        );
 
         if (command.nickname() != null) {
             adminUser.updateNickname(command.nickname());
@@ -134,8 +137,10 @@ public class AdminUserManagementAppService {
             throw new ApplicationException(AdminMessage.LAST_ADMIN_CANNOT_DELETE);
         }
 
-        AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(id),
+                AdminMessage.ADMIN_NOT_FOUND
+        );
 
         adminUserRepository.delete(adminUser);
     }
@@ -167,13 +172,17 @@ public class AdminUserManagementAppService {
      */
     @Transactional
     public void assignRoles(Long id, AssignRolesCommand command) {
-        AdminUser adminUser = adminUserRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(id),
+                AdminMessage.ADMIN_NOT_FOUND
+        );
 
         // 验证所有角色 ID 存在
         for (Long roleId : command.roleIds()) {
-            adminRoleRepository.findById(roleId)
-                    .orElseThrow(() -> new ApplicationException(AdminMessage.ROLE_NOT_FOUND));
+            Assertions.requirePresent(
+                    adminRoleRepository.findById(roleId),
+                    AdminMessage.ROLE_NOT_FOUND
+            );
         }
 
         // 清除现有角色关联
