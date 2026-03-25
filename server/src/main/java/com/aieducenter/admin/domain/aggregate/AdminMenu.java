@@ -1,10 +1,12 @@
 package com.aieducenter.admin.domain.aggregate;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import cn.hutool.core.collection.CollUtil;
 
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.stereotype.Aggregate;
+import com.cartisan.data.jpa.annotation.EnumConvert;
 import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
 import com.cartisan.data.jpa.id.TsidGenerator;
 import com.aieducenter.admin.domain.entity.MenuType;
@@ -61,13 +63,13 @@ public class AdminMenu extends AuditableSoftDeletable implements AggregateRoot<A
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 20)
+    @EnumConvert(MenuType.class)
+    @Column(name = "type", nullable = false)
     private MenuType type = MenuType.MENU;
 
     // 子菜单（不持久化，查询时组装）
     @Transient
-    private List<AdminMenu> children = new ArrayList<>();
+    private List<AdminMenu> children = CollUtil.newArrayList();
 
     /**
      * 创建菜单。
@@ -109,7 +111,7 @@ public class AdminMenu extends AuditableSoftDeletable implements AggregateRoot<A
     }
 
     public void setChildren(List<AdminMenu> children) {
-        this.children = children != null ? children : new ArrayList<>();
+        this.children = children != null ? children : CollUtil.newArrayList();
     }
 
     // ========== 业务行为 ==========
