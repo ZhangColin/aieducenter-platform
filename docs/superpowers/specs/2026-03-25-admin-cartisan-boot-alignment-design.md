@@ -151,7 +151,7 @@ AdminUser adminUser = Assertions.requirePresent(
 - `AdminUserPermissionAppService.java` (4处)
 - `RoleManagementAppService.java` (5处)
 - `MenuManagementAppService.java` (4处)
-- `AdminUserAuthAppService.java` (3处)
+- `AdminUserAuthAppService.java` (4处)
 
 ### 3.4 Response DTO 枚举序列化
 
