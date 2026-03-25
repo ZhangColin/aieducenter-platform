@@ -14,26 +14,6 @@ echo "=========================================="
 echo "   启动本地开发环境"
 echo "=========================================="
 
-# 如果开发部署在运行，自动停止
-if docker ps --format '{{.Names}}' | grep -q "aiedu-backend-dev\|aiedu-web-dev\|aiedu-admin-dev"; then
-    echo ""
-    echo "→ 检测到开发部署正在运行，自动停止..."
-    "$SCRIPT_DIR/dev-stop.sh"
-fi
-
-# 启动 Redis 容器（本地开发用）
-echo ""
-echo "→ 启动 Redis..."
-if docker ps --format '{{.Names}}' | grep -q "^aiedu-redis-local$"; then
-    echo "  ✓ Redis 已在运行"
-elif docker ps -a --format '{{.Names}}' | grep -q "^aiedu-redis-local$"; then
-    docker start aiedu-redis-local
-    echo "  ✓ Redis 已启动"
-else
-    docker run -d --name aiedu-redis-local -p 6379:6379 redis:7-alpine
-    echo "  ✓ Redis 已启动"
-fi
-
 # 清理函数
 cleanup() {
     echo ""
@@ -55,6 +35,19 @@ cleanup() {
 
 # 捕获退出信号
 trap cleanup EXIT INT TERM
+
+# 启动 Redis 容器（如果未运行）
+echo ""
+echo "→ 检查 Redis..."
+if docker ps --format '{{.Names}}' | grep -q "^aiedu-redis-local$"; then
+    echo "  ✓ Redis 已在运行"
+elif docker ps -a --format '{{.Names}}' | grep -q "^aiedu-redis-local$"; then
+    docker start aiedu-redis-local
+    echo "  ✓ Redis 已启动"
+else
+    docker run -d --name aiedu-redis-local -p 6379:6379 redis:7-alpine
+    echo "  ✓ Redis 已启动"
+fi
 
 # 启动后端（后台运行）
 echo ""
@@ -83,7 +76,8 @@ echo ""
 echo "=========================================="
 echo "   本地开发环境已就绪"
 echo "=========================================="
-echo "   前端:   http://localhost:3000"
+echo "   前端:   http://localhost:3000 (web)"
+echo "          http://localhost:3001 (admin)"
 echo "   后端:   http://localhost:8080"
 echo "   Redis:  localhost:6379 (Docker)"
 echo ""

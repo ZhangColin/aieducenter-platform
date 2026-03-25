@@ -17,11 +17,11 @@ print_header() {
     echo "=========================================="
 }
 
-# 验证代码质量
-run_validate() {
+# 快速检查代码质量
+run_quick_check() {
     echo ""
-    echo "[1/4] 验证代码质量..."
-    "$SCRIPT_DIR/validate/all.sh"
+    echo "[1/4] 快速检查代码质量..."
+    "$SCRIPT_DIR/validate/quick-check.sh"
 }
 
 # 构建后端

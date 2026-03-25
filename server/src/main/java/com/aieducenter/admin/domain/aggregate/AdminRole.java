@@ -31,6 +31,11 @@ import lombok.Setter;
 @Aggregate
 public class AdminRole extends AuditableSoftDeletable implements AggregateRoot<AdminRole> {
 
+    /**
+     * 超级管理员角色码。
+     */
+    public static final String SUPER_ADMIN_CODE = "SUPER_ADMIN";
+
     @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)

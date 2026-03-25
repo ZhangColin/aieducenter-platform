@@ -11,14 +11,7 @@
  * <h3>限界上下文</h3>
  * <p>平台运营后台，独立于 Account Context 和 Tenant Context</p>
  *
- * <h3>包结构</h3>
- * <ul>
- *   <li>domain - 领域层：聚合根、实体、仓储接口、领域服务</li>
- *   <li>application - 应用层：应用服务、DTO</li>
- *   <li>infrastructure - 基础设施层：仓储实现</li>
- *   <li>web - 表现层：控制器</li>
- * </ul>
- *
  * @since 0.1.0
  */
+@com.cartisan.core.stereotype.BoundedContext(name = "PlatformAdmin", subDomain = com.cartisan.core.stereotype.SubDomain.SUPPORTING)
 package com.aieducenter.admin;

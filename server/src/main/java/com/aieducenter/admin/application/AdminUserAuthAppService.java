@@ -18,7 +18,6 @@ import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.cartisan.core.exception.ApplicationException;
 import com.aieducenter.admin.domain.error.AdminMessage;
-import com.cartisan.core.util.Assertions;
 import com.cartisan.security.authentication.AuthenticationService;
 import com.cartisan.security.authentication.TokenInfo;
 
@@ -55,10 +54,8 @@ public class AdminUserAuthAppService {
     @Transactional
     public TokenInfo login(AdminUserLoginCommand command) {
         // 验证用户名和密码
-        AdminUser adminUser = Assertions.requirePresent(
-                adminUserRepository.findByUsername(command.username()),
-                AdminMessage.LOGIN_FAILED
-        );
+        AdminUser adminUser = adminUserRepository.findByUsername(command.username())
+                .orElseThrow(() -> new ApplicationException(AdminMessage.LOGIN_FAILED));
 
         if (!adminUser.isActive()) {
             throw new ApplicationException(AdminMessage.ADMIN_DISABLED);
@@ -85,10 +82,8 @@ public class AdminUserAuthAppService {
      */
     @Transactional
     public void updatePassword(Long userId, UpdatePasswordCommand command) {
-        AdminUser adminUser = Assertions.requirePresent(
-                adminUserRepository.findById(userId),
-                AdminMessage.ADMIN_NOT_FOUND
-        );
+        AdminUser adminUser = adminUserRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         adminUser.updatePassword(command.oldPassword(), command.newPassword());
         adminUserRepository.save(adminUser);
@@ -99,10 +94,8 @@ public class AdminUserAuthAppService {
      */
     @Transactional
     public void resetPassword(Long userId, ResetPasswordCommand command) {
-        AdminUser adminUser = Assertions.requirePresent(
-                adminUserRepository.findById(userId),
-                AdminMessage.ADMIN_NOT_FOUND
-        );
+        AdminUser adminUser = adminUserRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         adminUser.resetPassword(command.newPassword());
         adminUserRepository.save(adminUser);
@@ -113,10 +106,8 @@ public class AdminUserAuthAppService {
      */
     @Transactional(readOnly = true)
     public CurrentUserResponse getCurrentAdmin(Long userId) {
-        AdminUser adminUser = Assertions.requirePresent(
-                adminUserRepository.findById(userId),
-                AdminMessage.ADMIN_NOT_FOUND
-        );
+        AdminUser adminUser = adminUserRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
         // 获取角色、菜单、权限
         List<String> roleCodes = adminPermissionAppService.getRoleCodes(userId);

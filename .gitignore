@@ -57,6 +57,8 @@ out/
 .env*.local
 .env.production
 .env.development
+.env.dev
+.env.test
 # .env.prod - 提交到 git，敏感信息用其他手段管理
 
 # Local configuration (not committed)

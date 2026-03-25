@@ -15,7 +15,7 @@ services:
       POSTGRES_USER: aiedu
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev123}
     ports:
-      - "5433:5432"  # 宿主机 5433 -> 容器 5432（避开本地 pg）
+      - "5432:5432"
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
     healthcheck:

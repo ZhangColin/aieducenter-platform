@@ -2,15 +2,22 @@
 # 在隔离的 Docker 环境中运行后端测试
 # Build context: workspace/ (parent of aieducenter-platform-admin/)
 
-FROM amazoncorretto:21
+# 设置 JVM TLS 选项（构建时和运行时都需要）
+ARG JAVA_TOOL_OPTIONS=-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3 -Dhttps.protocols=TLSv1.2,TLSv1.3 -Djavax.net.ssl.trustStore=NONE
+
+FROM eclipse-temurin:21-jdk-jammy
+
+# 继承构建参数
+ENV JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS}
 
 # 预下载 Gradle 到本地
-RUN yum install -y unzip curl nc && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends unzip curl && \
     curl -fsSL https://services.gradle.org/distributions/gradle-8.5-bin.zip -o /tmp/gradle.zip && \
     unzip -q /tmp/gradle.zip -d /opt/ && \
     rm /tmp/gradle.zip && \
     ln -s /opt/gradle-8.5/bin/gradle /usr/local/bin/gradle && \
-    yum clean all
+    rm -rf /var/lib/apt/lists/*
 
 # 复制 cartisan-boot 到 /cartisan-boot（settings.gradle.kts 引用 ../../cartisan-boot）
 COPY cartisan-boot /cartisan-boot/
@@ -38,7 +45,7 @@ COPY aieducenter-platform-admin/docker/test/init.gradle /app/server/init.gradle.
 
 # Gradle 配置：禁用守护进程，设置 JVM TLS 选项
 ENV GRADLE_USER_HOME=/app/server/.gradle
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Djdk.tls.client.protocols=TLSv1.2,TLSv1.3 -Dhttps.protocols=TLSv1.2,TLSv1.3"
 ENV JAVA_OPTS="-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3 -Dhttps.protocols=TLSv1.2,TLSv1.3"
 ENV JAVA_TOOL_OPTIONS="-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3 -Dhttps.protocols=TLSv1.2,TLSv1.3"
 
