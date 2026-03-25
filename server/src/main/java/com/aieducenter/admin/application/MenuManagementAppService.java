@@ -1,11 +1,11 @@
 package com.aieducenter.admin.application;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.MapUtil;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +18,7 @@ import com.aieducenter.admin.application.dto.command.UpdateMenuCommand;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.aieducenter.admin.application.mapper.AdminMenuMapper;
 import com.cartisan.core.exception.DomainException;
+import com.cartisan.core.util.Assertions;
 
 /**
  * 菜单管理应用服务。
@@ -44,7 +45,7 @@ public class MenuManagementAppService {
         List<AdminMenu> allMenus = menuRepository.findAll();
 
         // 构建映射（如果 menuIds 为 null，则包含所有菜单）
-        Map<Long, AdminMenu> menuMap = new HashMap<>();
+        Map<Long, AdminMenu> menuMap = MapUtil.newHashMap();
         for (AdminMenu menu : allMenus) {
             if (menuIds == null || menuIds.contains(menu.getId())) {
                 menuMap.put(menu.getId(), menu);
@@ -52,7 +53,7 @@ public class MenuManagementAppService {
         }
 
         // 建立父子关系
-        List<AdminMenu> roots = new ArrayList<>();
+        List<AdminMenu> roots = CollUtil.newArrayList();
         for (AdminMenu menu : menuMap.values()) {
             if (menu.getParentId() == null) {
                 roots.add(menu);
@@ -74,9 +75,10 @@ public class MenuManagementAppService {
     public Long create(CreateMenuCommand command) {
         // 验证父菜单
         if (command.parentId() != null) {
-            if (menuRepository.findById(command.parentId()).isEmpty()) {
-                throw new DomainException(AdminMessage.MENU_NOT_FOUND);
-            }
+            Assertions.requirePresent(
+                    menuRepository.findById(command.parentId()),
+                    AdminMessage.MENU_NOT_FOUND
+            );
 
             // 检查层级（最多3级）- 通过计算父菜单的层级
             int parentDepth = calculateDepth(command.parentId());
@@ -95,8 +97,10 @@ public class MenuManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateMenuCommand command) {
-        AdminMenu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
+        AdminMenu menu = Assertions.requirePresent(
+                menuRepository.findById(id),
+                AdminMessage.MENU_NOT_FOUND
+        );
 
         // 如果修改父菜单，验证新父菜单
         if (command.parentId() != null && !command.parentId().equals(menu.getParentId())) {
@@ -105,8 +109,10 @@ public class MenuManagementAppService {
                 throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
 
-            AdminMenu parent = menuRepository.findById(command.parentId())
-                    .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
+            AdminMenu parent = Assertions.requirePresent(
+                    menuRepository.findById(command.parentId()),
+                    AdminMessage.MENU_NOT_FOUND
+            );
 
             // 检查层级
             int parentDepth = calculateDepth(parent.getId());
@@ -133,8 +139,10 @@ public class MenuManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        AdminMenu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
+        AdminMenu menu = Assertions.requirePresent(
+                menuRepository.findById(id),
+                AdminMessage.MENU_NOT_FOUND
+        );
 
         // 有子菜单的不能删除
         if (hasChildren(id)) {
@@ -203,8 +211,10 @@ public class MenuManagementAppService {
      * 根据 ID 获取菜单详情。
      */
     public MenuResponse findById(Long id) {
-        AdminMenu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
+        AdminMenu menu = Assertions.requirePresent(
+                menuRepository.findById(id),
+                AdminMessage.MENU_NOT_FOUND
+        );
         return adminMenuMapper.convert(menu);
     }
 }
