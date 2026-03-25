@@ -40,7 +40,7 @@ public class AdminMenuController {
     )
     @Operation(summary = "查询菜单列表（树形）")
     public List<MenuResponse> findTree() {
-        return menuManagementAppService.findTreeAsDto();
+        return menuManagementAppService.findTree();
     }
 
     @GetMapping("/{id}")
@@ -52,7 +52,7 @@ public class AdminMenuController {
     )
     @Operation(summary = "查询菜单详情")
     public MenuResponse findById(@PathVariable Long id) {
-        return menuManagementAppService.findByIdAsDto(id);
+        return menuManagementAppService.findById(id);
     }
 
     @PostMapping
@@ -64,7 +64,7 @@ public class AdminMenuController {
     )
     @Operation(summary = "创建菜单")
     public Long create(@Valid @RequestBody CreateMenuCommand command) {
-        return menuManagementAppService.createAndReturnId(command);
+        return menuManagementAppService.create(command);
     }
 
     @PutMapping("/{id}")

@@ -60,7 +60,7 @@ public class AdminRoleController {
     )
     @Operation(summary = "查询角色详情")
     public RoleResponse findById(@PathVariable Long id) {
-        return roleManagementAppService.findByIdAsDto(id);
+        return roleManagementAppService.findById(id);
     }
 
     @PostMapping
@@ -72,7 +72,7 @@ public class AdminRoleController {
     )
     @Operation(summary = "创建角色")
     public Long create(@Valid @RequestBody CreateRoleCommand command) {
-        return roleManagementAppService.createAndReturnId(command);
+        return roleManagementAppService.create(command);
     }
 
     @PutMapping("/{id}")

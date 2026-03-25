@@ -62,10 +62,10 @@ public class MenuManagementAppService {
     }
 
     /**
-     * 创建菜单并返回 ID。
+     * 创建菜单。
      */
     @Transactional
-    public Long createAndReturnId(CreateMenuCommand command) {
+    public Long create(CreateMenuCommand command) {
         // 验证父菜单
         if (command.parentId() != null) {
             if (menuRepository.findById(command.parentId()).isEmpty()) {
@@ -187,17 +187,17 @@ public class MenuManagementAppService {
     // ========== DTO 返回方法 ==========
 
     /**
-     * 获取菜单树（DTO）。
+     * 获取菜单树。
      */
-    public List<MenuResponse> findTreeAsDto() {
+    public List<MenuResponse> findTree() {
         List<AdminMenu> menus = buildTree();
         return adminMenuMapper.convertList(menus);
     }
 
     /**
-     * 根据 ID 获取菜单详情（DTO）。
+     * 根据 ID 获取菜单详情。
      */
-    public MenuResponse findByIdAsDto(Long id) {
+    public MenuResponse findById(Long id) {
         AdminMenu menu = menuRepository.findById(id)
                 .orElseThrow(() -> new DomainException(AdminMessage.MENU_NOT_FOUND));
         return adminMenuMapper.convert(menu);

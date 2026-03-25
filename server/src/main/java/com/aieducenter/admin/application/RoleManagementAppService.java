@@ -60,10 +60,10 @@ public class RoleManagementAppService {
     }
 
     /**
-     * 创建角色并返回 ID。
+     * 创建角色。
      */
     @Transactional
-    public Long createAndReturnId(CreateRoleCommand command) {
+    public Long create(CreateRoleCommand command) {
         // 检查 code 唯一性
         if (roleRepository.findByCode(command.code()).isPresent()) {
             throw new DomainException(AdminMessage.ROLE_CODE_ALREADY_EXISTS);
@@ -162,17 +162,9 @@ public class RoleManagementAppService {
     }
 
     /**
-     * 获取所有角色列表（DTO）。
+     * 根据 ID 获取角色详情。
      */
-    public List<RoleResponse> findAllAsDto() {
-        List<AdminRole> roles = roleRepository.findAll();
-        return adminRoleMapper.convertList(roles);
-    }
-
-    /**
-     * 根据 ID 获取角色详情（DTO）。
-     */
-    public RoleResponse findByIdAsDto(Long id) {
+    public RoleResponse findById(Long id) {
         AdminRole role = roleRepository.findById(id)
                 .orElseThrow(() -> new DomainException(AdminMessage.ROLE_NOT_FOUND));
         return adminRoleMapper.convert(role);
