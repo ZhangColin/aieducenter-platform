@@ -1,0 +1,30 @@
+# 后端测试容器 Dockerfile
+# 在隔离的 Docker 环境中运行后端测试
+
+FROM eclipse-temurin:21-jdk-alpine
+
+# 安装必要工具
+RUN apk add --no-cache bash curl
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制 Gradle wrapper（使用绝对路径避免歧义）
+COPY server/gradlew /app/server/
+COPY server/gradle/wrapper/gradle-wrapper.jar /app/server/gradle/wrapper/
+COPY server/gradle/wrapper/gradle-wrapper.properties /app/server/gradle/wrapper/
+
+# 复制构建配置
+COPY server/build.gradle.kts /app/server/
+COPY server/settings.gradle.kts /app/server/
+COPY server/src /app/server/src
+
+# Gradle 配置：禁用守护进程
+ENV GRADLE_USER_HOME=/app/server/.gradle
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.caching=false"
+
+# 切换到 server 目录运行测试
+WORKDIR /app/server
+
+# 运行测试（运行时，不是构建时）
+CMD ["./gradlew", "test", "--no-daemon"]

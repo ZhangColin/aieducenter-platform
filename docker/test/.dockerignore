@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+bin/
+!gradle/wrapper/
+
+# Node
+node_modules/
+.pnpm-store/
+.next/
+coverage/
+*.log*
+*.tsbuildinfo
+
+# Git
+.git/
+
+# IDE
+.idea/
+.vscode/
+*.iml

@@ -1,0 +1,27 @@
+# 前端测试容器 Dockerfile
+# 在隔离的 Docker 环境中运行前端测试
+
+FROM node:20-alpine
+
+# 安装 pnpm
+RUN npm install -g pnpm@9
+
+WORKDIR /app
+
+# 复制 monorepo 配置（使用绝对路径）
+COPY package.json /app/
+COPY pnpm-workspace.yaml /app/
+COPY pnpm-lock.yaml /app/
+
+# 复制 packages 目录（共享依赖）
+COPY packages/ /app/packages/
+
+# 复制前端项目
+COPY web/ /app/web/
+COPY admin/ /app/admin/
+
+# 安装依赖
+RUN pnpm install --frozen-lockfile
+
+# 运行测试（只测试 web 和 admin，跳过没有测试的 packages）
+CMD ["sh", "-c", "pnpm --filter './web' test && pnpm --filter './admin' test"]
