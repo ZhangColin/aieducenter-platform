@@ -21,6 +21,7 @@ import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 
+import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
 
