@@ -1,23 +1,32 @@
 package com.aieducenter.admin.domain.entity;
 
+import com.cartisan.core.domain.BaseEnum;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * 菜单类型枚举。
  *
  * @since 0.1.0
  */
-public enum MenuType {
+@Getter
+@AllArgsConstructor
+public enum MenuType implements BaseEnum<MenuType> {
     /**
      * 普通菜单（可点击，有路由）。
      */
-    MENU,
+    MENU(1, "菜单"),
 
     /**
      * 分组标题（不可点击，纯展示，可带图标）。
      */
-    GROUP,
+    GROUP(2, "分组"),
 
     /**
      * 分隔线。
      */
-    DIVIDER
+    DIVIDER(3, "分隔线");
+
+    private final Integer code;
+    private final String name;
 }
