@@ -21,4 +21,8 @@
  *
  * @since 0.1.0
  */
+@BoundedContext(name = "PlatformAdmin", subDomain = SubDomain.SUPPORT)
 package com.aieducenter.admin;
+
+import com.cartisan.core.domain.SubDomain;
+import com.cartisan.core.stereotype.BoundedContext;
