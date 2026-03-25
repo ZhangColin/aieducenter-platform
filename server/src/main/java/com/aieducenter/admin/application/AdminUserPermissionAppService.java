@@ -11,6 +11,8 @@ import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 
+import com.cartisan.core.util.Assertions;
+
 /**
  * 管理员权限应用服务。
  *
@@ -46,12 +48,13 @@ public class AdminUserPermissionAppService {
      */
     public List<String> getPermissions(Long adminId) {
         // 超级管理员返回空列表（由 SaToken 拦截器直接放行）
-        if (adminUserRepository.hasRole(adminId, "SUPER_ADMIN")) {
+        if (adminUserRepository.hasRole(adminId, AdminRole.SUPER_ADMIN_CODE)) {
             return List.of();
         }
 
-        AdminUser adminUser = adminUserRepository.findById(adminId)
-                .orElseThrow();
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(adminId)
+        );
 
         // 通过领域模型聚合权限编码
         Set<Long> roleIds = adminUser.getRoleIds();
@@ -73,16 +76,17 @@ public class AdminUserPermissionAppService {
      */
     public List<String> getRoleCodes(Long adminId) {
         // 超级管理员返回空列表（由 SaToken 拦截器直接放行）
-        if (adminUserRepository.hasRole(adminId, "SUPER_ADMIN")) {
+        if (adminUserRepository.hasRole(adminId, AdminRole.SUPER_ADMIN_CODE)) {
             return List.of();
         }
 
-        AdminUser adminUser = adminUserRepository.findById(adminId)
-                .orElseThrow();
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(adminId)
+        );
 
         // 通过领域模型聚合角色编码
         return adminUser.getRoleIds().stream()
-                .map(roleId -> adminRoleRepository.findById(roleId).orElseThrow())
+                .map(roleId -> Assertions.requirePresent(adminRoleRepository.findById(roleId)))
                 .map(AdminRole::getCode)
                 .collect(Collectors.toList());
     }
@@ -95,12 +99,13 @@ public class AdminUserPermissionAppService {
      */
     public List<MenuResponse> getMenus(Long adminId) {
         // 超级管理员返回所有菜单
-        if (adminUserRepository.hasRole(adminId, "SUPER_ADMIN")) {
+        if (adminUserRepository.hasRole(adminId, AdminRole.SUPER_ADMIN_CODE)) {
             return menuManagementAppService.findTree(null);
         }
 
-        AdminUser adminUser = adminUserRepository.findById(adminId)
-                .orElseThrow();
+        AdminUser adminUser = Assertions.requirePresent(
+                adminUserRepository.findById(adminId)
+        );
 
         // 通过领域模型聚合菜单 ID
         Set<Long> roleIds = adminUser.getRoleIds();
@@ -124,6 +129,6 @@ public class AdminUserPermissionAppService {
      * 检查是否为超级管理员。
      */
     public boolean isSuperAdmin(Long adminId) {
-        return adminUserRepository.hasRole(adminId, "SUPER_ADMIN");
+        return adminUserRepository.hasRole(adminId, AdminRole.SUPER_ADMIN_CODE);
     }
 }
