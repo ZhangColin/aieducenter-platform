@@ -1,30 +1,59 @@
 # 后端测试容器 Dockerfile
 # 在隔离的 Docker 环境中运行后端测试
+# Build context: workspace/ (parent of aieducenter-platform-admin/)
 
-FROM eclipse-temurin:21-jdk-alpine
+FROM amazoncorretto:21
 
-# 安装必要工具
-RUN apk add --no-cache bash curl
+# 预下载 Gradle 到本地
+RUN yum install -y unzip curl nc && \
+    curl -fsSL https://services.gradle.org/distributions/gradle-8.5-bin.zip -o /tmp/gradle.zip && \
+    unzip -q /tmp/gradle.zip -d /opt/ && \
+    rm /tmp/gradle.zip && \
+    ln -s /opt/gradle-8.5/bin/gradle /usr/local/bin/gradle && \
+    yum clean all
+
+# 复制 cartisan-boot 到 /cartisan-boot（settings.gradle.kts 引用 ../../cartisan-boot）
+COPY cartisan-boot /cartisan-boot/
 
 # 设置工作目录
 WORKDIR /app
 
-# 复制 Gradle wrapper（使用绝对路径避免歧义）
-COPY server/gradlew /app/server/
-COPY server/gradle/wrapper/gradle-wrapper.jar /app/server/gradle/wrapper/
-COPY server/gradle/wrapper/gradle-wrapper.properties /app/server/gradle/wrapper/
+# 复制 Gradle init 配置（需要在项目文件之前）
+COPY aieducenter-platform-admin/docker/test/init.gradle /app/server/init.gradle.d/repositories.gradle
 
-# 复制构建配置
-COPY server/build.gradle.kts /app/server/
-COPY server/settings.gradle.kts /app/server/
-COPY server/src /app/server/src
+# 复制项目文件（从 aieducenter-platform-admin/）
+COPY aieducenter-platform-admin/server/gradlew /app/server/
+COPY aieducenter-platform-admin/server/gradle/wrapper/gradle-wrapper.jar /app/server/gradle/wrapper/
+COPY aieducenter-platform-admin/server/gradle/wrapper/gradle-wrapper.properties /app/server/gradle/wrapper/
+COPY aieducenter-platform-admin/server/build.gradle.kts /app/server/
+COPY aieducenter-platform-admin/server/settings.gradle.kts /app/server/
+COPY aieducenter-platform-admin/server/src /app/server/src
 
-# Gradle 配置：禁用守护进程
+# 预下载依赖（解决 TLS 问题）
+RUN cd /app/server && \
+    gradle dependencies --init-script=/app/server/init.gradle.d/repositories.gradle || true
+
+# 复制 Gradle init 配置（使用 Maven Central 而不是 plugins.gradle.org）
+COPY aieducenter-platform-admin/docker/test/init.gradle /app/server/init.gradle.d/repositories.gradle
+
+# Gradle 配置：禁用守护进程，设置 JVM TLS 选项
 ENV GRADLE_USER_HOME=/app/server/.gradle
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.caching=false"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
+ENV JAVA_OPTS="-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3 -Dhttps.protocols=TLSv1.2,TLSv1.3"
+ENV JAVA_TOOL_OPTIONS="-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3 -Dhttps.protocols=TLSv1.2,TLSv1.3"
 
 # 切换到 server 目录运行测试
 WORKDIR /app/server
 
-# 运行测试（运行时，不是构建时）
-CMD ["./gradlew", "test", "--no-daemon"]
+# 等待数据库和 Redis 就绪，然后运行测试
+CMD ["sh", "-c", "echo 'Waiting for services...' && \
+  for i in $(seq 1 60); do \
+    nc -zv postgres 5432 2>&1 | grep -q succeeded && break || echo 'Postgres not ready...'; \
+    sleep 2; \
+  done && \
+  for i in $(seq 1 30); do \
+    nc -zv redis 6379 2>&1 | grep -q succeeded && break || echo 'Redis not ready...'; \
+    sleep 1; \
+  done && \
+  echo 'Services ready! Running tests...' && \
+  gradle test --no-daemon --init-script=/app/server/init.gradle.d/repositories.gradle"]

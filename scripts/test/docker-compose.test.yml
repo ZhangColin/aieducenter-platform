@@ -90,8 +90,8 @@ services:
   # 后端集成测试
   backend-tests:
     build:
-      context: ../../
-      dockerfile: docker/test/Dockerfile.backend
+      context: ../../../
+      dockerfile: aieducenter-platform-admin/docker/test/Dockerfile.backend
     container_name: test-backend-tests
     environment:
       SPRING_PROFILES_ACTIVE: test
@@ -101,7 +101,7 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     volumes:
-      - ../../server/build/reports:/app/server/build/reports
+      - ../../../aieducenter-platform-admin/server/build/reports:/app/server/build/reports
     depends_on:
       postgres:
         condition: service_healthy

@@ -41,27 +41,7 @@ wait_for_service() {
     return 1
 }
 
-# 运行后端单元测试（无需 docker）
-run_backend_unit_tests() {
-    print_header "后端单元测试"
-
-    cd "$PROJECT_ROOT/server"
-    ./gradlew test --no-daemon
-
-    color_info "后端单元测试通过"
-}
-
-# 运行前端单元测试（无需 docker）
-run_frontend_unit_tests() {
-    print_header "前端单元测试"
-
-    cd "$PROJECT_ROOT"
-    pnpm test --run
-
-    color_info "前端单元测试通过"
-}
-
-# 运行后端集成测试
+# 运行后端测试（Docker 容器内）
 run_backend_integration_tests() {
     print_header "后端集成测试"
 
@@ -86,7 +66,7 @@ run_backend_integration_tests() {
     fi
 }
 
-# 运行前端集成测试
+# 运行前端测试（Docker 容器内）
 run_frontend_integration_tests() {
     print_header "前端集成测试"
 

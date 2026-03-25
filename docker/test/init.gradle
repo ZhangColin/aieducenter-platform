@@ -1,0 +1,33 @@
+initscript {
+    repositories {
+        maven { url = "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+        maven { url = "https://repo1.maven.org/maven2" }
+    }
+}
+allprojects {
+    repositories {
+        maven { url = "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+        maven { url = "https://repo1.maven.org/maven2" }
+    }
+    buildscript {
+        repositories {
+            maven { url = "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+            maven { url = "https://repo1.maven.org/maven2" }
+        }
+    }
+}
+settingsEvaluated { settings ->
+    settings.pluginManagement {
+        repositories {
+            maven { url = "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+            maven { url = "https://repo1.maven.org/maven2" }
+            gradlePluginPortal()
+        }
+    }
+    settings.dependencyResolutionManagement {
+        repositories {
+            maven { url = "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+            maven { url = "https://repo1.maven.org/maven2" }
+        }
+    }
+}

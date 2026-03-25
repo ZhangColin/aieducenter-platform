@@ -1,11 +1,11 @@
 #!/bin/bash
-# 测试运行入口
+# 测试运行入口 - 所有测试在 Docker 容器内执行
 # 用法: ./scripts/test/run.sh [选项]
 #
 # 选项:
-#   --unit              单元测试
-#   --integration       集成测试（后端 + 前端）
-#   --e2e               E2E 测试
+#   --backend           后端测试（Docker 容器内）
+#   --frontend          前端测试（Docker 容器内）
+#   --e2e               E2E 测试（Docker 容器内）
 #   --all               全部测试（默认）
 
 set -e
@@ -20,14 +20,14 @@ show_usage() {
     echo "用法: $0 [选项]"
     echo ""
     echo "选项:"
-    echo "  --unit              运行单元测试"
-    echo "  --integration       运行集成测试"
+    echo "  --backend           运行后端测试"
+    echo "  --frontend          运行前端测试"
     echo "  --e2e               运行 E2E 测试"
     echo "  --all               运行全部测试（默认）"
     echo ""
     echo "示例:"
-    echo "  $0 --unit"
-    echo "  $0 --integration"
+    echo "  $0 --backend"
+    echo "  $0 --frontend"
     echo "  $0 --e2e"
     echo "  $0 --all"
     exit 1
@@ -37,18 +37,16 @@ show_usage() {
 TEST_TYPE="${1:---all}"
 
 case $TEST_TYPE in
-    --unit)
-        print_header "运行单元测试"
-        run_backend_unit_tests
-        run_frontend_unit_tests
-        print_header "单元测试完成"
+    --backend)
+        print_header "运行后端测试"
+        run_backend_integration_tests
+        print_header "后端测试完成"
         ;;
 
-    --integration)
-        print_header "运行集成测试"
-        run_backend_integration_tests
+    --frontend)
+        print_header "运行前端测试"
         run_frontend_integration_tests
-        print_header "集成测试完成"
+        print_header "前端测试完成"
         ;;
 
     --e2e)
@@ -60,13 +58,11 @@ case $TEST_TYPE in
     --all)
         print_header "运行全部测试"
         echo ""
-        echo "[1/3] 单元测试..."
-        run_backend_unit_tests
-        run_frontend_unit_tests
+        echo "[1/3] 后端测试..."
+        run_backend_integration_tests
 
         echo ""
-        echo "[2/3] 集成测试..."
-        run_backend_integration_tests
+        echo "[2/3] 前端测试..."
         run_frontend_integration_tests
 
         echo ""
