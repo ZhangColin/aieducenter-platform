@@ -3,12 +3,10 @@ package com.aieducenter.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-
-import com.cartisan.security.authentication.AuthenticationService;
-import com.cartisan.security.permission.PermissionScanner;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,14 +15,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>验证 OpenAPI Bean 的配置是否正确
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = OpenApiConfig.class)
 class OpenApiConfigTest {
-
-    @MockBean
-    private AuthenticationService authenticationService;
-
-    @MockBean
-    private PermissionScanner permissionScanner;
 
     @Autowired
     private OpenAPI openAPI;

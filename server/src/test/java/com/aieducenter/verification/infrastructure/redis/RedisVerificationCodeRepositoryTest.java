@@ -15,7 +15,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,18 +22,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * Redis 仓储集成测试。
  *
- * <p>此测试直接使用 Redis 连接验证原子操作的正确性。
- * 测试环境通过 Docker Compose 启动 Redis 容器（服务名: redis）。
- * 本地开发时需要启动 Redis：docker run -d -p 6379:6379 redis:7-alpine
- *
- * <p>环境变量 REDIS_HOST 可覆盖 Redis 主机名（Docker 测试用 redis，本地开发用 localhost）
+ * <p>测试环境：运行 ./scripts/test/run.sh 会自动启动 Redis (localhost:26379)
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = RedisVerificationCodeRepositoryTest.RedisTestConfig.class)
-@TestPropertySource(properties = {
-    "spring.data.redis.host=${REDIS_HOST:localhost}",
-    "spring.data.redis.port=6379"
-})
 class RedisVerificationCodeRepositoryTest {
 
     private static final String EMAIL_LIMIT_PREFIX = "limit:email:";
@@ -56,10 +47,8 @@ class RedisVerificationCodeRepositoryTest {
         @Bean
         RedisProperties redisProperties() {
             RedisProperties properties = new RedisProperties();
-            // 支持环境变量 REDIS_HOST，默认为 localhost
-            String redisHost = System.getenv().getOrDefault("REDIS_HOST", "localhost");
-            properties.setHost(redisHost);
-            properties.setPort(6379);
+            properties.setHost("localhost");
+            properties.setPort(26379);
             return properties;
         }
 

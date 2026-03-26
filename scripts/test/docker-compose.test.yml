@@ -1,158 +1,30 @@
-# 测试环境 Docker Compose 配置
-# 所有测试容器在独立网络内，不映射端口到宿主机
+# 测试环境 Docker Compose
+# 只提供数据库服务，测试在主机上运行
 
 services:
-  # PostgreSQL 测试数据库
-  postgres:
+  postgres-test:
     image: postgres:16-alpine
-    container_name: test-postgres
+    container_name: aiedu-postgres-test
+    ports:
+      - "25432:5432"
     environment:
       POSTGRES_DB: aieducenter_test
       POSTGRES_USER: aiedu_test
       POSTGRES_PASSWORD: test123
-    volumes:
-      - postgres-test-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aiedu_test"]
-      interval: 10s
-      timeout: 5s
+      interval: 2s
+      timeout: 3s
       retries: 5
-    networks:
-      - test-network
-    profiles: ["test"]
 
-  # Redis 测试
-  redis:
+  redis-test:
     image: redis:7-alpine
-    container_name: test-redis
+    container_name: aiedu-redis-test
+    ports:
+      - "26379:6379"
     command: redis-server --appendonly yes
-    volumes:
-      - redis-test-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
+      interval: 2s
+      timeout: 2s
       retries: 3
-    networks:
-      - test-network
-    profiles: ["test"]
-
-  # 后端服务
-  backend:
-    build:
-      context: ../../
-      dockerfile: docker/backend/Dockerfile
-    container_name: test-backend
-    environment:
-      SPRING_PROFILES_ACTIVE: test
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/aieducenter_test
-      SPRING_DATASOURCE_USERNAME: aiedu_test
-      SPRING_DATASOURCE_PASSWORD: test123
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - test-network
-    profiles: ["test"]
-
-  # Web 前端
-  web:
-    build:
-      context: ../../
-      dockerfile: docker/frontend/Dockerfile.web
-    container_name: test-web
-    environment:
-      NEXT_PUBLIC_API_URL: http://backend:8080
-    depends_on:
-      - backend
-    networks:
-      - test-network
-    profiles: ["test"]
-
-  # Admin 前端
-  admin:
-    build:
-      context: ../../
-      dockerfile: docker/frontend/Dockerfile.admin
-    container_name: test-admin
-    environment:
-      NEXT_PUBLIC_API_URL: http://backend:8080
-    depends_on:
-      - backend
-    networks:
-      - test-network
-    profiles: ["test"]
-
-  # 后端集成测试
-  backend-tests:
-    build:
-      context: ../../../
-      dockerfile: aieducenter-platform-admin/docker/test/Dockerfile.backend
-    container_name: test-backend-tests
-    environment:
-      SPRING_PROFILES_ACTIVE: test
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/aieducenter_test
-      SPRING_DATASOURCE_USERNAME: aiedu_test
-      SPRING_DATASOURCE_PASSWORD: test123
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    volumes:
-      - ../../../aieducenter-platform-admin/server/build/reports:/app/server/build/reports
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - test-network
-    profiles: ["test"]
-
-  # 前端集成测试
-  frontend-tests:
-    build:
-      context: ../../
-      dockerfile: docker/test/Dockerfile.frontend
-    container_name: test-frontend-tests
-    environment:
-      API_BASE_URL: http://backend:8080
-    volumes:
-      - ../../web/coverage:/app/coverage
-    depends_on:
-      - backend
-    networks:
-      - test-network
-    profiles: ["test"]
-
-  # E2E 测试
-  e2e-tests:
-    image: mcr.microsoft.com/playwright:latest
-    container_name: test-e2e
-    environment:
-      BASE_URL: http://web:3000
-      ADMIN_URL: http://admin:3001
-    working_dir: /e2e
-    volumes:
-      - ../../e2e:/e2e
-      - ../../e2e/playwright-report:/app/playwright-report
-      - ../../e2e/test-results:/app/test-results
-    depends_on:
-      - web
-      - admin
-      - backend
-    networks:
-      - test-network
-    profiles: ["test"]
-    command: sh -c "npm install && npx playwright test"
-
-volumes:
-  postgres-test-data:
-  redis-test-data:
-
-networks:
-  test-network:
-    driver: bridge
-    name: aiedu-test-network
