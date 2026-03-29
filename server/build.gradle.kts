@@ -19,42 +19,48 @@ repositories {
 }
 
 dependencies {
+    // BOM 平台导入 - 统一管理依赖版本
+    compileOnly(platform("com.cartisan:cartisan-dependencies:0.1.0-SNAPSHOT"))
+    annotationProcessor(platform("com.cartisan:cartisan-dependencies:0.1.0-SNAPSHOT"))
+    implementation(platform("com.cartisan:cartisan-dependencies:0.1.0-SNAPSHOT"))
+
     // Spring Boot Starter
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.flywaydb:flyway-core:10.18.0")
+    implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql:10.18.0")
 
-    // PostgreSQL Driver
+    // PostgreSQL Driver（数据库驱动，业务自己管理版本）
     runtimeOnly("org.postgresql:postgresql:42.7.4")
 
-    // cartisan-core 和 cartisan-web
+    // cartisan 模块
     implementation("com.cartisan:cartisan-core:0.1.0-SNAPSHOT")
     implementation("com.cartisan:cartisan-web:0.1.0-SNAPSHOT")
     implementation("com.cartisan:cartisan-data-jpa:0.1.0-SNAPSHOT")
-
-    // cartisan-security (Sa-Token)
     implementation("com.cartisan:cartisan-security:0.1.0-SNAPSHOT")
 
-    // Spring Security Crypto (for BCrypt)
-    implementation("org.springframework.security:spring-security-crypto:6.3.0")
+    // Spring Security Crypto
+    implementation("org.springframework.security:spring-security-crypto")
 
-    // Hutool (for validation)
-    implementation("cn.hutool:hutool-core:5.8.29")
+    // Hutool（使用 hutool-all，版本由 BOM 管理）
+    implementation("cn.hutool:hutool-all")
 
-    // MapStruct (DomainMapper)
-    implementation("org.mapstruct:mapstruct:1.6.0")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.0")
+    // MapStruct
+    implementation("org.mapstruct:mapstruct")
+    annotationProcessor("org.mapstruct:mapstruct-processor")
 
     // Lombok
-    compileOnly("org.projectlombok:lombok:1.18.34")
-    annotationProcessor("org.projectlombok:lombok:1.18.34")
-    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding")
 
     // SpringDoc OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
+
+    // Druid 数据源监控
+    runtimeOnly("com.alibaba:druid-spring-boot-3-starter")
 
     testImplementation("com.cartisan:cartisan-test:0.1.0-SNAPSHOT")
 }
@@ -65,7 +71,7 @@ tasks.withType<Test> {
 }
 
 pitest {
-    junit5PluginVersion = "1.2.1"
+    junit5PluginVersion = "1.2.3"
     targetClasses = setOf(
         "com.aieducenter.verification.domain.*",
         "com.aieducenter.verification.application.*",
