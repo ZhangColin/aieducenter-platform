@@ -159,28 +159,16 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
 
     // ========== 业务行为 ==========
 
+    
+    
+    
     /**
-     * 验证密码。
+     * 修改密码（已加密）。
+     *
+     * @param encodedPassword 加密后的密码
      */
-    public boolean matchesPassword(String plainPassword) {
-        return PASSWORD_ENCODER.matches(plainPassword, this.password);
-    }
-
-    /**
-     * 修改密码。
-     */
-    public void updatePassword(String oldPassword, String newPassword) {
-        Assertions.require(matchesPassword(oldPassword), AdminMessage.PASSWORD_INCORRECT);
-        validatePasswordStrength(newPassword);
-        this.password = PASSWORD_ENCODER.encode(newPassword);
-    }
-
-    /**
-     * 重置密码（管理员操作）。
-     */
-    public void resetPassword(String plainPassword) {
-        validatePasswordStrength(plainPassword);
-        this.password = PASSWORD_ENCODER.encode(plainPassword);
+    public void changePassword(String encodedPassword) {
+        this.password = Objects.requireNonNull(encodedPassword, "encodedPassword cannot be null");
     }
 
     /**
@@ -274,10 +262,4 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
         );
     }
 
-    private void validatePasswordStrength(String plainPassword) {
-        Assertions.require(
-            plainPassword != null && plainPassword.matches(PASSWORD_PATTERN),
-            AdminMessage.PASSWORD_WEAK
-        );
     }
-}
