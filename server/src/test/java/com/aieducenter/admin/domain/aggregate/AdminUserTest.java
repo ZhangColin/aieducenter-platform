@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.cartisan.core.exception.DomainException;
@@ -12,81 +13,65 @@ import com.cartisan.core.exception.DomainException;
  * AdminUser 聚合根测试。
  */
 class AdminUserTest {
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
+
+    // Helper method to generate encoded password for tests
+    private String encodePassword(String plainPassword) {
+        return encoder.encode(plainPassword);
+    }
 
     @Test
     void given_valid_input_when_create_admin_then_success() {
+        // Given - pre-encoded password (simulating what application service does)
+        String encodedPassword = encodePassword("Test1234");
+
         // When
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
+        AdminUser adminUser = new AdminUser("testuser", encodedPassword, "测试用户");
 
         // Then
         assertThat(adminUser.getUsername()).isEqualTo("testuser");
         assertThat(adminUser.getNickname()).isEqualTo("测试用户");
         assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
+        assertThat(adminUser.getPassword()).isEqualTo(encodedPassword);
     }
 
     @Test
     void given_invalid_username_when_create_admin_then_throw_exception() {
         // When & Then
-        assertThatThrownBy(() -> new AdminUser("invalid user", "Test1234", "测试用户"))
+        assertThatThrownBy(() -> new AdminUser("invalid user", encodePassword("Test1234"), "测试用户"))
                 .isInstanceOf(DomainException.class)
                 .hasMessageContaining(AdminMessage.USERNAME_INVALID.message());
     }
 
     @Test
-    void given_weak_password_when_create_admin_then_throw_exception() {
-        // When & Then
-        assertThatThrownBy(() -> new AdminUser("testuser", "weak", "测试用户"))
-                .isInstanceOf(DomainException.class)
-                .hasMessageContaining(AdminMessage.PASSWORD_WEAK.message());
-    }
-
-    @Test
-    void given_correct_password_when_matches_password_then_true() {
+    void given_encoded_password_when_changePassword_then_success() {
         // Given
-        String plainPassword = "Test1234";
-        AdminUser adminUser = new AdminUser("testuser", plainPassword, "测试用户");
-
-        // When & Then
-        assertThat(adminUser.matchesPassword(plainPassword)).isTrue();
-    }
-
-    @Test
-    void given_wrong_password_when_matches_password_then_false() {
-        // Given
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
-
-        // When & Then
-        assertThat(adminUser.matchesPassword("WrongPass123")).isFalse();
-    }
-
-    @Test
-    void given_old_password_correct_when_update_password_then_success() {
-        // Given
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
+        String oldPassword = encodePassword("OldPass123");
+        String newPassword = encodePassword("NewPass456");
+        AdminUser adminUser = new AdminUser("testuser", oldPassword, "测试用户");
 
         // When
-        adminUser.updatePassword("Test1234", "NewPass567");
+        adminUser.changePassword(newPassword);
 
         // Then
-        assertThat(adminUser.matchesPassword("NewPass567")).isTrue();
-        assertThat(adminUser.matchesPassword("Test1234")).isFalse();
+        assertThat(adminUser.getPassword()).isEqualTo(newPassword);
     }
 
     @Test
-    void given_old_password_incorrect_when_update_password_then_throw_exception() {
+    void given_null_password_when_changePassword_then_throw_exception() {
         // Given
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
+        AdminUser adminUser = new AdminUser("testuser", encodePassword("Test1234"), "测试用户");
 
         // When & Then
-        assertThatThrownBy(() -> adminUser.updatePassword("WrongPass", "NewPass567"))
-                .isInstanceOf(DomainException.class)
-                .hasMessageContaining(AdminMessage.PASSWORD_INCORRECT.message());
+        assertThatThrownBy(() -> adminUser.changePassword(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("encodedPassword cannot be null");
     }
 
     @Test
     void given_active_admin_when_disable_then_status_disabled() {
         // Given
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
+        AdminUser adminUser = new AdminUser("testuser", encodePassword("Test1234"), "测试用户");
 
         // When
         adminUser.disable();
@@ -98,7 +83,7 @@ class AdminUserTest {
     @Test
     void given_disabled_admin_when_enable_then_status_active() {
         // Given
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
+        AdminUser adminUser = new AdminUser("testuser", encodePassword("Test1234"), "测试用户");
         adminUser.disable();
 
         // When
@@ -106,18 +91,5 @@ class AdminUserTest {
 
         // Then
         assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
-    }
-
-    @Test
-    void given_admin_when_reset_password_then_success() {
-        // Given
-        AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
-
-        // When
-        adminUser.resetPassword("NewPass567");
-
-        // Then
-        assertThat(adminUser.matchesPassword("NewPass567")).isTrue();
-        assertThat(adminUser.matchesPassword("Test1234")).isFalse();
     }
 }
