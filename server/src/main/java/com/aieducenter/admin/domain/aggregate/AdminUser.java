@@ -68,12 +68,15 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     @Column(name = "nickname", nullable = false, length = 50)
     private String nickname;
 
+    @Getter
     @Column(name = "email", length = 255)
     private String email;
 
+    @Getter
     @Column(name = "phone", length = 20)
     private String phone;
 
+    @Getter
     @Column(name = "avatar", length = 512)
     private String avatar;
 
@@ -152,22 +155,6 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     }
 
     // ========== Getter ==========
-
-    public String getPassword() {
-        return password;
-    }
-
-    public Optional<String> getEmail() {
-        return Optional.ofNullable(email);
-    }
-
-    public Optional<String> getPhone() {
-        return Optional.ofNullable(phone);
-    }
-
-    public Optional<String> getAvatar() {
-        return Optional.ofNullable(avatar);
-    }
 
     public boolean isActive() {
         return status == AdminStatus.ACTIVE;
