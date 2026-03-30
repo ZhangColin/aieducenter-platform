@@ -2,7 +2,7 @@
 
 **日期：** 2026-03-30
 **作者：** Claude
-**状态：** 草案
+**状态：** 待审查
 
 ## 1. 概述
 
@@ -14,7 +14,8 @@
 
 通过代码审查发现：
 - 1 处代码规范问题：领域层未使用 `Assertions.require()`
-- 8 个测试文件缺失（`AdminUserAuthAppServiceTest` 已存在）
+- 1 个测试文件缺失：`PermissionControllerTest`
+- 7 个测试文件已存在但未提交到 git（需检查并提交）
 
 ## 2. 代码修复
 
@@ -74,16 +75,19 @@ private void validatePasswordStrength(String plainPassword) {
 
 ### 3.2 需要补充的测试文件
 
-| # | 测试文件 | 测试类型 | 覆盖方法 | 预计测试数 |
-|---|----------|----------|----------|------------|
-| 1 | `AdminUserManagementAppServiceTest` | 应用服务 | findAll, create, update, delete, updateStatus, assignRoles, resetPassword, findById | ~12 |
-| 2 | `MenuManagementAppServiceTest` | 应用服务 | findAll, create, update, delete, assignToRole, getTree, findById | ~10 |
-| 3 | `AdminUserPermissionAppServiceTest` | 应用服务 | getRoleCodes, getPermissions, getMenus, hasRole, hasPermission | ~6 |
-| 4 | `PermissionScanAppServiceTest` | 应用服务 | scanAll, scanByScope, syncPermissions | ~5 |
-| 5 | `AdminUserControllerTest` | API | GET /api/v1/admin/users, POST, PUT, DELETE, PUT /status, PUT /roles, PUT /password | ~8 |
-| 6 | `AdminMenuControllerTest` | API | GET /api/v1/admin/menus, GET /tree, POST, PUT, DELETE | ~7 |
-| 7 | `AdminAuthControllerTest` | API | POST /login, POST /logout, GET /current, PUT /password | ~5 |
-| 8 | `PermissionControllerTest` | API | GET /permissions, GET /scan, POST /sync | ~4 |
+| # | 测试文件 | 测试类型 | 状态 | 说明 |
+|---|----------|----------|------|------|
+| 1 | `AdminUserManagementAppServiceTest` | 应用服务 | ✅ 已存在 | 需提交到 git |
+| 2 | `MenuManagementAppServiceTest` | 应用服务 | ✅ 已存在 | 需提交到 git |
+| 3 | `AdminUserPermissionAppServiceTest` | 应用服务 | ✅ 已存在 | 需提交到 git |
+| 4 | `PermissionScanAppServiceTest` | 应用服务 | ✅ 已存在 | 需提交到 git |
+| 5 | `AdminUserControllerTest` | API | ✅ 已存在 | 需提交到 git |
+| 6 | `AdminMenuControllerTest` | API | ✅ 已存在 | 需提交到 git |
+| 7 | `AdminAuthControllerTest` | API | ✅ 已存在 | 需提交到 git |
+| 8 | `PermissionControllerTest` | API | ❌ 缺失 | 需新增 |
+
+**PermissionController API：**
+- `GET /api/v1/admin/permissions?scope=admin` - 查询权限列表
 
 ### 3.3 测试模板
 
@@ -172,17 +176,11 @@ class XxxControllerTest {
 **阶段 1：代码修复**
 - Task 1: 修复 AdminUser.java 的断言方式
 
-**阶段 2：应用服务测试**
-- Task 2: AdminUserManagementAppServiceTest
-- Task 3: MenuManagementAppServiceTest
-- Task 4: AdminUserPermissionAppServiceTest
-- Task 5: PermissionScanAppServiceTest
+**阶段 2：提交现有测试**
+- Task 2: 提交 7 个已存在但未提交的测试文件
 
-**阶段 3：Controller API 测试**
-- Task 6: AdminUserControllerTest
-- Task 7: AdminMenuControllerTest
-- Task 8: AdminAuthControllerTest
-- Task 9: PermissionControllerTest
+**阶段 3：补充缺失测试**
+- Task 3: PermissionControllerTest
 
 ### 4.2 验收标准
 
