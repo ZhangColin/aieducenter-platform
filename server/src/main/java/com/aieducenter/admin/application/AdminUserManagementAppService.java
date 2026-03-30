@@ -20,6 +20,7 @@ import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
+import com.aieducenter.admin.domain.service.PasswordEncoderService;
 
 import com.cartisan.core.exception.ApplicationException;
 import com.cartisan.core.util.Assertions;
@@ -35,20 +36,25 @@ import com.cartisan.web.response.PageResponse;
 @Service
 public class AdminUserManagementAppService {
 
+    private static final String PASSWORD_PATTERN = "^(?=.*[a-zA-Z])(?=.*\\d).{8,20}$";
+
     private final AdminUserRepository adminUserRepository;
     private final AdminRoleRepository adminRoleRepository;
     private final AdminUserAuthAppService adminUserAuthAppService;
     private final AdminUserMapper adminUserMapper;
+    private final PasswordEncoderService passwordEncoderService;
 
     public AdminUserManagementAppService(
             AdminUserRepository adminUserRepository,
             AdminRoleRepository adminRoleRepository,
             AdminUserAuthAppService adminUserAuthAppService,
-            AdminUserMapper adminUserMapper) {
+            AdminUserMapper adminUserMapper,
+            PasswordEncoderService passwordEncoderService) {
         this.adminUserRepository = adminUserRepository;
         this.adminRoleRepository = adminRoleRepository;
         this.adminUserAuthAppService = adminUserAuthAppService;
         this.adminUserMapper = adminUserMapper;
+        this.passwordEncoderService = passwordEncoderService;
     }
 
     /**
@@ -90,7 +96,15 @@ public class AdminUserManagementAppService {
                 AdminMessage.USERNAME_ALREADY_EXISTS
         );
 
-        AdminUser adminUser = new AdminUser(command.username(), command.password(), command.nickname());
+        // Validate password strength in application service
+        if (command.password() == null || !command.password().matches(PASSWORD_PATTERN)) {
+            throw new ApplicationException(AdminMessage.PASSWORD_WEAK);
+        }
+
+        // Encode password in application service
+        String encodedPassword = passwordEncoderService.encodePassword(command.password());
+
+        AdminUser adminUser = new AdminUser(command.username(), encodedPassword, command.nickname());
         if (command.email() != null) {
             adminUser.updateEmail(command.email());
         }
