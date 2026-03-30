@@ -2,6 +2,7 @@ package com.aieducenter.admin.domain.aggregate;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import cn.hutool.core.collection.CollUtil;
@@ -123,14 +124,13 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
      * 创建管理员。
      *
      * @param username 用户名（必填）
-     * @param plainPassword 明文密码
+     * @param encodedPassword 加密后的密码（应用服务层已加密）
      * @param nickname 昵称
      */
-    public AdminUser(String username, String plainPassword, String nickname) {
+    public AdminUser(String username, String encodedPassword, String nickname) {
         validateUsername(username);
-        validatePasswordStrength(plainPassword);
         this.username = username;
-        this.password = PASSWORD_ENCODER.encode(plainPassword);
+        this.password = Objects.requireNonNull(encodedPassword, "encodedPassword cannot be null");
         this.nickname = nickname != null && !nickname.isBlank() ? nickname : username;
         this.status = AdminStatus.ACTIVE;
     }
