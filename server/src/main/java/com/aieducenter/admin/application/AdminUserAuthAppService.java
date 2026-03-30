@@ -16,6 +16,7 @@ import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
+import com.aieducenter.admin.domain.service.PasswordEncoderService;
 import com.cartisan.core.exception.ApplicationException;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.cartisan.security.authentication.AuthenticationService;
@@ -36,16 +37,19 @@ public class AdminUserAuthAppService {
     private final AdminUserPermissionAppService adminPermissionAppService;
     private final AuthenticationService authenticationService;
     private final AdminUserMapper adminUserMapper;
+    private final PasswordEncoderService passwordEncoderService;
 
     public AdminUserAuthAppService(
             AdminUserRepository adminUserRepository,
             AdminUserPermissionAppService adminPermissionAppService,
             AuthenticationService authenticationService,
-            AdminUserMapper adminUserMapper) {
+            AdminUserMapper adminUserMapper,
+            PasswordEncoderService passwordEncoderService) {
         this.adminUserRepository = adminUserRepository;
         this.adminPermissionAppService = adminPermissionAppService;
         this.authenticationService = authenticationService;
         this.adminUserMapper = adminUserMapper;
+        this.passwordEncoderService = passwordEncoderService;
     }
 
     /**
@@ -61,7 +65,7 @@ public class AdminUserAuthAppService {
             throw new ApplicationException(AdminMessage.ADMIN_DISABLED);
         }
 
-        if (!adminUser.matchesPassword(command.password())) {
+        if (!passwordEncoderService.verifyPassword(command.password(), adminUser.getPassword())) {
             throw new ApplicationException(AdminMessage.LOGIN_FAILED);
         }
 
@@ -85,7 +89,14 @@ public class AdminUserAuthAppService {
         AdminUser adminUser = adminUserRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        adminUser.updatePassword(command.oldPassword(), command.newPassword());
+        // Verify old password using domain service
+        if (!passwordEncoderService.verifyPassword(command.oldPassword(), adminUser.getPassword())) {
+            throw new ApplicationException(AdminMessage.PASSWORD_INCORRECT);
+        }
+
+        // Encode and update new password using domain service
+        String newEncodedPassword = passwordEncoderService.encodePassword(command.newPassword());
+        adminUser.changePassword(newEncodedPassword);
         adminUserRepository.save(adminUser);
     }
 
@@ -97,7 +108,8 @@ public class AdminUserAuthAppService {
         AdminUser adminUser = adminUserRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        adminUser.resetPassword(command.newPassword());
+        String encodedPassword = passwordEncoderService.encodePassword(command.newPassword());
+        adminUser.changePassword(encodedPassword);
         adminUserRepository.save(adminUser);
     }
 
