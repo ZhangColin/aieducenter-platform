@@ -60,6 +60,7 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
+    @Getter
     @Column(name = "password", nullable = false)
     private String password;
 
@@ -67,12 +68,15 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     @Column(name = "nickname", nullable = false, length = 50)
     private String nickname;
 
+    @Getter
     @Column(name = "email", length = 255)
     private String email;
 
+    @Getter
     @Column(name = "phone", length = 20)
     private String phone;
 
+    @Getter
     @Column(name = "avatar", length = 512)
     private String avatar;
 
@@ -151,22 +155,6 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     }
 
     // ========== Getter ==========
-
-    public String getPassword() {
-        return password;
-    }
-
-    public Optional<String> getEmail() {
-        return Optional.ofNullable(email);
-    }
-
-    public Optional<String> getPhone() {
-        return Optional.ofNullable(phone);
-    }
-
-    public Optional<String> getAvatar() {
-        return Optional.ofNullable(avatar);
-    }
 
     public boolean isActive() {
         return status == AdminStatus.ACTIVE;
@@ -283,14 +271,16 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     // ========== 私有方法 ==========
 
     private void validateUsername(String username) {
-        if (username == null || !username.matches(USERNAME_PATTERN)) {
-            throw new DomainException(AdminMessage.USERNAME_INVALID);
-        }
+        Assertions.require(
+            username != null && username.matches(USERNAME_PATTERN),
+            AdminMessage.USERNAME_INVALID
+        );
     }
 
     private void validatePasswordStrength(String plainPassword) {
-        if (plainPassword == null || !plainPassword.matches(PASSWORD_PATTERN)) {
-            throw new DomainException(AdminMessage.PASSWORD_WEAK);
-        }
+        Assertions.require(
+            plainPassword != null && plainPassword.matches(PASSWORD_PATTERN),
+            AdminMessage.PASSWORD_WEAK
+        );
     }
 }
