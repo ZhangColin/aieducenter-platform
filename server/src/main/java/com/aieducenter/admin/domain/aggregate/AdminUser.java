@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import cn.hutool.core.collection.CollUtil;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.domain.BaseEnum;
@@ -46,11 +45,9 @@ import lombok.Getter;
 @Aggregate
 public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<AdminUser> {
 
-    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
-
+  
     private static final String USERNAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]{2,19}$";
-    private static final String PASSWORD_PATTERN = "^(?=.*[a-zA-Z])(?=.*\\d).{8,20}$";
-
+    
     @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)
