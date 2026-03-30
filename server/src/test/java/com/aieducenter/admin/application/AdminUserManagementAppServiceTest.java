@@ -299,4 +299,15 @@ class AdminUserManagementAppServiceTest {
         assertThat(adminUser.getRoleIds()).isEmpty();
         verify(adminUserRepository).save(adminUser);
     }
+
+    @Test
+    void given_weak_password_when_create_then_throw_application_exception() {
+        // Given
+        CreateAdminUserCommand command = new CreateAdminUserCommand("testuser", "weak", "测试用户", null, null);
+
+        // When & Then
+        assertThatThrownBy(() -> adminUserManagementAppService.create(command))
+            .isInstanceOf(ApplicationException.class)
+            .hasMessageContaining(AdminMessage.PASSWORD_WEAK.message());
+    }
 }
