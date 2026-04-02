@@ -182,6 +182,8 @@ void given_username_when_validate_then_expected(String username, boolean valid) 
 | 权限检查 | 10 个角色，< 1s | `@Timeout(1, TimeUnit.SECONDS)` |
 | 菜单树构建 | 100 个菜单，< 500ms | `@Timeout(500, TimeUnit.MILLISECONDS)` |
 
+> **注意**：以上性能目标需要根据实际 CI/CD 环境硬件规格进行校准。实现时应先测量基准性能，然后设置合理的超时阈值。
+
 **实现示例**：
 ```java
 @Test
@@ -231,7 +233,31 @@ void performance_test_should_be_stable() {
 - 2.1 聚合根（修正第 84 行反模式示例）
 - 第六章测试规范（完全重写）
 
-#### 2.2.2 领域层解耦规范（2.7 节）
+#### 2.2.2 修正反模式示例
+
+**修正位置**：`docs/guide/限界上下文代码编写规范.md` 第 84 行
+
+**当前问题**：
+```java
+// ❌ v1.4 错误示例
+private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
+```
+
+**修正后**：
+```java
+// ✅ v2.0 正确示例
+// 领域层不应直接依赖外部框架，应通过领域服务封装
+@DomainService
+public class PasswordEncoderService {
+    private final PasswordEncoderPort encoder;
+
+    public String encodePassword(String plainPassword) {
+        return encoder.encode(plainPassword);
+    }
+}
+```
+
+#### 2.2.3 领域层解耦规范（2.7 节）
 
 **核心原则**：
 > 领域层必须保持零外部依赖。所有外部框架、库、基础设施都通过端口接口解耦。
@@ -488,8 +514,8 @@ server/src/test/java/com/aieducenter/admin/
 ### 5.1 后续行动计划
 
 **短期（1-3 个月）**：
-- [x] 完成 Admin 上下文测试补充
-- [x] 更新规范文档到 v2.0
+- [ ] 完成 Admin 上下文测试补充
+- [ ] 更新规范文档到 v2.0
 - [ ] 将 Admin 模式应用到 Account 上下文
 - [ ] 建立 ArchUnit 规则模板库
 
