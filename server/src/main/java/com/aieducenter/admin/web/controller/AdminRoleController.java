@@ -14,6 +14,7 @@ import com.aieducenter.admin.application.dto.command.CreateRoleCommand;
 import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
 import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
+import com.aieducenter.admin.constants.AdminScopes;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.PageResponse;
@@ -42,7 +43,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:read",
         name = "平台管理 / 角色管理 / 查看",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "查询角色列表（分页）")
     public PageResponse<RoleResponse> findAll(
@@ -56,7 +57,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:read",
         name = "平台管理 / 角色管理 / 查看",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "查询角色详情")
     public RoleResponse findById(@PathVariable Long id) {
@@ -68,7 +69,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:write",
         name = "平台管理 / 角色管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "创建角色")
     public Long create(@Valid @RequestBody CreateRoleCommand command) {
@@ -80,7 +81,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:write",
         name = "平台管理 / 角色管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "更新角色")
     public void update(
@@ -94,7 +95,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:write",
         name = "平台管理 / 角色管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "删除角色")
     public void delete(@PathVariable Long id) {
@@ -106,7 +107,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:write",
         name = "平台管理 / 角色管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "分配菜单")
     public void assignMenus(
@@ -120,7 +121,7 @@ public class AdminRoleController {
     @RequirePermission(
         value = "admin:role:write",
         name = "平台管理 / 角色管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "分配权限")
     public void assignPermissions(

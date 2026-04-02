@@ -15,6 +15,7 @@ import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
+import com.aieducenter.admin.constants.AdminScopes;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.PageResponse;
@@ -43,7 +44,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:read",
         name = "平台管理 / 用户管理 / 查看",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "查询管理员列表（分页）")
     public PageResponse<AdminUserResponse> findAll(
@@ -57,7 +58,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:read",
         name = "平台管理 / 用户管理 / 查看",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "查询管理员详情")
     public AdminUserResponse findById(@PathVariable Long id) {
@@ -69,7 +70,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:write",
         name = "平台管理 / 用户管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "创建管理员")
     public Long create(@Valid @RequestBody CreateAdminUserCommand command) {
@@ -81,7 +82,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:write",
         name = "平台管理 / 用户管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "更新管理员")
     public void update(
@@ -95,7 +96,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:write",
         name = "平台管理 / 用户管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "删除管理员")
     public void delete(@PathVariable Long id) {
@@ -107,7 +108,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:write",
         name = "平台管理 / 用户管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "修改管理员状态")
     public void updateStatus(
@@ -121,7 +122,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:write",
         name = "平台管理 / 用户管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "分配角色")
     public void assignRoles(
@@ -135,7 +136,7 @@ public class AdminUserController {
     @RequirePermission(
         value = "admin:user:write",
         name = "平台管理 / 用户管理 / 编辑",
-        scope = "admin"
+        scope = AdminScopes.ADMIN
     )
     @Operation(summary = "重置管理员密码")
     public void resetPassword(

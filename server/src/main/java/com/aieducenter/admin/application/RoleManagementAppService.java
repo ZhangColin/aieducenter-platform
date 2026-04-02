@@ -24,6 +24,7 @@ import com.aieducenter.admin.application.dto.command.UpdateRoleCommand;
 import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.application.mapper.AdminRoleMapper;
+import com.aieducenter.admin.constants.AdminScopes;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
@@ -169,7 +170,7 @@ public class RoleManagementAppService {
         );
 
         // 验证权限 codes 有效性（通过 PermissionScanner 扫描代码中定义的权限）
-        Set<String> validPermissionCodes = permissionScanner.scanByScope("admin").stream()
+        Set<String> validPermissionCodes = permissionScanner.scanByScope(AdminScopes.ADMIN).stream()
                 .map(Permission::code)
                 .collect(Collectors.toSet());
 

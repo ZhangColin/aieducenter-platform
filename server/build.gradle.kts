@@ -15,6 +15,7 @@ java {
 }
 
 repositories {
+    mavenLocal()  // 优先使用本地 Maven 仓库（cartisan-boot）
     mavenCentral()
 }
 

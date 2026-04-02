@@ -1,7 +1,13 @@
 package com.aieducenter.admin.domain.entity;
 
-import jakarta.persistence.*;
 import java.util.Objects;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+
+import com.cartisan.core.domain.DomainEntity;
+import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
+import com.cartisan.data.jpa.id.TsidGenerator;
 
 /**
  * 角色-权限关联实体。
@@ -11,15 +17,21 @@ import java.util.Objects;
  * @since 0.1.0
  */
 @Entity
-@Table(name = "sys_admin_role_permissions")
-public class AdminRolePermission {
+@Table(name = "sys_admin_role_permissions", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"role_id", "permission_code"})
+})
+@Getter
+public class AdminRolePermission extends AuditableSoftDeletable implements DomainEntity<AdminRolePermission, Long> {
 
     @Id
-    @Column(name = "role_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
+    private Long id;
+
+    @Column(name = "role_id", nullable = false)
     private Long roleId;
 
-    @Id
-    @Column(name = "permission_code")
+    @Column(name = "permission_code", nullable = false, length = 255)
     private String permissionCode;
 
     @Column(name = "permission_name")
@@ -38,18 +50,6 @@ public class AdminRolePermission {
         this.roleId = roleId;
         this.permissionCode = Objects.requireNonNull(permissionCode, "permissionCode must not be null");
         this.permissionName = permissionName;
-    }
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public String getPermissionCode() {
-        return permissionCode;
-    }
-
-    public String getPermissionName() {
-        return permissionName;
     }
 
     @Override

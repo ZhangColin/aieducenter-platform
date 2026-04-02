@@ -63,6 +63,7 @@ public class AdminMenu extends AuditableSoftDeletable implements AggregateRoot<A
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
+    @Getter
     @EnumConvert(MenuType.class)
     @Column(name = "type", nullable = false)
     private MenuType type = MenuType.MENU;

@@ -1,7 +1,13 @@
 package com.aieducenter.admin.domain.entity;
 
-import jakarta.persistence.*;
 import java.util.Objects;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+
+import com.cartisan.core.domain.DomainEntity;
+import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
+import com.cartisan.data.jpa.id.TsidGenerator;
 
 /**
  * 角色-菜单关联实体。
@@ -11,15 +17,21 @@ import java.util.Objects;
  * @since 0.1.0
  */
 @Entity
-@Table(name = "sys_admin_role_menus")
-public class AdminRoleMenu {
+@Table(name = "sys_admin_role_menus", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"role_id", "menu_id"})
+})
+@Getter
+public class AdminRoleMenu extends AuditableSoftDeletable implements DomainEntity<AdminRoleMenu, Long> {
 
     @Id
-    @Column(name = "role_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
+    private Long id;
+
+    @Column(name = "role_id", nullable = false)
     private Long roleId;
 
-    @Id
-    @Column(name = "menu_id")
+    @Column(name = "menu_id", nullable = false)
     private Long menuId;
 
     /**
@@ -34,14 +46,6 @@ public class AdminRoleMenu {
     public AdminRoleMenu(Long roleId, Long menuId) {
         this.roleId = roleId;
         this.menuId = Objects.requireNonNull(menuId, "menuId must not be null");
-    }
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public Long getMenuId() {
-        return menuId;
     }
 
     @Override
