@@ -158,7 +158,7 @@ class AccountLoginAppServiceTest {
     void given_valid_sms_code_when_login_by_sms_then_return_token() {
         // Given
         var user = User.restore(1005L, "testuser", null, "13812345678", "$2a$10$validhashedpassword", "Test", null);
-        var command = new LoginBySmsCommand("13812345678", "123456", "captchaId", "1234");
+        var command = new LoginBySmsCommand("13812345678", "123456");
         var tokenInfo = new TokenInfo("token-sms", 1005L, Instant.now().plusSeconds(3600));
 
         when(userRepository.findByPhoneNumber("13812345678")).thenReturn(Optional.of(user));
@@ -169,14 +169,14 @@ class AccountLoginAppServiceTest {
 
         // Then
         assertThat(result.token()).isEqualTo("token-sms");
-        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
         verify(verificationCodeAppService).verifyPhoneCode(new VerifySmsCodeCommand("13812345678", "123456", "LOGIN"));
+        verify(captchaAppService, never()).verifyCaptcha(any(), any());
     }
 
     @Test
     void given_unregistered_phone_when_login_by_sms_then_throw_account_not_found() {
         // Given
-        var command = new LoginBySmsCommand("13899999999", "123456", "captchaId", "1234");
+        var command = new LoginBySmsCommand("13899999999", "123456");
 
         when(userRepository.findByPhoneNumber("13899999999")).thenReturn(Optional.empty());
 
@@ -184,14 +184,14 @@ class AccountLoginAppServiceTest {
         assertThatThrownBy(() -> loginAppService.loginBySms(command))
             .isInstanceOf(DomainException.class)
             .hasMessageContaining(UserError.ACCOUNT_NOT_FOUND.message());
-        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
+        verify(captchaAppService, never()).verifyCaptcha(any(), any());
         verify(verificationCodeAppService).verifyPhoneCode(any());
     }
 
     @Test
     void given_invalid_sms_code_when_login_by_sms_then_propagate_verification_error() {
         // Given
-        var command = new LoginBySmsCommand("13812345678", "000000", "captchaId", "1234");
+        var command = new LoginBySmsCommand("13812345678", "000000");
         var verificationError = new DomainException(
             com.aieducenter.verification.domain.error.VerificationCodeError.CODE_INVALID);
 
@@ -202,20 +202,18 @@ class AccountLoginAppServiceTest {
         // When & Then
         assertThatThrownBy(() -> loginAppService.loginBySms(command))
             .isSameAs(verificationError);
-        verify(captchaAppService).verifyCaptcha("captchaId", "1234");
+        verify(captchaAppService, never()).verifyCaptcha(any(), any());
     }
 
     @Test
-    void given_invalid_captcha_when_login_by_sms_then_throw_captcha_invalid() {
+    void given_invalid_captcha_when_login_by_sms_then_throw_account_not_found() {
         // Given
-        var command = new LoginBySmsCommand("13812345678", "123456", "invalidId", "wrong");
-
-        doThrow(new DomainException(CaptchaError.CAPTCHA_INVALID))
-            .when(captchaAppService).verifyCaptcha("invalidId", "wrong");
+        var command = new LoginBySmsCommand("13899999999", "123456");
 
         // When & Then
         assertThatThrownBy(() -> loginAppService.loginBySms(command))
             .isInstanceOf(DomainException.class)
-            .hasMessageContaining(CaptchaError.CAPTCHA_INVALID.message());
+            .hasMessageContaining(UserError.ACCOUNT_NOT_FOUND.message());
+        verify(captchaAppService, never()).verifyCaptcha(any(), any());
     }
 }

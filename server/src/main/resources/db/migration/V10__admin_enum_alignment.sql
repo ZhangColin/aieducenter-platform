@@ -1,4 +1,9 @@
 -- 修改 sys_admin_users.status 列：VARCHAR(20) → INTEGER
+-- 先处理默认值问题
+ALTER TABLE sys_admin_users
+  ALTER COLUMN status DROP DEFAULT;
+
+-- 然后修改列类型
 ALTER TABLE sys_admin_users
   ALTER COLUMN status TYPE INTEGER USING (
     CASE status
@@ -8,11 +13,16 @@ ALTER TABLE sys_admin_users
     END
   );
 
--- 修改 sys_admin_users.status 默认值
+-- 重新设置默认值
 ALTER TABLE sys_admin_users
   ALTER COLUMN status SET DEFAULT 1;
 
 -- 修改 sys_admin_menus.type 列：VARCHAR(20) → INTEGER
+-- 先处理默认值问题
+ALTER TABLE sys_admin_menus
+  ALTER COLUMN type DROP DEFAULT;
+
+-- 然后修改列类型
 ALTER TABLE sys_admin_menus
   ALTER COLUMN type TYPE INTEGER USING (
     CASE type
@@ -23,6 +33,6 @@ ALTER TABLE sys_admin_menus
     END
   );
 
--- 修改 sys_admin_menus.type 默认值
+-- 重新设置默认值
 ALTER TABLE sys_admin_menus
   ALTER COLUMN type SET DEFAULT 1;

@@ -24,15 +24,20 @@
         <pitest.junit5.plugin.version>1.2.3</pitest.junit5.plugin.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- BOM 平台导入 - 统一管理依赖版本 -->
+            <dependency>
+                <groupId>com.cartisan</groupId>
+                <artifactId>cartisan-dependencies</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-        <!-- BOM 平台导入 - 统一管理依赖版本 -->
-        <dependency>
-            <groupId>com.cartisan</groupId>
-            <artifactId>cartisan-dependencies</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
 
         <!-- Spring Boot Starter -->
         <dependency>
@@ -144,6 +149,16 @@
 
     <build>
         <plugins>
+            <!-- Spring Boot Maven Plugin -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <mainClass>com.aieducenter.AieduCenterApplication</mainClass>
+                </configuration>
+            </plugin>
+
             <!-- Pitest Maven Plugin -->
             <plugin>
                 <groupId>org.pitest</groupId>
@@ -157,7 +172,6 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <junit5PluginVersion>${pitest.junit5.plugin.version}</junit5PluginVersion>
                     <targetClasses>
                         <param>com.aieducenter.verification.domain.*</param>
                         <param>com.aieducenter.verification.application.*</param>
@@ -176,7 +190,6 @@
                     </jvmArgs>
                     <threads>2</threads>
                     <timeoutFactor>2.0</timeoutFactor>
-                    <timeoutConstInMillis>10000</timeoutConstInMillis>
                 </configuration>
             </plugin>
         </plugins>
