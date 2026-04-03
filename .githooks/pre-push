@@ -8,7 +8,7 @@ cd "$PROJECT_ROOT"
 
 echo "🚀 推送前执行验证..."
 
-./scripts/validate/all.sh
+./scripts/validate/quick-check.sh
 
 if [ $? -ne 0 ]; then
     echo ""
