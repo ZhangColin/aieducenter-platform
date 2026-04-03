@@ -11,7 +11,7 @@ import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 
-import com.cartisan.core.util.Assertions;
+import static com.cartisan.core.util.Assertions.requirePresent;
 
 /**
  * 管理员权限应用服务。
@@ -52,7 +52,7 @@ public class AdminUserPermissionAppService {
             return List.of();
         }
 
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(adminId)
         );
 
@@ -80,13 +80,17 @@ public class AdminUserPermissionAppService {
             return List.of();
         }
 
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(adminId)
         );
 
         // 通过领域模型聚合角色编码
-        return adminUser.getRoleIds().stream()
-                .map(roleId -> Assertions.requirePresent(adminRoleRepository.findById(roleId)))
+        Set<Long> roleIds = adminUser.getRoleIds();
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+
+        return adminRoleRepository.findAllById(roleIds).stream()
                 .map(AdminRole::getCode)
                 .collect(Collectors.toList());
     }
@@ -103,7 +107,7 @@ public class AdminUserPermissionAppService {
             return menuManagementAppService.findTree(null);
         }
 
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(adminId)
         );
 

@@ -1,7 +1,7 @@
 package com.aieducenter.admin.domain.service;
 
 import com.cartisan.core.stereotype.DomainService;
-import com.aieducenter.admin.domain.port.PasswordEncoderPort;
+import com.aieducenter.admin.domain.port.PasswordEncoder;
 
 /**
  * 密码编码领域服务。
@@ -14,9 +14,9 @@ import com.aieducenter.admin.domain.port.PasswordEncoderPort;
 @DomainService
 public class PasswordEncoderService {
 
-    private final PasswordEncoderPort encoder;
+    private final PasswordEncoder encoder;
 
-    public PasswordEncoderService(PasswordEncoderPort encoder) {
+    public PasswordEncoderService(PasswordEncoder encoder) {
         this.encoder = encoder;
     }
 

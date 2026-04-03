@@ -59,7 +59,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
     private String avatar;        // 头像 URL
 
     // 状态
-    private AdminStatus status;   // ACTIVE / DISABLED
+    private AdminUserStatus status;   // ACTIVE / DISABLED
     private boolean system;       // 系统内置用户，不可删除
 
     // 审计字段（继承自 Auditable）
@@ -70,7 +70,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
 ### 2.3 状态枚举
 
 ```java
-public enum AdminStatus {
+public enum AdminUserStatus {
     ACTIVE,      // 启用
     DISABLED     // 禁用
 }

@@ -1,6 +1,10 @@
 package com.aieducenter.admin.application;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import cn.hutool.core.collection.CollUtil;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,12 +22,15 @@ import com.aieducenter.admin.application.mapper.AdminUserMapper;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
 import com.aieducenter.admin.domain.service.PasswordEncoderService;
 
+import static com.cartisan.core.util.Assertions.require;
+import static com.cartisan.core.util.Assertions.requirePresent;
+
 import com.cartisan.core.exception.ApplicationException;
-import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
 
 import com.cartisan.web.response.PageResponse;
@@ -78,7 +85,7 @@ public class AdminUserManagementAppService {
      */
     @Transactional(readOnly = true)
     public AdminUserResponse findById(Long id) {
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(id),
                 AdminMessage.ADMIN_NOT_FOUND
         );
@@ -91,7 +98,7 @@ public class AdminUserManagementAppService {
      */
     @Transactional
     public Long create(CreateAdminUserCommand command) {
-        Assertions.require(
+        require(
                 !adminUserRepository.existsByUsername(command.username()),
                 AdminMessage.USERNAME_ALREADY_EXISTS
         );
@@ -106,10 +113,10 @@ public class AdminUserManagementAppService {
 
         AdminUser adminUser = new AdminUser(command.username(), encodedPassword, command.nickname());
         if (command.email() != null) {
-            adminUser.updateEmail(command.email());
+            adminUser.setEmail(command.email());
         }
         if (command.phone() != null) {
-            adminUser.updatePhone(command.phone());
+            adminUser.setPhone(command.phone());
         }
 
         AdminUser saved = adminUserRepository.save(adminUser);
@@ -121,7 +128,7 @@ public class AdminUserManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateAdminUserCommand command) {
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(id),
                 AdminMessage.ADMIN_NOT_FOUND
         );
@@ -130,13 +137,13 @@ public class AdminUserManagementAppService {
             adminUser.updateNickname(command.nickname());
         }
         if (command.email() != null) {
-            adminUser.updateEmail(command.email());
+            adminUser.setEmail(command.email());
         }
         if (command.phone() != null) {
-            adminUser.updatePhone(command.phone());
+            adminUser.setPhone(command.phone());
         }
         if (command.avatar() != null) {
-            adminUser.updateAvatar(command.avatar());
+            adminUser.setAvatar(command.avatar());
         }
 
         adminUserRepository.save(adminUser);
@@ -152,7 +159,7 @@ public class AdminUserManagementAppService {
             throw new ApplicationException(AdminMessage.LAST_ADMIN_CANNOT_DELETE);
         }
 
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(id),
                 AdminMessage.ADMIN_NOT_FOUND
         );
@@ -167,13 +174,13 @@ public class AdminUserManagementAppService {
      * @param status 状态枚举
      */
     @Transactional
-    public void updateStatus(Long id, AdminUser.AdminStatus status) {
-        AdminUser adminUser = Assertions.requirePresent(
+    public void updateStatus(Long id, AdminUserStatus status) {
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(id),
                 AdminMessage.ADMIN_NOT_FOUND
         );
 
-        if (status == AdminUser.AdminStatus.ACTIVE) {
+        if (status == AdminUserStatus.ACTIVE) {
             adminUser.enable();
         } else {
             adminUser.disable();
@@ -187,17 +194,19 @@ public class AdminUserManagementAppService {
      */
     @Transactional
     public void assignRoles(Long id, AssignRolesCommand command) {
-        AdminUser adminUser = Assertions.requirePresent(
+        AdminUser adminUser = requirePresent(
                 adminUserRepository.findById(id),
                 AdminMessage.ADMIN_NOT_FOUND
         );
 
-        // 验证所有角色 ID 存在
-        for (Long roleId : command.roleIds()) {
-            Assertions.requirePresent(
-                    adminRoleRepository.findById(roleId),
-                    AdminMessage.ROLE_NOT_FOUND
-            );
+        // 验证所有角色 ID 存在（批量查询避免 N+1）
+        Set<Long> existingRoleIds = adminRoleRepository.findAllById(command.roleIds())
+                .stream()
+                .map(AdminRole::getId)
+                .collect(Collectors.toSet());
+
+        if (!CollUtil.containsAll(existingRoleIds, command.roleIds())) {
+            throw new ApplicationException(AdminMessage.ROLE_NOT_FOUND);
         }
 
         // 清除现有角色关联

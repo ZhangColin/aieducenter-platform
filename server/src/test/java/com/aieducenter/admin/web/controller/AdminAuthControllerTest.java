@@ -32,6 +32,7 @@ import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.application.dto.response.CurrentUserResponse;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 import com.cartisan.security.annotation.CurrentUser;
 import com.cartisan.security.authentication.TokenInfo;
 
@@ -114,7 +115,7 @@ class AdminAuthControllerTest {
     void given_authenticatedUser_when_getCurrentAdmin_then_returnUserInfo() throws Exception {
         // Given
         AdminUserResponse user = new AdminUserResponse(1L, "admin", "管理员", null, null, null,
-                AdminUser.AdminStatus.ACTIVE, null, null, null);
+                AdminUserStatus.ACTIVE, null, null, null);
         List<String> roleCodes = List.of("SUPER_ADMIN");
         List<String> permissions = List.of("admin:user:read", "admin:user:write");
         List<MenuResponse> menus = List.of(new MenuResponse(1L, "用户管理", "/users", "user", null, 1, null));

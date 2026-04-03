@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.aieducenter.admin.domain.aggregate.AdminMenu;
-import com.aieducenter.admin.domain.entity.MenuType;
+import com.aieducenter.admin.domain.enums.MenuType;
 
 /**
  * Menu 边界值测试。

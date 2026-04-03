@@ -267,16 +267,25 @@ class RoleManagementAppServiceTest {
     // ========== assignMenus tests ==========
 
     @Test
-    void given_valid_menus_when_assignMenus_then_success() {
+    void given_valid_menus_when_assignMenus_then_success() throws Exception {
         // Given
         Long roleId = 1L;
         AssignMenusCommand command = new AssignMenusCommand(List.of(1L, 2L, 3L));
         AdminRole role = new AdminRole("测试角色", "TEST", "测试", 1);
 
+        AdminMenu menu1 = new AdminMenu("菜单1", "/menu1", "icon1", null, 1);
+        AdminMenu menu2 = new AdminMenu("菜单2", "/menu2", "icon2", null, 1);
+        AdminMenu menu3 = new AdminMenu("菜单3", "/menu3", "icon3", null, 1);
+
+        // Set IDs using reflection
+        java.lang.reflect.Field idField = AdminMenu.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(menu1, 1L);
+        idField.set(menu2, 2L);
+        idField.set(menu3, 3L);
+
         when(roleRepository.findById(roleId)).thenReturn(Optional.of(role));
-        when(menuRepository.findById(1L)).thenReturn(Optional.of(new AdminMenu("菜单1", "/menu1", "icon1", null, 1)));
-        when(menuRepository.findById(2L)).thenReturn(Optional.of(new AdminMenu("菜单2", "/menu2", "icon2", null, 1)));
-        when(menuRepository.findById(3L)).thenReturn(Optional.of(new AdminMenu("菜单3", "/menu3", "icon3", null, 1)));
+        when(menuRepository.findAllById(command.menuIds())).thenReturn(List.of(menu1, menu2, menu3));
 
         // When
         roleManagementAppService.assignMenus(roleId, command);
@@ -301,15 +310,21 @@ class RoleManagementAppServiceTest {
     }
 
     @Test
-    void given_nonexistent_menu_when_assignMenus_then_throw_exception() {
+    void given_nonexistent_menu_when_assignMenus_then_throw_exception() throws Exception {
         // Given
         Long roleId = 1L;
         AssignMenusCommand command = new AssignMenusCommand(List.of(1L, 999L));
         AdminRole role = new AdminRole("测试角色", "TEST", "测试", 1);
 
+        AdminMenu menu1 = new AdminMenu("菜单1", "/menu1", "icon1", null, 1);
+
+        // Set ID using reflection
+        java.lang.reflect.Field idField = AdminMenu.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(menu1, 1L);
+
         when(roleRepository.findById(roleId)).thenReturn(Optional.of(role));
-        when(menuRepository.findById(1L)).thenReturn(Optional.of(new AdminMenu("菜单1", "/menu1", "icon1", null, 1)));
-        when(menuRepository.findById(999L)).thenReturn(Optional.empty());
+        when(menuRepository.findAllById(command.menuIds())).thenReturn(List.of(menu1)); // Only menu1 exists
 
         // When & Then
         assertThatThrownBy(() -> roleManagementAppService.assignMenus(roleId, command))

@@ -1,6 +1,6 @@
 # cartisan-boot 使用手册
 
-> **版本**：v0.9 | **日期**：2026-03-29
+> **版本**：v0.9 | **日期**：2026-03-30
 > **模块**：Core + Test + Web + Data-JPA + Event + Security + Data-Query + AI
 
 ---
@@ -151,6 +151,43 @@
 |----|------|
 | `BaseEnumSerializer` | Jackson 序列化器：BaseEnum → Integer code |
 | `BaseEnumDeserializer` | Jackson 反序列化器：Integer → BaseEnum（使用 ContextualDeserializer） |
+| `BaseEnumConverter` | Spring MVC Converter：String(Integer code) → BaseEnum，支持 `@RequestParam`、`@PathVariable` |
+
+**BaseEnum 参数绑定**：
+
+业务枚举实现 `BaseEnum` 接口后，**零配置**即可在 Controller 中直接使用枚举类型：
+
+```java
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    // GET /api/users?status=1  → status 自动转换为 UserStatus.ACTIVE
+    @GetMapping
+    public List<UserDTO> getUsers(@RequestParam UserStatus status) {
+        return userService.getUsersByStatus(status);
+    }
+
+    // PUT /api/users/123?status=0  → status 自动转换为 UserStatus.DISABLED
+    @PutMapping("/{id}")
+    public void updateUserStatus(
+            @PathVariable Long id,
+            @RequestParam UserStatus status) {
+        userService.updateStatus(id, status);
+    }
+}
+```
+
+**特性**：
+- ✅ **零配置**：引入 `cartisan-web` 依赖即生效
+- ✅ **只支持 Integer code**：如 `?status=1`，不支持 name 格式（如 `?status=ACTIVE`）
+- ✅ **null 处理**：null/空字符串返回 null，由 `@NotNull` 等校验处理
+- ✅ **错误处理**：无效 code 返回 400 Bad Request（而非 404）
+
+**设计取舍**：
+1. **只支持 code 不支持 name**：API 传输应该是稳定的 code 值，而不是可能变化的 name
+2. **null 返回 null**：Converter 负责类型转换，校验由业务层注解处理（职责分离）
+3. **自动注册**：通过 `CartisanWebAutoConfiguration` 实现 `WebMvcConfigurer` 自动注册
 
 ### 2.2 异常体系（com.cartisan.core.exception）
 
@@ -171,6 +208,34 @@
 | `@DomainService` | TYPE | 标注领域服务 |
 | `@Port(PortType)` | TYPE | 标注端口接口 |
 | `@Adapter(PortType)` | TYPE | 标注适配器实现 |
+
+**PortType 类型**：
+
+| 类型 | 用途 | 示例 |
+|------|------|------|
+| `REPOSITORY` | 仓储端口：聚合根持久化 | `OrderRepository` |
+| `CLIENT` | 客户端端口：调用外部服务 | `PasswordEncoderPort`、`SmsSenderPort` |
+| `PUBLISHER` | 发布者端口：发布领域事件 | `DomainEventPublisher` |
+
+### 2.3.1 Repository 模式 vs Service Port 模式
+
+| 特性 | Repository 模式 | Service Port 模式 |
+|------|-----------------|-------------------|
+| **用途** | 数据持久化 | 外部服务调用 |
+| **PortType** | `PortType.REPOSITORY` | `PortType.CLIENT` |
+| **操作** | CRUD 操作 | 调用/发送/查询等 |
+| **返回值** | 聚合根/值对象 | 响应 DTO 或基础类型 |
+| **示例** | `AdminUserRepository` | `SmsSenderPort`、`PaymentGatewayPort` |
+
+**Service Port 适用场景**：
+- **跨限界上下文调用**：如订单上下文调用库存上下文
+- **外部 API 调用**：如短信服务、支付网关、OSS 存储
+- **中间件交互**：如消息队列、缓存、搜索引擎
+
+**不适合 Service Port 的场景**：
+- 纯工具类（如 BCryptPasswordEncoder、UUID 生成器）- 直接注入使用
+- 领域业务逻辑 - 应在聚合根或领域服务中
+- 应用服务编排 - 应在 Application Service 中
 
 ### 2.4 断言工具（com.cartisan.core.util.Assertions）
 
@@ -699,6 +764,8 @@ public class OrderApplicationService {
 
 ### 3.4 使用架构注解
 
+#### 3.4.1 Repository 模式（数据持久化）
+
 ```java
 // package-info.java - 标注限界上下文
 @BoundedContext(name = "OrderManagement", subDomain = SubDomain.CORE)
@@ -721,6 +788,82 @@ public class OrderPricingService {
     // 不属于任何聚合根的定价逻辑
 }
 ```
+
+#### 3.4.2 Service Port 模式（领域服务 + 南向接口）
+
+当领域层需要调用外部服务（如短信、支付、OSS）或跨限界上下文时，应使用**领域服务 + 南向接口模式**：
+
+```java
+// ========== 领域层 ==========
+// Step 1: 定义南向接口（端口）
+@Port(PortType.CLIENT)
+public interface SmsSenderPort {
+    void sendVerificationCode(String phoneNumber, String code);
+    void sendNotification(String phoneNumber, String message);
+}
+
+// Step 2: 创建领域服务
+@DomainService
+public class NotificationService {
+    private final SmsSenderPort smsSender;
+
+    public NotificationService(SmsSenderPort smsSender) {
+        this.smsSender = smsSender;
+    }
+
+    public void sendLoginCode(User user, String code) {
+        smsSender.sendVerificationCode(user.getPhoneNumber(), code);
+    }
+}
+
+// ========== 基础设施层 ==========
+// Step 3: 实现适配器（阿里云短信）
+@Component("aliyunSmsSender")
+@Adapter(PortType.CLIENT)
+public class AliyunSmsSenderAdapter implements SmsSenderPort {
+    private final AliyunSmsClient client;
+
+    public AliyunSmsSenderAdapter(AliyunSmsClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public void sendVerificationCode(String phoneNumber, String code) {
+        client.sendWithTemplate(phoneNumber, "VERIFY_CODE_TEMPLATE", Map.of("code", code));
+    }
+
+    @Override
+    public void sendNotification(String phoneNumber, String message) {
+        client.send(phoneNumber, message);
+    }
+}
+
+// ========== 应用层 ==========
+// Step 4: 应用服务使用
+@ApplicationService
+public class UserAuthAppService {
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+
+    public void sendLoginCode(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        String code = generateRandomCode();
+        notificationService.sendLoginCode(user, code);
+        // 保存验证码到 Redis...
+    }
+}
+```
+
+**关键点**：
+
+| 要点 | 说明 |
+|------|------|
+| `@Port(PortType.CLIENT)` | 标记客户端端口接口 |
+| `@DomainService` | 领域服务封装外部服务调用 |
+| `@Component` | 适配器必须添加，Spring 才能发现 Bean |
+| `@Adapter(PortType.CLIENT)` | 标记适配器类型 |
+| 构造函数注入 | 所有依赖字段声明为 final |
+| 可替换性 | 可轻松切换阿里云/腾讯云/云片短信 |
 
 ### 3.5 使用 ArchUnit 规则
 
@@ -1762,7 +1905,22 @@ cartisan-boot 的设计理念：**提供能力，不强求风格**。
 - 是否严格遵循 DDD 风格由业务团队决定
 - 代码应该简洁务实，避免为了教条增加不必要的抽象
 
-### 4.2 JPA / 数据访问
+#### 4.1.3 领域服务与南向接口
+
+**何时使用领域服务？**
+
+领域服务用于封装：
+- 不属于任何聚合根的业务逻辑
+- 需要多个聚合根协作的业务逻辑
+- 需要调用外部服务的业务逻辑（通过南向接口）
+
+**何时使用南向接口（Service Port）？**
+
+| 适合使用 Service Port | 不适合使用 Service Port |
+|----------------------|------------------------|
+| 跨限界上下文调用 | 领域业务逻辑（应在聚合根中） |
+| 外部 API 调用（短信、支付、OSS） | 应用服务编排（应在 Application Service 中） |
+| 中间件交互（消息队列、缓存、搜索） | 纯工具类（如 BCryptPasswordEncoder，直接注入使用） |
 
 | 规则 | 说明 |
 |------|------|

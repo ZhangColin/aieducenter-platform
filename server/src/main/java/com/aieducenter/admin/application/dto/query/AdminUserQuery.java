@@ -1,6 +1,6 @@
 package com.aieducenter.admin.application.dto.query;
 
-import com.aieducenter.admin.domain.aggregate.AdminUser;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 import com.cartisan.data.jpa.specification.Condition;
 import com.cartisan.data.jpa.specification.ConditionType;
 
@@ -18,7 +18,7 @@ public record AdminUserQuery(
     /**
      * 状态查询。
      */
-    @Condition(type = ConditionType.EQUAL) AdminUser.AdminStatus status,
+    @Condition(type = ConditionType.EQUAL) AdminUserStatus status,
 
     /**
      * 关键字模糊搜索（用户名、昵称、邮箱）。

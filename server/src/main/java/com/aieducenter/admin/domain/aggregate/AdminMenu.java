@@ -9,7 +9,7 @@ import com.cartisan.core.stereotype.Aggregate;
 import com.cartisan.data.jpa.annotation.EnumConvert;
 import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
 import com.cartisan.data.jpa.id.TsidGenerator;
-import com.aieducenter.admin.domain.entity.MenuType;
+import com.aieducenter.admin.domain.enums.MenuType;
 
 import jakarta.persistence.*;
 import lombok.Getter;

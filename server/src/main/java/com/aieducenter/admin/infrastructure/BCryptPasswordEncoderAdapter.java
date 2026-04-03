@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import com.cartisan.core.stereotype.Adapter;
 import com.cartisan.core.stereotype.PortType;
-import com.aieducenter.admin.domain.port.PasswordEncoderPort;
+import com.aieducenter.admin.domain.port.PasswordEncoder;
 
 /**
  * BCrypt 密码编码器适配器。
@@ -16,7 +16,7 @@ import com.aieducenter.admin.domain.port.PasswordEncoderPort;
  */
 @Component("adminBCryptPasswordEncoder")
 @Adapter(PortType.CLIENT)
-public class BCryptPasswordEncoderAdapter implements PasswordEncoderPort {
+public class BCryptPasswordEncoderAdapter implements PasswordEncoder {
 
     private static final int STRENGTH = 10;
     private final BCryptPasswordEncoder encoder;

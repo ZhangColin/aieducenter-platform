@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aieducenter.admin.application.AdminUserManagementAppService;
 import com.aieducenter.admin.application.dto.command.AssignRolesCommand;
-import com.aieducenter.admin.domain.aggregate.AdminUser;
 import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.application.dto.query.AdminUserQuery;
 import com.aieducenter.admin.application.dto.response.AdminUserResponse;
 import com.aieducenter.admin.constants.AdminScopes;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 import com.cartisan.security.annotation.RequireAuth;
 import com.cartisan.security.annotation.RequirePermission;
 import com.cartisan.web.response.PageResponse;
@@ -113,7 +113,8 @@ public class AdminUserController {
     @Operation(summary = "修改管理员状态")
     public void updateStatus(
             @PathVariable Long id,
-            @RequestParam AdminUser.AdminStatus status) {
+            @RequestParam AdminUserStatus status) {
+        // cartisan-boot 自动转换：?status=1 → AdminUserStatus.ACTIVE
         adminManagementAppService.updateStatus(id, status);
     }
 

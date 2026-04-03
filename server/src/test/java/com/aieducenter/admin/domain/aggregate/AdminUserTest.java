@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.cartisan.core.exception.DomainException;
 
@@ -31,7 +32,7 @@ class AdminUserTest {
         // Then
         assertThat(adminUser.getUsername()).isEqualTo("testuser");
         assertThat(adminUser.getNickname()).isEqualTo("测试用户");
-        assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
+        assertThat(adminUser.getStatus()).isEqualTo(AdminUserStatus.ACTIVE);
         assertThat(adminUser.getPassword()).isEqualTo(encodedPassword);
     }
 
@@ -64,8 +65,8 @@ class AdminUserTest {
 
         // When & Then
         assertThatThrownBy(() -> adminUser.changePassword(null))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("encodedPassword cannot be null");
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining(AdminMessage.PASSWORD_WEAK.message());
     }
 
     @Test
@@ -77,7 +78,7 @@ class AdminUserTest {
         adminUser.disable();
 
         // Then
-        assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.DISABLED);
+        assertThat(adminUser.getStatus()).isEqualTo(AdminUserStatus.DISABLED);
     }
 
     @Test
@@ -90,6 +91,6 @@ class AdminUserTest {
         adminUser.enable();
 
         // Then
-        assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
+        assertThat(adminUser.getStatus()).isEqualTo(AdminUserStatus.ACTIVE);
     }
 }

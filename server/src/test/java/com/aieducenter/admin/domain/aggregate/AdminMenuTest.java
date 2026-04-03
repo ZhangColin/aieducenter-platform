@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.aieducenter.admin.domain.entity.MenuType;
+import com.aieducenter.admin.domain.enums.MenuType;
 
 /**
  * AdminMenu 聚合根测试。

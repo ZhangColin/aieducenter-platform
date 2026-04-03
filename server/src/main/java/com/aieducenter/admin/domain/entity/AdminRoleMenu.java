@@ -6,13 +6,12 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import com.cartisan.core.domain.DomainEntity;
-import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
-import com.cartisan.data.jpa.id.TsidGenerator;
 
 /**
  * 角色-菜单关联实体。
  *
- * <p>属于 AdminRole 聚合，无回引用到 AdminRole。</p>
+ * <p>属于 AdminRole 聚合的一部分，无独立审计字段。</p>
+ * <p>关联删除采用物理删除，避免唯一索引与软删除冲突。</p>
  *
  * @since 0.1.0
  */
@@ -21,7 +20,7 @@ import com.cartisan.data.jpa.id.TsidGenerator;
     @UniqueConstraint(columnNames = {"role_id", "menu_id"})
 })
 @Getter
-public class AdminRoleMenu extends AuditableSoftDeletable implements DomainEntity<AdminRoleMenu, Long> {
+public class AdminRoleMenu implements DomainEntity<AdminRoleMenu, Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

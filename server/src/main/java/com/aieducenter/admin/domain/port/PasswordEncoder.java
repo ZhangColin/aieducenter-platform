@@ -12,7 +12,7 @@ import com.cartisan.core.stereotype.PortType;
  * @since 0.1.0
  */
 @Port(PortType.CLIENT)
-public interface PasswordEncoderPort {
+public interface PasswordEncoder {
 
     /**
      * 加密密码。

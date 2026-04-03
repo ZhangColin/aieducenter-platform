@@ -119,7 +119,7 @@ class AdminUserPermissionAppServiceTest {
     }
 
     @Test
-    void given_user_with_roles_when_getRoleCodes_then_return_role_codes() {
+    void given_user_with_roles_when_getRoleCodes_then_return_role_codes() throws Exception {
         // Given
         Long adminId = 1L;
         AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
@@ -129,10 +129,15 @@ class AdminUserPermissionAppServiceTest {
         AdminRole role1 = new AdminRole("管理员", "ADMIN", "管理员", 1);
         AdminRole role2 = new AdminRole("操作员", "OPERATOR", "操作员", 2);
 
+        // Set IDs using reflection
+        java.lang.reflect.Field idField = AdminRole.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(role1, 1L);
+        idField.set(role2, 2L);
+
         when(adminUserRepository.hasRole(adminId, AdminRole.SUPER_ADMIN_CODE)).thenReturn(false);
         when(adminUserRepository.findById(adminId)).thenReturn(Optional.of(adminUser));
-        when(adminRoleRepository.findById(1L)).thenReturn(Optional.of(role1));
-        when(adminRoleRepository.findById(2L)).thenReturn(Optional.of(role2));
+        when(adminRoleRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of(role1, role2));
 
         // When
         List<String> roleCodes = adminUserPermissionAppService.getRoleCodes(adminId);

@@ -9,19 +9,20 @@ import cn.hutool.core.collection.CollUtil;
 
 
 import com.cartisan.core.domain.AggregateRoot;
-import com.cartisan.core.domain.BaseEnum;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.stereotype.Aggregate;
-import com.cartisan.core.util.Assertions;
+import static com.cartisan.core.util.Assertions.require;
 import com.cartisan.data.jpa.annotation.EnumConvert;
 import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
 import com.cartisan.data.jpa.id.TsidGenerator;
 import com.aieducenter.admin.domain.entity.AdminUserRole;
 import com.aieducenter.admin.domain.error.AdminMessage;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * AdminUser 聚合根。
@@ -67,58 +68,28 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     private String nickname;
 
     @Getter
+    @Setter
     @Column(name = "email", length = 255)
     private String email;
 
     @Getter
+    @Setter
     @Column(name = "phone", length = 20)
     private String phone;
 
     @Getter
+    @Setter
     @Column(name = "avatar", length = 512)
     private String avatar;
 
     @Getter
-    @EnumConvert(AdminStatus.class)
+    @EnumConvert(AdminUserStatus.class)
     @Column(name = "status", nullable = false)
-    private AdminStatus status;
+    private AdminUserStatus status;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "admin_id")
     private Set<AdminUserRole> userRoles = CollUtil.newHashSet();
-
-    /**
-     * 管理员状态枚举。
-     */
-    public enum AdminStatus implements BaseEnum<AdminStatus> {
-        /**
-         * 激活。
-         */
-        ACTIVE(1, "激活"),
-
-        /**
-         * 禁用。
-         */
-        DISABLED(0, "禁用");
-
-        private final Integer code;
-        private final String name;
-
-        AdminStatus(Integer code, String name) {
-            this.code = code;
-            this.name = name;
-        }
-
-        @Override
-        public Integer getCode() {
-            return code;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-    }
 
     /**
      * 创建管理员。
@@ -130,9 +101,10 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     public AdminUser(String username, String encodedPassword, String nickname) {
         validateUsername(username);
         this.username = username;
-        this.password = Objects.requireNonNull(encodedPassword, "encodedPassword cannot be null");
+        require(encodedPassword != null, AdminMessage.PASSWORD_WEAK);
+        this.password = encodedPassword;
         this.nickname = nickname != null && !nickname.isBlank() ? nickname : username;
-        this.status = AdminStatus.ACTIVE;
+        this.status = AdminUserStatus.ACTIVE;
     }
 
     /**
@@ -154,7 +126,7 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     // ========== Getter ==========
 
     public boolean isActive() {
-        return status == AdminStatus.ACTIVE;
+        return this.status == AdminUserStatus.ACTIVE;
     }
 
     // ========== 业务行为 ==========
@@ -168,7 +140,8 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
      * @param encodedPassword 加密后的密码
      */
     public void changePassword(String encodedPassword) {
-        this.password = Objects.requireNonNull(encodedPassword, "encodedPassword cannot be null");
+        require(encodedPassword != null, AdminMessage.PASSWORD_WEAK);
+        this.password = encodedPassword;
     }
 
     /**
@@ -188,39 +161,19 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
         }
     }
 
-    /**
-     * 修改邮箱。
-     */
-    public void updateEmail(String email) {
-        this.email = email;
-    }
-
-    /**
-     * 修改手机号。
-     */
-    public void updatePhone(String phone) {
-        this.phone = phone;
-    }
-
-    /**
-     * 修改头像。
-     */
-    public void updateAvatar(String avatar) {
-        this.avatar = avatar;
-    }
 
     /**
      * 禁用管理员。
      */
     public void disable() {
-        this.status = AdminStatus.DISABLED;
+        this.status = AdminUserStatus.DISABLED;
     }
 
     /**
      * 启用管理员。
      */
     public void enable() {
-        this.status = AdminStatus.ACTIVE;
+        this.status = AdminUserStatus.ACTIVE;
     }
 
     /**
@@ -256,7 +209,7 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     // ========== 私有方法 ==========
 
     private void validateUsername(String username) {
-        Assertions.require(
+        require(
             username != null && username.matches(USERNAME_PATTERN),
             AdminMessage.USERNAME_INVALID
         );

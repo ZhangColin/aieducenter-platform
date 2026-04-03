@@ -20,6 +20,7 @@ import com.aieducenter.admin.application.dto.command.CreateAdminUserCommand;
 import com.aieducenter.admin.application.dto.command.UpdateAdminUserCommand;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.aggregate.AdminUser;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminUserRepository;
@@ -166,7 +167,7 @@ class AdminUserManagementAppServiceTest {
         Long userId = 1L;
         UpdateAdminUserCommand command = new UpdateAdminUserCommand("新昵称", null, null, null);
         AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
-        adminUser.updateEmail("old@example.com");
+        adminUser.setEmail("old@example.com");
 
         when(adminUserRepository.findById(userId)).thenReturn(Optional.of(adminUser));
 
@@ -190,10 +191,10 @@ class AdminUserManagementAppServiceTest {
         when(adminUserRepository.findById(userId)).thenReturn(Optional.of(adminUser));
 
         // When
-        adminUserManagementAppService.updateStatus(userId, AdminUser.AdminStatus.DISABLED);
+        adminUserManagementAppService.updateStatus(userId, AdminUserStatus.DISABLED);
 
         // Then
-        assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.DISABLED);
+        assertThat(adminUser.getStatus()).isEqualTo(AdminUserStatus.DISABLED);
         verify(adminUserRepository).save(adminUser);
     }
 
@@ -207,10 +208,10 @@ class AdminUserManagementAppServiceTest {
         when(adminUserRepository.findById(userId)).thenReturn(Optional.of(adminUser));
 
         // When
-        adminUserManagementAppService.updateStatus(userId, AdminUser.AdminStatus.ACTIVE);
+        adminUserManagementAppService.updateStatus(userId, AdminUserStatus.ACTIVE);
 
         // Then
-        assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
+        assertThat(adminUser.getStatus()).isEqualTo(AdminUserStatus.ACTIVE);
         verify(adminUserRepository).save(adminUser);
     }
 
@@ -222,7 +223,7 @@ class AdminUserManagementAppServiceTest {
         when(adminUserRepository.findById(userId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> adminUserManagementAppService.updateStatus(userId, AdminUser.AdminStatus.ACTIVE))
+        assertThatThrownBy(() -> adminUserManagementAppService.updateStatus(userId, AdminUserStatus.ACTIVE))
             .isInstanceOf(DomainException.class)
             .hasMessageContaining(AdminMessage.ADMIN_NOT_FOUND.message());
     }
@@ -230,7 +231,7 @@ class AdminUserManagementAppServiceTest {
     // ========== assignRoles tests ==========
 
     @Test
-    void given_valid_roles_when_assignRoles_then_success() {
+    void given_valid_roles_when_assignRoles_then_success() throws Exception {
         // Given
         Long userId = 1L;
         AssignRolesCommand command = new AssignRolesCommand(List.of(1L, 2L));
@@ -238,9 +239,14 @@ class AdminUserManagementAppServiceTest {
         AdminRole role1 = new AdminRole("管理员", "ADMIN", "管理员", 1);
         AdminRole role2 = new AdminRole("操作员", "OPERATOR", "操作员", 2);
 
+        // Set IDs using reflection
+        java.lang.reflect.Field idField = AdminRole.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(role1, 1L);
+        idField.set(role2, 2L);
+
         when(adminUserRepository.findById(userId)).thenReturn(Optional.of(adminUser));
-        when(adminRoleRepository.findById(1L)).thenReturn(Optional.of(role1));
-        when(adminRoleRepository.findById(2L)).thenReturn(Optional.of(role2));
+        when(adminRoleRepository.findAllById(command.roleIds())).thenReturn(List.of(role1, role2));
 
         // When
         adminUserManagementAppService.assignRoles(userId, command);
@@ -265,20 +271,24 @@ class AdminUserManagementAppServiceTest {
     }
 
     @Test
-    void given_nonexistent_role_when_assignRoles_then_throw_exception() {
+    void given_nonexistent_role_when_assignRoles_then_throw_exception() throws Exception {
         // Given
         Long userId = 1L;
         AssignRolesCommand command = new AssignRolesCommand(List.of(1L, 999L));
         AdminUser adminUser = new AdminUser("testuser", "Test1234", "测试用户");
         AdminRole role1 = new AdminRole("管理员", "ADMIN", "管理员", 1);
 
+        // Set ID using reflection
+        java.lang.reflect.Field idField = AdminRole.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(role1, 1L);
+
         when(adminUserRepository.findById(userId)).thenReturn(Optional.of(adminUser));
-        when(adminRoleRepository.findById(1L)).thenReturn(Optional.of(role1));
-        when(adminRoleRepository.findById(999L)).thenReturn(Optional.empty());
+        when(adminRoleRepository.findAllById(command.roleIds())).thenReturn(List.of(role1)); // Only role1 exists, 999L doesn't
 
         // When & Then
         assertThatThrownBy(() -> adminUserManagementAppService.assignRoles(userId, command))
-            .isInstanceOf(DomainException.class)
+            .isInstanceOf(ApplicationException.class)
             .hasMessageContaining(AdminMessage.ROLE_NOT_FOUND.message());
     }
 

@@ -6,13 +6,12 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import com.cartisan.core.domain.DomainEntity;
-import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
-import com.cartisan.data.jpa.id.TsidGenerator;
 
 /**
  * 角色-权限关联实体。
  *
- * <p>属于 AdminRole 聚合，无回引用到 AdminRole。</p>
+ * <p>属于 AdminRole 聚合的一部分，无独立审计字段。</p>
+ * <p>关联删除采用物理删除，避免唯一索引与软删除冲突。</p>
  *
  * @since 0.1.0
  */
@@ -21,7 +20,7 @@ import com.cartisan.data.jpa.id.TsidGenerator;
     @UniqueConstraint(columnNames = {"role_id", "permission_code"})
 })
 @Getter
-public class AdminRolePermission extends AuditableSoftDeletable implements DomainEntity<AdminRolePermission, Long> {
+public class AdminRolePermission implements DomainEntity<AdminRolePermission, Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,10 +30,10 @@ public class AdminRolePermission extends AuditableSoftDeletable implements Domai
     @Column(name = "role_id", nullable = false)
     private Long roleId;
 
-    @Column(name = "permission_code", nullable = false, length = 255)
+    @Column(name = "permission_code", nullable = false, length = 100)
     private String permissionCode;
 
-    @Column(name = "permission_name")
+    @Column(name = "permission_name", length = 100)
     private String permissionName;
 
     /**
@@ -57,8 +56,7 @@ public class AdminRolePermission extends AuditableSoftDeletable implements Domai
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AdminRolePermission that = (AdminRolePermission) o;
-        return Objects.equals(roleId, that.roleId) &&
-               Objects.equals(permissionCode, that.permissionCode);
+        return Objects.equals(roleId, that.roleId) && Objects.equals(permissionCode, that.permissionCode);
     }
 
     @Override

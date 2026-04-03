@@ -292,7 +292,7 @@ public AdminUser(String username, String plainPassword, String nickname) {
     this.username = username;
     this.password = PASSWORD_ENCODER.encode(plainPassword);
     this.nickname = nickname != null && !nickname.isBlank() ? nickname : username;
-    this.status = AdminStatus.ACTIVE;
+    this.status = AdminUserStatus.ACTIVE;
 }
 ```
 
@@ -310,7 +310,7 @@ public AdminUser(String username, String encodedPassword, String nickname) {
     this.username = username;
     this.password = Objects.requireNonNull(encodedPassword, "encodedPassword cannot be null");
     this.nickname = nickname != null && !nickname.isBlank() ? nickname : username;
-    this.status = AdminStatus.ACTIVE;
+    this.status = AdminUserStatus.ACTIVE;
 }
 ```
 
@@ -668,7 +668,7 @@ void given_valid_input_when_create_admin_then_success() {
     // Then
     assertThat(adminUser.getUsername()).isEqualTo("testuser");
     assertThat(adminUser.getNickname()).isEqualTo("测试用户");
-    assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
+    assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminUserStatus.ACTIVE);
 }
 ```
 
@@ -685,7 +685,7 @@ void given_valid_input_when_create_admin_then_success() {
     // Then
     assertThat(adminUser.getUsername()).isEqualTo("testuser");
     assertThat(adminUser.getNickname()).isEqualTo("测试用户");
-    assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminStatus.ACTIVE);
+    assertThat(adminUser.getStatus()).isEqualTo(AdminUser.AdminUserStatus.ACTIVE);
     assertThat(adminUser.getPassword()).isEqualTo(encodedPassword);
 }
 ```

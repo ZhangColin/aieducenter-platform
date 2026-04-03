@@ -17,8 +17,9 @@ import com.aieducenter.admin.application.dto.command.CreateMenuCommand;
 import com.aieducenter.admin.application.dto.command.UpdateMenuCommand;
 import com.aieducenter.admin.application.dto.response.MenuResponse;
 import com.aieducenter.admin.application.mapper.AdminMenuMapper;
+import static com.cartisan.core.util.Assertions.requirePresent;
+
 import com.cartisan.core.exception.DomainException;
-import com.cartisan.core.util.Assertions;
 
 /**
  * 菜单管理应用服务。
@@ -75,7 +76,7 @@ public class MenuManagementAppService {
     public Long create(CreateMenuCommand command) {
         // 验证父菜单
         if (command.parentId() != null) {
-            Assertions.requirePresent(
+            requirePresent(
                     menuRepository.findById(command.parentId()),
                     AdminMessage.MENU_NOT_FOUND
             );
@@ -97,7 +98,7 @@ public class MenuManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateMenuCommand command) {
-        AdminMenu menu = Assertions.requirePresent(
+        AdminMenu menu = requirePresent(
                 menuRepository.findById(id),
                 AdminMessage.MENU_NOT_FOUND
         );
@@ -109,7 +110,7 @@ public class MenuManagementAppService {
                 throw new DomainException(AdminMessage.MENU_INVALID_PARENT);
             }
 
-            AdminMenu parent = Assertions.requirePresent(
+            AdminMenu parent = requirePresent(
                     menuRepository.findById(command.parentId()),
                     AdminMessage.MENU_NOT_FOUND
             );
@@ -139,7 +140,7 @@ public class MenuManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        AdminMenu menu = Assertions.requirePresent(
+        AdminMenu menu = requirePresent(
                 menuRepository.findById(id),
                 AdminMessage.MENU_NOT_FOUND
         );
@@ -211,7 +212,7 @@ public class MenuManagementAppService {
      * 根据 ID 获取菜单详情。
      */
     public MenuResponse findById(Long id) {
-        AdminMenu menu = Assertions.requirePresent(
+        AdminMenu menu = requirePresent(
                 menuRepository.findById(id),
                 AdminMessage.MENU_NOT_FOUND
         );

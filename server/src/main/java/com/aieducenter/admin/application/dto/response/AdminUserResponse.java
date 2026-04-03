@@ -1,6 +1,6 @@
 package com.aieducenter.admin.application.dto.response;
 
-import com.aieducenter.admin.domain.aggregate.AdminUser;
+import com.aieducenter.admin.domain.enums.AdminUserStatus;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +16,7 @@ public record AdminUserResponse(
         String email,
         String phone,
         String avatar,
-        AdminUser.AdminStatus status,
+        AdminUserStatus status,
         String statusName,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

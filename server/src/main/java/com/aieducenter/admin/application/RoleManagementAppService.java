@@ -13,6 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aieducenter.admin.domain.aggregate.AdminMenu;
 import com.aieducenter.admin.domain.aggregate.AdminRole;
 import com.aieducenter.admin.domain.repository.AdminRoleRepository;
 import com.aieducenter.admin.domain.repository.AdminMenuRepository;
@@ -25,8 +26,9 @@ import com.aieducenter.admin.application.dto.query.AdminRoleQuery;
 import com.aieducenter.admin.application.dto.response.RoleResponse;
 import com.aieducenter.admin.application.mapper.AdminRoleMapper;
 import com.aieducenter.admin.constants.AdminScopes;
+import static com.cartisan.core.util.Assertions.requirePresent;
+
 import com.cartisan.core.exception.DomainException;
-import com.cartisan.core.util.Assertions;
 import com.cartisan.data.jpa.specification.ConditionSpecifications;
 import com.cartisan.security.permission.Permission;
 import com.cartisan.security.permission.PermissionScanner;
@@ -89,7 +91,7 @@ public class RoleManagementAppService {
      */
     @Transactional
     public void update(Long id, UpdateRoleCommand command) {
-        AdminRole role = Assertions.requirePresent(
+        AdminRole role = requirePresent(
                 roleRepository.findById(id),
                 AdminMessage.ROLE_NOT_FOUND
         );
@@ -113,7 +115,7 @@ public class RoleManagementAppService {
      */
     @Transactional
     public void delete(Long id) {
-        AdminRole role = Assertions.requirePresent(
+        AdminRole role = requirePresent(
                 roleRepository.findById(id),
                 AdminMessage.ROLE_NOT_FOUND
         );
@@ -137,17 +139,19 @@ public class RoleManagementAppService {
     @Transactional
     public void assignMenus(Long roleId, AssignMenusCommand command) {
         // 验证角色存在
-        AdminRole role = Assertions.requirePresent(
+        AdminRole role = requirePresent(
                 roleRepository.findById(roleId),
                 AdminMessage.ROLE_NOT_FOUND
         );
 
-        // 验证所有菜单 ID 存在
-        for (Long menuId : command.menuIds()) {
-            Assertions.requirePresent(
-                    menuRepository.findById(menuId),
-                    AdminMessage.MENU_NOT_FOUND
-            );
+        // 验证所有菜单 ID 存在（批量查询避免 N+1）
+        Set<Long> existingMenuIds = menuRepository.findAllById(command.menuIds())
+                .stream()
+                .map(AdminMenu::getId)
+                .collect(Collectors.toSet());
+
+        if (!CollUtil.containsAll(existingMenuIds, command.menuIds())) {
+            throw new DomainException(AdminMessage.MENU_NOT_FOUND);
         }
 
         // 清除现有菜单并添加新菜单
@@ -164,7 +168,7 @@ public class RoleManagementAppService {
     @Transactional
     public void assignPermissions(Long roleId, AssignPermissionsCommand command) {
         // 验证角色存在
-        AdminRole role = Assertions.requirePresent(
+        AdminRole role = requirePresent(
                 roleRepository.findById(roleId),
                 AdminMessage.ROLE_NOT_FOUND
         );
@@ -192,7 +196,7 @@ public class RoleManagementAppService {
      * 根据 ID 获取角色详情。
      */
     public RoleResponse findById(Long id) {
-        AdminRole role = Assertions.requirePresent(
+        AdminRole role = requirePresent(
                 roleRepository.findById(id),
                 AdminMessage.ROLE_NOT_FOUND
         );

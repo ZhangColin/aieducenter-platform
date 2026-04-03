@@ -1,4 +1,4 @@
-package com.aieducenter.admin.domain.entity;
+package com.aieducenter.admin.domain.enums;
 
 import com.cartisan.core.domain.BaseEnum;
 

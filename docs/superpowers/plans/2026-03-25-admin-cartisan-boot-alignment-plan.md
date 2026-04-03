@@ -16,7 +16,7 @@
 - `server/src/main/resources/db/migration/V10__admin_enum_alignment.sql` - 数据库迁移脚本
 
 ### 修改文件
-- `server/src/main/java/com/aieducenter/admin/domain/aggregate/AdminUser.java` - AdminStatus 枚举 + @EnumConvert
+- `server/src/main/java/com/aieducenter/admin/domain/aggregate/AdminUser.java` - AdminUserStatus 枚举 + @EnumConvert
 - `server/src/main/java/com/aieducenter/admin/domain/aggregate/AdminMenu.java` - type 字段 @EnumConvert
 - `server/src/main/java/com/aieducenter/admin/domain/entity/MenuType.java` - 实现 BaseEnum
 - `server/src/main/java/com/aieducenter/admin/application/dto/response/AdminUserResponse.java` - status 字段类型
@@ -90,14 +90,14 @@ git commit -m "refactor: MenuType implements BaseEnum with @Getter/@AllArgsConst
 
 ---
 
-## Task 2: AdminStatus 枚举实现 BaseEnum
+## Task 2: AdminUserStatus 枚举实现 BaseEnum
 
 **Files:**
 - Modify: `server/src/main/java/com/aieducenter/admin/domain/aggregate/AdminUser.java`
 
-- [ ] **Step 1: 修改 AdminStatus 枚举**
+- [ ] **Step 1: 修改 AdminUserStatus 枚举**
 
-将 AdminStatus 枚举（约在第 88-105 行）替换为：
+将 AdminUserStatus 枚举（约在第 88-105 行）替换为：
 
 ```java
     /**
@@ -105,7 +105,7 @@ git commit -m "refactor: MenuType implements BaseEnum with @Getter/@AllArgsConst
      */
     @Getter
     @AllArgsConstructor
-    public enum AdminStatus implements BaseEnum<AdminStatus> {
+    public enum AdminUserStatus implements BaseEnum<AdminUserStatus> {
         /**
          * 激活。
          */
@@ -130,7 +130,7 @@ Expected: BUILD SUCCESSFUL
 
 ```bash
 git add server/src/main/java/com/aieducenter/admin/domain/aggregate/AdminUser.java
-git commit -m "refactor: AdminStatus implements BaseEnum with @Getter/@AllArgsConstructor"
+git commit -m "refactor: AdminUserStatus implements BaseEnum with @Getter/@AllArgsConstructor"
 ```
 
 ---
@@ -156,16 +156,16 @@ import com.cartisan.data.jpa.annotation.EnumConvert;
     @Getter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private AdminStatus status;
+    private AdminUserStatus status;
 ```
 
 替换为：
 
 ```java
     @Getter
-    @EnumConvert(AdminStatus.class)
+    @EnumConvert(AdminUserStatus.class)
     @Column(name = "status", nullable = false)
-    private AdminStatus status;
+    private AdminUserStatus status;
 ```
 
 - [ ] **Step 3: 移除不再需要的导入**
@@ -280,7 +280,7 @@ public record AdminUserResponse(
     String email,
     String phone,
     String avatar,
-    AdminUser.AdminStatus status,
+    AdminUser.AdminUserStatus status,
     String statusName,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
@@ -314,7 +314,7 @@ git commit -m "refactor: AdminUserResponse.status uses enum type with auto seria
 ```java
 public record AdminUserQuery(
     @Condition(type = ConditionType.INNER_LIKE) String username,
-    @Condition(type = ConditionType.EQUAL) AdminUser.AdminStatus status,
+    @Condition(type = ConditionType.EQUAL) AdminUser.AdminUserStatus status,
     @Condition(blurry = "username,nickname,email") String keyword
 ) {}
 ```
@@ -323,12 +323,12 @@ public record AdminUserQuery(
 ```java
 public record AdminUserQuery(
     @Condition(type = ConditionType.INNER_LIKE) String username,
-    @Condition(type = ConditionType.EQUAL) AdminUser.AdminStatus status,
+    @Condition(type = ConditionType.EQUAL) AdminUser.AdminUserStatus status,
     @Condition(blurry = "username,nickname,email") String keyword
 ) {}
 ```
 
-**说明**：AdminStatus 保持为 `AdminUser` 的内部枚举，因此 `AdminUserQuery` 无需修改。前端传参时传整型 code（如 `1`），Jackson 会自动反序列化为 `AdminStatus.ACTIVE`。
+**说明**：AdminUserStatus 保持为 `AdminUser` 的内部枚举，因此 `AdminUserQuery` 无需修改。前端传参时传整型 code（如 `1`），Jackson 会自动反序列化为 `AdminUserStatus.ACTIVE`。
 
 - [ ] **Step 2: 编译验证**
 
@@ -362,9 +362,9 @@ git commit -m "refactor: confirm AdminUserQuery.status uses enum type"
     }
 
     /**
-     * 将 AdminStatus 转换为字符串。
+     * 将 AdminUserStatus 转换为字符串。
      */
-    default String mapStatus(AdminUser.AdminStatus status) {
+    default String mapStatus(AdminUser.AdminUserStatus status) {
         return status != null ? status.name() : null;
     }
 ```
@@ -407,8 +407,8 @@ git commit -m "refactor: remove manual mapStatus method, MapStruct handles BaseE
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(AdminMessage.ADMIN_NOT_FOUND));
 
-        AdminUser.AdminStatus statusEnum = AdminUser.AdminStatus.fromString(status);
-        if (statusEnum == AdminUser.AdminStatus.ACTIVE) {
+        AdminUser.AdminUserStatus statusEnum = AdminUser.AdminUserStatus.fromString(status);
+        if (statusEnum == AdminUser.AdminUserStatus.ACTIVE) {
             adminUser.enable();
         } else {
             adminUser.disable();
@@ -428,13 +428,13 @@ git commit -m "refactor: remove manual mapStatus method, MapStruct handles BaseE
      * @param status 状态枚举
      */
     @Transactional
-    public void updateStatus(Long id, AdminUser.AdminStatus status) {
+    public void updateStatus(Long id, AdminUser.AdminUserStatus status) {
         AdminUser adminUser = Assertions.requirePresent(
                 adminUserRepository.findById(id),
                 AdminMessage.ADMIN_NOT_FOUND
         );
 
-        if (status == AdminUser.AdminStatus.ACTIVE) {
+        if (status == AdminUser.AdminUserStatus.ACTIVE) {
             adminUser.enable();
         } else {
             adminUser.disable();
@@ -475,12 +475,12 @@ public void updateStatus(
 @Operation(summary = "修改管理员状态")
 public void updateStatus(
         @PathVariable Long id,
-        @RequestParam AdminUser.AdminStatus status) {
+        @RequestParam AdminUser.AdminUserStatus status) {
     adminManagementAppService.updateStatus(id, status);
 }
 ```
 
-**说明**：Jackson 会自动将前端传的整型 code（如 `1`）反序列化为 `AdminStatus.ACTIVE`。
+**说明**：Jackson 会自动将前端传的整型 code（如 `1`）反序列化为 `AdminUserStatus.ACTIVE`。
 
 - [ ] **Step 3: 编译验证**
 

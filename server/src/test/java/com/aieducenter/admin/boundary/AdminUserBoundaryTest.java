@@ -94,7 +94,7 @@ class AdminUserBoundaryTest {
             assertThat(adminUser.getPassword()).isEqualTo(encodedPassword);
         } else if (encodedPassword == null) {
             assertThatThrownBy(() -> new AdminUser(validUsername, encodedPassword, "测试用户"))
-                    .isInstanceOf(NullPointerException.class);
+                    .isInstanceOf(DomainException.class);
         } else {
             // Blank strings are allowed (domain only checks null)
             AdminUser adminUser = new AdminUser(validUsername, encodedPassword, "测试用户");
@@ -141,8 +141,7 @@ class AdminUserBoundaryTest {
         // When & Then
         if (encodedPassword == null) {
             assertThatThrownBy(() -> adminUser.changePassword(encodedPassword))
-                    .isInstanceOf(NullPointerException.class)
-                    .hasMessageContaining("encodedPassword cannot be null");
+                    .isInstanceOf(DomainException.class);
         } else if (encodedPassword.isBlank()) {
             // 空白字符串在修改密码时应该被允许（因为domain只检查null）
             adminUser.changePassword(encodedPassword);

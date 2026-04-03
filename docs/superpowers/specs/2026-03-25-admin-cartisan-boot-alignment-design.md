@@ -22,7 +22,7 @@ cartisan-boot 使用手册已更新到 v0.9 版本，检查发现 admin 上下�
 
 ### 3.1 枚举改造（ENUM-001, ENUM-002）
 
-#### AdminStatus 枚举
+#### AdminUserStatus 枚举
 
 **文件**: `AdminUser.java`
 
@@ -32,7 +32,7 @@ cartisan-boot 使用手册已更新到 v0.9 版本，检查发现 admin 上下�
  */
 @Getter
 @AllArgsConstructor
-public enum AdminStatus implements BaseEnum<AdminStatus> {
+public enum AdminUserStatus implements BaseEnum<AdminUserStatus> {
     ACTIVE(1, "激活"),
     DISABLED(0, "禁用");
 
@@ -69,12 +69,12 @@ public enum MenuType implements BaseEnum<MenuType> {
 // 修改前
 @Enumerated(EnumType.STRING)
 @Column(name = "status", nullable = false, length = 20)
-private AdminStatus status;
+private AdminUserStatus status;
 
 // 修改后（需导入 com.cartisan.data.jpa.annotation.EnumConvert）
-@EnumConvert(AdminStatus.class)
+@EnumConvert(AdminUserStatus.class)
 @Column(name = "status", nullable = false)
-private AdminStatus status;
+private AdminUserStatus status;
 ```
 
 #### AdminMenu 实体字段修改
@@ -179,7 +179,7 @@ public record AdminUserResponse(
     String email,
     String phone,
     String avatar,
-    AdminStatus status,         // 自动序列化为 code (Integer)
+    AdminUserStatus status,         // 自动序列化为 code (Integer)
     String statusName,          // MapStruct 自动调用 getName()
     LocalDateTime createdAt,
     LocalDateTime updatedAt
@@ -193,7 +193,7 @@ public record AdminUserResponse(
 @Mapper(componentModel = "spring")
 public interface AdminUserMapper extends DomainMapper<AdminUser, AdminUserResponse> {
     // 无需手动配置，自动映射：
-    // AdminStatus status -> Integer code (Jackson 序列化)
+    // AdminUserStatus status -> Integer code (Jackson 序列化)
     // String statusName -> getName() (MapStruct)
 }
 ```
@@ -204,19 +204,19 @@ public interface AdminUserMapper extends DomainMapper<AdminUser, AdminUserRespon
 // 修改前
 public record AdminUserQuery(
     @Condition(type = ConditionType.INNER_LIKE) String username,
-    @Condition(type = ConditionType.EQUAL) AdminUser.AdminStatus status,
+    @Condition(type = ConditionType.EQUAL) AdminUser.AdminUserStatus status,
     @Condition(blurry = "username,nickname,email") String keyword
 ) {}
 
 // 修改后：保持枚举类型，维持类型安全
 public record AdminUserQuery(
     @Condition(type = ConditionType.INNER_LIKE) String username,
-    @Condition(type = ConditionType.EQUAL) AdminStatus status,
+    @Condition(type = ConditionType.EQUAL) AdminUserStatus status,
     @Condition(blurry = "username,nickname,email") String keyword
 ) {}
 ```
 
-**说明**：前端传参时传整型 code（如 `1`），Jackson 自动反序列化为 `AdminStatus.ACTIVE`。
+**说明**：前端传参时传整型 code（如 `1`），Jackson 自动反序列化为 `AdminUserStatus.ACTIVE`。
 
 ### 3.5 @BoundedContext 注解
 
@@ -249,11 +249,11 @@ import com.cartisan.core.domain.SubDomain;
 
 | 文件 | 修改类型 | 说明 |
 |------|----------|------|
-| `AdminUser.java` | 枚举 + 注解 | AdminStatus 实现 BaseEnum，字段改用 @EnumConvert |
+| `AdminUser.java` | 枚举 + 注解 | AdminUserStatus 实现 BaseEnum，字段改用 @EnumConvert |
 | `AdminMenu.java` | 注解 | type 字段改用 @EnumConvert |
 | `MenuType.java` | 枚举 | 实现 BaseEnum，添加 @Getter/@AllArgsConstructor |
-| `AdminUserResponse.java` | 字段类型 | status: String → AdminStatus，新增 statusName |
-| `AdminUserQuery.java` | 字段类型 | status: AdminUser.AdminStatus → AdminStatus |
+| `AdminUserResponse.java` | 字段类型 | status: String → AdminUserStatus，新增 statusName |
+| `AdminUserQuery.java` | 字段类型 | status: AdminUser.AdminUserStatus → AdminUserStatus |
 | `AdminUserMapper.java` | 删除方法 | 移除手动 mapStatus（MapStruct 自动处理） |
 | `AdminUserManagementAppService.java` | 工具方法 | orElseThrow → requirePresent (4处) |
 | `AdminUserPermissionAppService.java` | 工具方法 | orElseThrow → requirePresent (4处) |

@@ -900,7 +900,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private AdminStatus status;
+    private AdminUserStatus status;
 
     @Column(name = "system", nullable = false)
     private boolean system = false;
@@ -908,7 +908,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
     /**
      * 管理员状态枚举。
      */
-    public enum AdminStatus {
+    public enum AdminUserStatus {
         ACTIVE,
         DISABLED
     }
@@ -926,7 +926,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
         this.username = username;
         this.password = PASSWORD_ENCODER.encode(plainPassword);
         this.nickname = nickname != null && !nickname.isBlank() ? nickname : username;
-        this.status = AdminStatus.ACTIVE;
+        this.status = AdminUserStatus.ACTIVE;
     }
 
     /**
@@ -975,7 +975,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
         return Optional.ofNullable(avatar);
     }
 
-    public AdminStatus getStatus() {
+    public AdminUserStatus getStatus() {
         return status;
     }
 
@@ -984,7 +984,7 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
     }
 
     public boolean isActive() {
-        return status == AdminStatus.ACTIVE;
+        return status == AdminUserStatus.ACTIVE;
     }
 
     // ========== 业务行为 ==========
@@ -1055,14 +1055,14 @@ public class Admin extends SoftDeletable implements AggregateRoot<Admin> {
      * 禁用管理员。
      */
     public void disable() {
-        this.status = AdminStatus.DISABLED;
+        this.status = AdminUserStatus.DISABLED;
     }
 
     /**
      * 启用管理员。
      */
     public void enable() {
-        this.status = AdminStatus.ACTIVE;
+        this.status = AdminUserStatus.ACTIVE;
     }
 
     /**
@@ -3851,7 +3851,7 @@ class AdminTest {
         // Then
         assertThat(admin.getUsername()).isEqualTo("testuser");
         assertThat(admin.getNickname()).isEqualTo("测试用户");
-        assertThat(admin.getStatus()).isEqualTo(Admin.AdminStatus.ACTIVE);
+        assertThat(admin.getStatus()).isEqualTo(Admin.AdminUserStatus.ACTIVE);
         assertThat(admin.isSystem()).isFalse();
     }
 
@@ -3937,7 +3937,7 @@ class AdminTest {
         admin.disable();
 
         // Then
-        assertThat(admin.getStatus()).isEqualTo(Admin.AdminStatus.DISABLED);
+        assertThat(admin.getStatus()).isEqualTo(Admin.AdminUserStatus.DISABLED);
     }
 
     @Test
@@ -3950,7 +3950,7 @@ class AdminTest {
         admin.enable();
 
         // Then
-        assertThat(admin.getStatus()).isEqualTo(Admin.AdminStatus.ACTIVE);
+        assertThat(admin.getStatus()).isEqualTo(Admin.AdminUserStatus.ACTIVE);
     }
 }
 ```
