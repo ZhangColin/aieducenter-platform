@@ -5,7 +5,7 @@
 ## 技术栈
 
 ### 后端
-- Java 21 / Spring Boot 3.4.x / Gradle Kotlin DSL
+- Java 21 / Spring Boot 3.4.x / Maven
 - 基座框架：cartisan-boot（DDD、Web、Security、Data、AI、Event、Test）→ [使用手册](docs/guide/cartisan-boot-使用手册.md)
 - 缓存/消息：Redis（余额缓存、限流、会话上下文、Streams 消息队列）
 
@@ -29,12 +29,13 @@
 
 ## 常用命令
 
-> **注意：** `gradlew` 在 `server/` 子目录下，不在项目根目录。所有 Gradle 命令需在项目根目录运行（根目录有 `server/gradlew`）时，实际路径是 `server/gradlew`，但更简便的方式是 `cd server` 后执行。
+> **注意：** 所有 Maven 命令需在 `server/` 子目录下执行。
 
-- 编译：`cd server && ./gradlew compileJava`
-- 单元测试（无需 Docker）：`cd server && ./gradlew test`
-- 指定测试：`cd server && ./gradlew test --tests "*.XxxTest"`
-- 全量检查（含 ArchUnit）：`cd server && ./gradlew check`
+- 编译：`cd server && mvn compile`
+- 单元测试（无需 Docker）：`cd server && mvn test`
+- 指定测试：`cd server && mvn test -Dtest=XxxTest`
+- 全量检查（含 ArchUnit）：`cd server && mvn verify`
+- 变异测试：`cd server && mvn org.pitest:pitest-maven:mutationCoverage`
 - 前端开发：`pnpm dev`
 
 ## 开发流程
