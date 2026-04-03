@@ -63,7 +63,7 @@ echo "   运行后端测试"
 echo "=========================================="
 cd "$PROJECT_ROOT/server"
 
-./gradlew test --no-daemon
+mvn test
 
 echo ""
 color_info "测试完成！"
