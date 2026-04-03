@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.account.config.SaTokenTestConfig;
+import com.aieducenter.verification.application.CaptchaAppService;
 import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.VerifyCodeCommand;
 import com.aieducenter.verification.application.dto.VerifyCodeResult;
@@ -45,6 +46,9 @@ class AccountPasswordResetIntegrationTest {
     @MockBean
     private VerificationCodeAppService verificationCodeAppService;
 
+    @MockBean
+    private CaptchaAppService captchaAppService;
+
     @BeforeAll
     static void setup() {
         SaTokenTestConfig.initSaTokenContext();
@@ -55,6 +59,9 @@ class AccountPasswordResetIntegrationTest {
         // Mock verification code for registration calls
         when(verificationCodeAppService.verifyPhoneCode(any()))
             .thenReturn(new VerifyCodeResult(true, "OK"));
+
+        // Mock captcha verification (always pass - void method, no return value)
+        org.mockito.Mockito.doNothing().when(captchaAppService).verifyCaptcha(any(), any());
     }
 
     // ── Scenario 1: Phone reset success — new password works ─────────────────
@@ -86,7 +93,9 @@ class AccountPasswordResetIntegrationTest {
                 .content("""
                     {
                         "account": "13800138001",
-                        "password": "NewPass456"
+                        "password": "NewPass456",
+                        "captchaId": "test-captcha-id",
+                        "captchaCode": "1234"
                     }
                     """))
             .andExpect(status().isOk());
@@ -121,7 +130,9 @@ class AccountPasswordResetIntegrationTest {
                 .content("""
                     {
                         "account": "13800138000",
-                        "password": "NewPass456"
+                        "password": "NewPass456",
+                        "captchaId": "test-captcha-id",
+                        "captchaCode": "1234"
                     }
                     """))
             .andExpect(status().isOk());
