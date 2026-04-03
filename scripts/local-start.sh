@@ -100,7 +100,7 @@ echo "→ 启动后端服务..."
 kill_process_on_port 8080 "后端服务"
 
 cd "$PROJECT_ROOT/server"
-./gradlew bootRun > "$LOG_DIR/backend.log" 2>&1 &
+mvn spring-boot:run > "$LOG_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
 echo "$BACKEND_PID" > "$LOG_DIR/backend.pid"
 
