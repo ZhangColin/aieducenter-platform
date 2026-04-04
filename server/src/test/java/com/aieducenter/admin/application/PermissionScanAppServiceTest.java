@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.aieducenter.admin.application.dto.response.PermissionResponse;
+import com.aieducenter.admin.application.mapper.PermissionMapper;
 import com.cartisan.security.permission.Permission;
 import com.cartisan.security.permission.PermissionScanner;
 
@@ -24,16 +25,25 @@ class PermissionScanAppServiceTest {
     @Mock
     private PermissionScanner permissionScanner;
 
+    @Mock
+    private PermissionMapper permissionMapper;
+
     @Test
     void given_permissionsInCode_when_scanAll_then_returnAllPermissions() {
         // Given
-        PermissionScanAppService service = new PermissionScanAppService(permissionScanner);
+        PermissionScanAppService service = new PermissionScanAppService(permissionScanner, permissionMapper);
 
-        Permission perm1 = createMockPermission("admin:user:read", "平台管理 / 用户管理 / 查看");
-        Permission perm2 = createMockPermission("admin:user:write", "平台管理 / 用户管理 / 编辑");
-        List<Permission> expectedPermissions = List.of(perm1, perm2);
+        List<Permission> expectedPermissions = List.of(
+                createMockPermission("admin:user:read"),
+                createMockPermission("admin:user:write")
+        );
 
         when(permissionScanner.scanAll()).thenReturn(expectedPermissions);
+        when(permissionMapper.convertList(expectedPermissions))
+                .thenReturn(List.of(
+                        new PermissionResponse("admin:user:read", "平台管理 / 用户管理 / 查看"),
+                        new PermissionResponse("admin:user:write", "平台管理 / 用户管理 / 编辑")
+                ));
 
         // When
         List<PermissionResponse> result = service.scanAll();
@@ -50,7 +60,7 @@ class PermissionScanAppServiceTest {
     @Test
     void given_noPermissionsInCode_when_scanAll_then_returnEmptyList() {
         // Given
-        PermissionScanAppService service = new PermissionScanAppService(permissionScanner);
+        PermissionScanAppService service = new PermissionScanAppService(permissionScanner, permissionMapper);
         when(permissionScanner.scanAll()).thenReturn(List.of());
 
         // When
@@ -64,12 +74,13 @@ class PermissionScanAppServiceTest {
     @Test
     void given_adminScopePermissions_when_scanByScope_then_returnAdminPermissions() {
         // Given
-        PermissionScanAppService service = new PermissionScanAppService(permissionScanner);
+        PermissionScanAppService service = new PermissionScanAppService(permissionScanner, permissionMapper);
 
-        Permission perm1 = createMockPermission("admin:user:read", "平台管理 / 用户管理 / 查看");
-        List<Permission> adminPermissions = List.of(perm1);
+        List<Permission> adminPermissions = List.of(createMockPermission("admin:user:read"));
 
         when(permissionScanner.scanByScope("admin")).thenReturn(adminPermissions);
+        when(permissionMapper.convertList(adminPermissions))
+                .thenReturn(List.of(new PermissionResponse("admin:user:read", "平台管理 / 用户管理 / 查看")));
 
         // When
         List<PermissionResponse> result = service.scanByScope("admin");
@@ -81,10 +92,7 @@ class PermissionScanAppServiceTest {
         verify(permissionScanner).scanByScope("admin");
     }
 
-    private Permission createMockPermission(String code, String name) {
-        Permission mock = org.mockito.Mockito.mock(Permission.class);
-        when(mock.code()).thenReturn(code);
-        when(mock.name()).thenReturn(name);
-        return mock;
+    private Permission createMockPermission(String code) {
+        return org.mockito.Mockito.mock(Permission.class);
     }
 }

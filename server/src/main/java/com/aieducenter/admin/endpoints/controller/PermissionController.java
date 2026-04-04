@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * 权限查询控制器。
  */
 @RestController
-@RequestMapping("/api/v1/admin/permissions")
+@RequestMapping("/api/admin/permissions")
 @Tag(name = "Admin Permissions", description = "权限查询")
 public class PermissionController {
 

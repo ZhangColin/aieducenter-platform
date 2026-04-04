@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,7 +64,7 @@ class AdminUserControllerTest {
                 .thenReturn(new com.cartisan.web.response.PageResponse<>(users, 2, 1, 20));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/users"))
+        mvc.perform(get("/api/admin/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(2))
                 .andExpect(jsonPath("$.items[0].username").value("admin"))
@@ -80,7 +80,7 @@ class AdminUserControllerTest {
                 .thenReturn(new AdminUserResponse(1L, "admin", "管理员", null, null, null, AdminUserStatus.ACTIVE, null, null, null));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/users/1"))
+        mvc.perform(get("/api/admin/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("admin"));
@@ -104,7 +104,7 @@ class AdminUserControllerTest {
         when(adminManagementAppService.create(any(CreateAdminUserCommand.class))).thenReturn(1L);
 
         // When & Then
-        mvc.perform(post("/api/v1/admin/users")
+        mvc.perform(post("/api/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -126,7 +126,7 @@ class AdminUserControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/users/1")
+        mvc.perform(put("/api/admin/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
@@ -137,7 +137,7 @@ class AdminUserControllerTest {
     @Test
     void given_existingUser_when_deleteUser_then_success() throws Exception {
         // When & Then
-        mvc.perform(delete("/api/v1/admin/users/1"))
+        mvc.perform(delete("/api/admin/users/1"))
                 .andExpect(status().isOk());
 
         verify(adminManagementAppService).delete(1L);
@@ -170,7 +170,7 @@ class AdminUserControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/users/1/roles")
+        mvc.perform(put("/api/admin/users/1/roles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
@@ -188,7 +188,7 @@ class AdminUserControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/users/1/password")
+        mvc.perform(put("/api/admin/users/1/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());

@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,7 +60,7 @@ class AdminRoleControllerTest {
                 ));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/roles"))
+        mvc.perform(get("/api/admin/roles"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.items[0].name").value("管理员"))
@@ -76,7 +76,7 @@ class AdminRoleControllerTest {
                 .thenReturn(new RoleResponse(1L, "管理员", "ADMIN", "系统管理员", 1, null, null));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/roles/1"))
+        mvc.perform(get("/api/admin/roles/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("管理员"));
@@ -99,7 +99,7 @@ class AdminRoleControllerTest {
         when(roleManagementAppService.create(any(CreateRoleCommand.class))).thenReturn(1L);
 
         // When & Then
-        mvc.perform(post("/api/v1/admin/roles")
+        mvc.perform(post("/api/admin/roles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -121,7 +121,7 @@ class AdminRoleControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/roles/1")
+        mvc.perform(put("/api/admin/roles/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
@@ -132,7 +132,7 @@ class AdminRoleControllerTest {
     @Test
     void given_existingRole_when_deleteRole_then_success() throws Exception {
         // When & Then
-        mvc.perform(delete("/api/v1/admin/roles/1"))
+        mvc.perform(delete("/api/admin/roles/1"))
                 .andExpect(status().isOk());
 
         verify(roleManagementAppService).delete(1L);
@@ -148,7 +148,7 @@ class AdminRoleControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/roles/1/menus")
+        mvc.perform(put("/api/admin/roles/1/menus")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
@@ -166,7 +166,7 @@ class AdminRoleControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/roles/1/permissions")
+        mvc.perform(put("/api/admin/roles/1/permissions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());

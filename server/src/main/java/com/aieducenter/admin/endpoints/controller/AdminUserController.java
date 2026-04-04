@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ import jakarta.validation.Valid;
  * 管理员管理控制器。
  */
 @RestController
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping("/api/admin/users")
 @Validated
 @Tag(name = "Admin Users", description = "管理员管理")
 public class AdminUserController {

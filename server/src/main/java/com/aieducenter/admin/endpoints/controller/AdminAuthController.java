@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ import jakarta.validation.Valid;
  * 管理员认证控制器。
  */
 @RestController
-@RequestMapping("/api/v1/admin/auth")
+@RequestMapping("/api/admin/auth")
 @Validated
 @Tag(name = "Admin Auth", description = "管理员认证")
 public class AdminAuthController {

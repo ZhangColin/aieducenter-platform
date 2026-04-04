@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,7 +54,7 @@ class AdminMenuControllerTest {
         ));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/menus"))
+        mvc.perform(get("/api/admin/menus"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("用户管理"))
@@ -71,7 +71,7 @@ class AdminMenuControllerTest {
                 .thenReturn(new MenuResponse(1L, "用户管理", "/users", "user", null, 1, null));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/menus/1"))
+        mvc.perform(get("/api/admin/menus/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("用户管理"));
@@ -95,7 +95,7 @@ class AdminMenuControllerTest {
         when(menuManagementAppService.create(any(CreateMenuCommand.class))).thenReturn(1L);
 
         // When & Then
-        mvc.perform(post("/api/v1/admin/menus")
+        mvc.perform(post("/api/admin/menus")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -118,7 +118,7 @@ class AdminMenuControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/menus/1")
+        mvc.perform(put("/api/admin/menus/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
@@ -129,7 +129,7 @@ class AdminMenuControllerTest {
     @Test
     void given_existingMenu_when_deleteMenu_then_success() throws Exception {
         // When & Then
-        mvc.perform(delete("/api/v1/admin/menus/1"))
+        mvc.perform(delete("/api/admin/menus/1"))
                 .andExpect(status().isOk());
 
         verify(menuManagementAppService).delete(1L);

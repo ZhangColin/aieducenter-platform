@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import jakarta.validation.Valid;
  * 角色管理控制器。
  */
 @RestController
-@RequestMapping("/api/v1/admin/roles")
+@RequestMapping("/api/admin/roles")
 @Validated
 @Tag(name = "Admin Roles", description = "角色管理")
 public class AdminRoleController {

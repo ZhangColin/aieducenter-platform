@@ -1,17 +1,16 @@
 package com.aieducenter.admin.domain.aggregate;
 
-import java.util.Optional;
 import java.util.Set;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import cn.hutool.core.collection.CollUtil;
 
 
 import com.cartisan.core.domain.AggregateRoot;
-import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.stereotype.Aggregate;
+
 import static com.cartisan.core.util.Assertions.require;
+
 import com.cartisan.data.jpa.annotation.EnumConvert;
 import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
 import com.cartisan.data.jpa.id.TsidGenerator;
@@ -20,7 +19,6 @@ import com.aieducenter.admin.domain.error.AdminMessage;
 import com.aieducenter.admin.domain.enums.AdminUserStatus;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -46,10 +44,8 @@ import lombok.Setter;
 @Table(name = "sys_admin_users")
 @Aggregate
 public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<AdminUser> {
-
-  
     private static final String USERNAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]{2,19}$";
-    
+
     @Getter
     @Id
     @Column(name = "id", nullable = false, updatable = false)
@@ -89,14 +85,14 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "admin_id")
-    private Set<AdminUserRole> userRoles = CollUtil.newHashSet();
+    private final Set<AdminUserRole> userRoles = CollUtil.newHashSet();
 
     /**
      * 创建管理员。
      *
-     * @param username 用户名（必填）
+     * @param username        用户名（必填）
      * @param encodedPassword 加密后的密码（应用服务层已加密）
-     * @param nickname 昵称
+     * @param nickname        昵称
      */
     public AdminUser(String username, String encodedPassword, String nickname) {
         validateUsername(username);
@@ -131,9 +127,7 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
 
     // ========== 业务行为 ==========
 
-    
-    
-    
+
     /**
      * 修改密码（已加密）。
      *
@@ -177,13 +171,6 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
     }
 
     /**
-     * 检查是否可以删除。
-     */
-    public void checkCanBeDeleted() {
-        // 删除保护逻辑移至 Application Service 层
-    }
-
-    /**
      * 添加角色关联。
      */
     public void addRole(Long roleId) {
@@ -210,9 +197,9 @@ public class AdminUser extends AuditableSoftDeletable implements AggregateRoot<A
 
     private void validateUsername(String username) {
         require(
-            username != null && username.matches(USERNAME_PATTERN),
-            AdminMessage.USERNAME_INVALID
+                username != null && username.matches(USERNAME_PATTERN),
+                AdminMessage.USERNAME_INVALID
         );
     }
 
-    }
+}

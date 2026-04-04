@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -92,7 +92,7 @@ class AdminAuthControllerTest {
         when(adminAuthAppService.login(any(AdminUserLoginCommand.class))).thenReturn(tokenInfo);
 
         // When & Then
-        mvc.perform(post("/api/v1/admin/auth/login")
+        mvc.perform(post("/api/admin/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -105,7 +105,7 @@ class AdminAuthControllerTest {
     @Test
     void given_authenticatedUser_when_logout_then_success() throws Exception {
         // When & Then
-        mvc.perform(post("/api/v1/admin/auth/logout"))
+        mvc.perform(post("/api/admin/auth/logout"))
                 .andExpect(status().isOk());
 
         verify(adminAuthAppService).logout();
@@ -124,7 +124,7 @@ class AdminAuthControllerTest {
                 .thenReturn(new CurrentUserResponse(user, roleCodes, menus, permissions));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/auth/current"))
+        mvc.perform(get("/api/admin/auth/current"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.username").value("admin"))
                 .andExpect(jsonPath("$.roleCodes.length()").value(1))
@@ -146,7 +146,7 @@ class AdminAuthControllerTest {
                 """;
 
         // When & Then
-        mvc.perform(put("/api/v1/admin/auth/current/password")
+        mvc.perform(put("/api/admin/auth/current/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());

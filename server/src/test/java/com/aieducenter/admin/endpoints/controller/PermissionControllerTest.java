@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -49,7 +49,7 @@ class PermissionControllerTest {
                 ));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/permissions"))
+        mvc.perform(get("/api/admin/permissions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("admin:user:read"))
                 .andExpect(jsonPath("$[0].name").value("用户管理-查看"))
@@ -67,7 +67,7 @@ class PermissionControllerTest {
                 ));
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/permissions").param("scope", "user"))
+        mvc.perform(get("/api/admin/permissions").param("scope", "user"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("user:profile:read"))
                 .andExpect(jsonPath("$[0].name").value("个人资料-查看"));
@@ -82,7 +82,7 @@ class PermissionControllerTest {
                 .thenReturn(List.of());
 
         // When & Then
-        mvc.perform(get("/api/v1/admin/permissions"))
+        mvc.perform(get("/api/admin/permissions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }

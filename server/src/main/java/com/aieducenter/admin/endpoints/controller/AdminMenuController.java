@@ -1,4 +1,4 @@
-package com.aieducenter.admin.web.controller;
+package com.aieducenter.admin.endpoints.controller;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
  * 菜单管理控制器。
  */
 @RestController
-@RequestMapping("/api/v1/admin/menus")
+@RequestMapping("/api/admin/menus")
 @Validated
 @Tag(name = "Admin Menus", description = "菜单管理")
 public class AdminMenuController {

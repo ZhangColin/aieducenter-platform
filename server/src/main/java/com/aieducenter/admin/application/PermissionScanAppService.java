@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.aieducenter.admin.application.dto.response.PermissionResponse;
-import com.cartisan.security.permission.Permission;
+import com.aieducenter.admin.application.mapper.PermissionMapper;
 import com.cartisan.security.permission.PermissionScanner;
 
 /**
@@ -15,30 +15,25 @@ import com.cartisan.security.permission.PermissionScanner;
 public class PermissionScanAppService {
 
     private final PermissionScanner permissionScanner;
+    private final PermissionMapper permissionMapper;
 
-    public PermissionScanAppService(PermissionScanner permissionScanner) {
+    public PermissionScanAppService(PermissionScanner permissionScanner,
+            PermissionMapper permissionMapper) {
         this.permissionScanner = permissionScanner;
+        this.permissionMapper = permissionMapper;
     }
 
     /**
      * 扫描指定 scope 的权限。
      */
     public List<PermissionResponse> scanByScope(String scope) {
-        return permissionScanner.scanByScope(scope).stream()
-                .map(this::toDto)
-                .toList();
+        return permissionMapper.convertList(permissionScanner.scanByScope(scope));
     }
 
     /**
      * 扫描所有权限。
      */
     public List<PermissionResponse> scanAll() {
-        return permissionScanner.scanAll().stream()
-                .map(this::toDto)
-                .toList();
-    }
-
-    private PermissionResponse toDto(Permission permission) {
-        return new PermissionResponse(permission.code(), permission.name());
+        return permissionMapper.convertList(permissionScanner.scanAll());
     }
 }
