@@ -12,13 +12,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.aieducenter.account.application.dto.ResetPasswordCommand;
+import com.aieducenter.account.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.port.SessionManagementPort;
+import com.aieducenter.account.domain.port.VerificationCodePort;
 import com.aieducenter.account.domain.repository.UserRepository;
-import com.aieducenter.verification.application.VerificationCodeAppService;
-import com.aieducenter.verification.application.dto.VerifyCodeCommand;
-import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
+import com.aieducenter.account.domain.service.AccountPasswordEncoderService;
 import com.aieducenter.verification.domain.error.VerificationCodeError;
 import com.cartisan.core.exception.DomainException;
 
@@ -29,10 +28,13 @@ class AccountPasswordResetAppServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private VerificationCodeAppService verificationCodeAppService;
+    private VerificationCodePort verificationCodePort;
 
     @Mock
     private SessionManagementPort sessionManagementPort;
+
+    @Mock
+    private AccountPasswordEncoderService accountPasswordEncoderService;
 
     @InjectMocks
     private AccountPasswordResetAppService resetAppService;
@@ -46,17 +48,20 @@ class AccountPasswordResetAppServiceTest {
         // Given
         var user = User.restore(2001L, "testuser", "test@example.com", null, HASH_OLD_PASSWORD, "Test", null);
         var command = new ResetPasswordCommand("test@example.com", "654321", "newPassword1");
+        var encodedNewPassword = "$2a$10$newEncodedPassword";
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(accountPasswordEncoderService.encodePassword("newPassword1")).thenReturn(encodedNewPassword);
 
         // When
         resetAppService.resetPassword(command);
 
         // Then
-        verify(verificationCodeAppService).verifyCode(new VerifyCodeCommand("test@example.com", "654321", "RESET_PASSWORD"));
+        verify(verificationCodePort).verifyCode("test@example.com", "654321", "RESET_PASSWORD");
         verify(userRepository).findByEmail("test@example.com");
         verify(userRepository).save(user);
         verify(sessionManagementPort).kickout(2001L);
+        verify(accountPasswordEncoderService).encodePassword("newPassword1");
     }
 
     @Test
@@ -64,17 +69,20 @@ class AccountPasswordResetAppServiceTest {
         // Given
         var user = User.restore(2002L, "testuser", null, "13812345678", HASH_OLD_PASSWORD, "Test", null);
         var command = new ResetPasswordCommand("13812345678", "654321", "newPassword1");
+        var encodedNewPassword = "$2a$10$newEncodedPassword";
 
         when(userRepository.findByPhoneNumber("13812345678")).thenReturn(Optional.of(user));
+        when(accountPasswordEncoderService.encodePassword("newPassword1")).thenReturn(encodedNewPassword);
 
         // When
         resetAppService.resetPassword(command);
 
         // Then
-        verify(verificationCodeAppService).verifyPhoneCode(new VerifySmsCodeCommand("13812345678", "654321", "RESET_PASSWORD"));
+        verify(verificationCodePort).verifyPhoneCode("13812345678", "654321", "RESET_PASSWORD");
         verify(userRepository).findByPhoneNumber("13812345678");
         verify(userRepository).save(user);
         verify(sessionManagementPort).kickout(2002L);
+        verify(accountPasswordEncoderService).encodePassword("newPassword1");
     }
 
     @Test
@@ -83,7 +91,7 @@ class AccountPasswordResetAppServiceTest {
         var command = new ResetPasswordCommand("test@example.com", "000000", "newPassword1");
 
         doThrow(new DomainException(VerificationCodeError.CODE_INVALID))
-            .when(verificationCodeAppService).verifyCode(any(VerifyCodeCommand.class));
+            .when(verificationCodePort).verifyCode("test@example.com", "000000", "RESET_PASSWORD");
 
         // When & Then
         assertThatThrownBy(() -> resetAppService.resetPassword(command))
@@ -109,8 +117,10 @@ class AccountPasswordResetAppServiceTest {
         // Given
         var user = User.restore(2003L, "testuser", "resilient@example.com", null, HASH_OLD_PASSWORD, "Test", null);
         var command = new ResetPasswordCommand("resilient@example.com", "654321", "newPassword1");
+        var encodedNewPassword = "$2a$10$newEncodedPassword";
 
         when(userRepository.findByEmail("resilient@example.com")).thenReturn(Optional.of(user));
+        when(accountPasswordEncoderService.encodePassword("newPassword1")).thenReturn(encodedNewPassword);
         doThrow(new RuntimeException("kickout error")).when(sessionManagementPort).kickout(any());
 
         // When & Then — should complete without throwing

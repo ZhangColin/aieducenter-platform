@@ -2,15 +2,15 @@ package com.aieducenter.account.application;
 
 import org.springframework.stereotype.Service;
 
-import com.aieducenter.account.application.dto.LoginByPasswordCommand;
-import com.aieducenter.account.application.dto.LoginBySmsCommand;
-import com.aieducenter.account.application.dto.LoginResult;
+import com.aieducenter.account.application.dto.command.LoginByPasswordCommand;
+import com.aieducenter.account.application.dto.command.LoginBySmsCommand;
+import com.aieducenter.account.application.dto.response.LoginResult;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.error.UserError;
+import com.aieducenter.account.domain.port.VerificationCodePort;
 import com.aieducenter.account.domain.repository.UserRepository;
+import com.aieducenter.account.domain.service.AccountPasswordEncoderService;
 import com.aieducenter.verification.application.CaptchaAppService;
-import com.aieducenter.verification.application.VerificationCodeAppService;
-import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.security.authentication.AuthenticationService;
 
@@ -25,19 +25,22 @@ import com.cartisan.security.authentication.AuthenticationService;
 public class AccountLoginAppService {
 
     private final UserRepository userRepository;
-    private final VerificationCodeAppService verificationCodeAppService;
+    private final VerificationCodePort verificationCodePort;
     private final AuthenticationService authenticationService;
     private final CaptchaAppService captchaAppService;
+    private final AccountPasswordEncoderService accountPasswordEncoderService;
 
     public AccountLoginAppService(
             UserRepository userRepository,
-            VerificationCodeAppService verificationCodeAppService,
+            VerificationCodePort verificationCodePort,
             AuthenticationService authenticationService,
-            CaptchaAppService captchaAppService) {
+            CaptchaAppService captchaAppService,
+            AccountPasswordEncoderService accountPasswordEncoderService) {
         this.userRepository = userRepository;
-        this.verificationCodeAppService = verificationCodeAppService;
+        this.verificationCodePort = verificationCodePort;
         this.authenticationService = authenticationService;
         this.captchaAppService = captchaAppService;
+        this.accountPasswordEncoderService = accountPasswordEncoderService;
     }
 
     /**
@@ -61,7 +64,7 @@ public class AccountLoginAppService {
             .orElseThrow(() -> new DomainException(UserError.ACCOUNT_NOT_FOUND));
 
         // 3. 验证密码
-        if (!user.matchesPassword(command.password())) {
+        if (!accountPasswordEncoderService.verifyPassword(command.password(), user.getPassword())) {
             throw new DomainException(UserError.LOGIN_PASSWORD_INCORRECT);
         }
 
@@ -83,8 +86,7 @@ public class AccountLoginAppService {
         // 注意：图形验证码已在发送短信验证码时校验过，这里不再重复校验
 
         // 1. 校验短信验证码
-        verificationCodeAppService.verifyPhoneCode(
-            new VerifySmsCodeCommand(command.phone(), command.code(), "LOGIN"));
+        verificationCodePort.verifyPhoneCode(command.phone(), command.code(), "LOGIN");
 
         // 2. 查找用户
         User user = userRepository.findByPhoneNumber(command.phone())

@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.aieducenter.account.application.AccountLoginAppService;
 import com.aieducenter.account.application.AccountPasswordResetAppService;
+import com.aieducenter.account.application.AccountQueryAppService;
 import com.aieducenter.account.application.AccountRegistrationAppService;
-import com.aieducenter.account.application.dto.LoginByPasswordCommand;
-import com.aieducenter.account.application.dto.LoginBySmsCommand;
-import com.aieducenter.account.application.dto.LoginResult;
-import com.aieducenter.account.application.dto.RegisterCommand;
-import com.aieducenter.account.application.dto.RegisterResult;
-import com.aieducenter.account.application.dto.ResetPasswordCommand;
-import com.aieducenter.account.domain.repository.UserRepository;
+import com.aieducenter.account.application.dto.command.LoginByPasswordCommand;
+import com.aieducenter.account.application.dto.command.LoginBySmsCommand;
+import com.aieducenter.account.application.dto.command.RegisterCommand;
+import com.aieducenter.account.application.dto.command.ResetPasswordCommand;
+import com.aieducenter.account.application.dto.response.LoginResult;
+import com.aieducenter.account.application.dto.response.RegisterResult;
 import com.cartisan.web.response.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -31,16 +31,16 @@ public class AccountController {
     private final AccountRegistrationAppService registrationAppService;
     private final AccountLoginAppService loginAppService;
     private final AccountPasswordResetAppService passwordResetAppService;
-    private final UserRepository userRepository;
+    private final AccountQueryAppService queryAppService;
 
     public AccountController(AccountRegistrationAppService registrationAppService,
             AccountLoginAppService loginAppService,
             AccountPasswordResetAppService passwordResetAppService,
-            UserRepository userRepository) {
+            AccountQueryAppService queryAppService) {
         this.registrationAppService = registrationAppService;
         this.loginAppService = loginAppService;
         this.passwordResetAppService = passwordResetAppService;
-        this.userRepository = userRepository;
+        this.queryAppService = queryAppService;
     }
 
     @PostMapping("/register")
@@ -76,7 +76,7 @@ public class AccountController {
             @NotBlank
             @Size(min = 3, max = 20)
             String username) {
-        boolean available = !userRepository.existsByUsername(username);
+        boolean available = queryAppService.isUsernameAvailable(username);
         return ApiResponse.ok(available);
     }
 
@@ -86,7 +86,7 @@ public class AccountController {
             @NotBlank
             @Pattern(regexp = "^1[3-9]\\d{9}$")
             String phone) {
-        boolean available = !userRepository.existsByPhoneNumber(phone);
+        boolean available = queryAppService.isPhoneNumberAvailable(phone);
         return ApiResponse.ok(available);
     }
 }

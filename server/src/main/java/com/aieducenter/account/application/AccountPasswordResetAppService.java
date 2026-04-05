@@ -5,13 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.aieducenter.account.application.dto.ResetPasswordCommand;
+import com.aieducenter.account.application.dto.command.ResetPasswordCommand;
 import com.aieducenter.account.domain.aggregate.User;
 import com.aieducenter.account.domain.port.SessionManagementPort;
+import com.aieducenter.account.domain.port.VerificationCodePort;
 import com.aieducenter.account.domain.repository.UserRepository;
-import com.aieducenter.verification.application.VerificationCodeAppService;
-import com.aieducenter.verification.application.dto.VerifyCodeCommand;
-import com.aieducenter.verification.application.dto.VerifySmsCodeCommand;
+import com.aieducenter.account.domain.service.AccountPasswordEncoderService;
 import com.aieducenter.verification.domain.error.VerificationCodeError;
 import com.cartisan.core.exception.DomainException;
 
@@ -29,16 +28,19 @@ public class AccountPasswordResetAppService {
     private static final Logger log = LoggerFactory.getLogger(AccountPasswordResetAppService.class);
 
     private final UserRepository userRepository;
-    private final VerificationCodeAppService verificationCodeAppService;
+    private final VerificationCodePort verificationCodePort;
     private final SessionManagementPort sessionManagementPort;
+    private final AccountPasswordEncoderService accountPasswordEncoderService;
 
     public AccountPasswordResetAppService(
             UserRepository userRepository,
-            VerificationCodeAppService verificationCodeAppService,
-            SessionManagementPort sessionManagementPort) {
+            VerificationCodePort verificationCodePort,
+            SessionManagementPort sessionManagementPort,
+            AccountPasswordEncoderService accountPasswordEncoderService) {
         this.userRepository = userRepository;
-        this.verificationCodeAppService = verificationCodeAppService;
+        this.verificationCodePort = verificationCodePort;
         this.sessionManagementPort = sessionManagementPort;
+        this.accountPasswordEncoderService = accountPasswordEncoderService;
     }
 
     /**
@@ -56,16 +58,18 @@ public class AccountPasswordResetAppService {
 
         User user;
         if (account.contains("@")) {
-            verificationCodeAppService.verifyCode(new VerifyCodeCommand(account, verificationCode, "RESET_PASSWORD"));
+            verificationCodePort.verifyCode(account, verificationCode, "RESET_PASSWORD");
             user = userRepository.findByEmail(account)
                 .orElseThrow(() -> new DomainException(VerificationCodeError.CODE_INVALID));
         } else {
-            verificationCodeAppService.verifyPhoneCode(new VerifySmsCodeCommand(account, verificationCode, "RESET_PASSWORD"));
+            verificationCodePort.verifyPhoneCode(account, verificationCode, "RESET_PASSWORD");
             user = userRepository.findByPhoneNumber(account)
                 .orElseThrow(() -> new DomainException(VerificationCodeError.CODE_INVALID));
         }
 
-        user.resetPassword(command.newPassword());
+        // 加密新密码
+        String encodedPassword = accountPasswordEncoderService.encodePassword(command.newPassword());
+        user.resetPassword(encodedPassword);
         userRepository.save(user);
 
         try {
