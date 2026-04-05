@@ -3,9 +3,7 @@ package com.aieducenter.account.domain.aggregate;
 import java.util.Optional;
 
 import jakarta.persistence.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import cn.hutool.core.lang.Validator;
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.exception.DomainException;
 import com.cartisan.core.util.Assertions;
@@ -15,6 +13,7 @@ import com.cartisan.data.jpa.id.TsidGenerator;
 import com.aieducenter.account.domain.error.UserError;
 
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * User 聚合根。
@@ -22,39 +21,25 @@ import lombok.Getter;
  * <h3>职责</h3>
  * <ul>
  *   <li>封装用户状态和行为</li>
- *   <li>管理用户登录凭证（用户名、邮箱、手机号）</li>
- *   <li>管理密码加密和验证</li>
-   *   <li>管理个人信息（昵称、头像）</li>
+ *   <li>管理用户登录凭证（用户名、密码）</li>
+ *   <li>管理个人信息（昵称、头像）</li>
  * </ul>
  *
  * <h3>不变量</h3>
  * <ul>
  *   <li>用户名不能为空</li>
- *   <li>密码必须加密存储</li>
+ *   <li>密码必须加密存储（由应用层加密后传入）</li>
  *   <li>昵称为空时默认显示用户名</li>
  * </ul>
  *
  * @since 0.1.0
  */
 @Entity
-@Table(name = "users")
+@Table(name = "act_users")
 @Aggregate
 public class User extends AuditableSoftDeletable implements AggregateRoot<User> {
 
-    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder(10);
-
-    /**
-     * 验证用户名格式：3-20 位，字母开头，允许字母/数字/下划线
-     */
-    private boolean isValidUsername(String value) {
-        return value.matches("^[a-zA-Z][a-zA-Z0-9_]{2,19}$");
-    }
-
-    private void validatePasswordStrength(String plainPassword) {
-        if (plainPassword == null || !plainPassword.matches("^(?=.*[a-zA-Z])(?=.*\\d).{8,20}$")) {
-            throw new DomainException(UserError.PASSWORD_WEAK);
-        }
-    }
+    private static final String USERNAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]{2,19}$";
 
     @Getter
     @Id
@@ -65,51 +50,45 @@ public class User extends AuditableSoftDeletable implements AggregateRoot<User> 
     @Column(name = "username", nullable = false, length = 20, unique = true)
     private String username;
 
+    @Getter
+    @Setter
     @Column(name = "email", length = 255, unique = true)
     private String email;
 
+    @Getter
+    @Setter
     @Column(name = "phone_number", length = 20, unique = true)
     private String phoneNumber;
 
-    @Column(name = "password", nullable = false, length = 255)
+    @Getter
+    @Column(name = "password", nullable = false)
     private String password;
 
     @Getter
     @Column(name = "nickname", length = 50)
     private String nickname;
 
+    @Getter
+    @Setter
     @Column(name = "avatar", length = 512)
     private String avatar;
-
 
     /**
      * 创建新用户。
      *
      * @param username 用户名（必填）
-     * @param plainPassword 明文密码
+     * @param encodedPassword 加密后的密码（应用服务层已加密）
      * @param nickname 昵称（可选，为空则使用用户名）
-     * @param avatar 头像 URL（可选）
      */
-    public User(String username, String plainPassword, String nickname, String avatar) {
-        // 验证用户名格式
-        if (!isValidUsername(username)) {
-            throw new DomainException(UserError.USERNAME_INVALID);
-        }
+    public User(String username, String encodedPassword, String nickname) {
+        validateUsername(username);
+        Assertions.require(encodedPassword != null, UserError.PASSWORD_WEAK);
         this.username = username;
-
-        validatePasswordStrength(plainPassword);
-        this.password = PASSWORD_ENCODER.encode(plainPassword);
-
-        // 昵称为空则设置为用户名
-        if (nickname == null || nickname.isBlank()) {
-            this.nickname = username;
-        } else {
-            this.nickname = nickname;
-        }
-
-        this.avatar = avatar;
+        this.password = encodedPassword;
+        this.nickname = (nickname == null || nickname.isBlank()) ? username : nickname;
         this.email = null;
         this.phoneNumber = null;
+        this.avatar = null;
     }
 
     /**
@@ -158,60 +137,20 @@ public class User extends AuditableSoftDeletable implements AggregateRoot<User> 
      * 注册新用户。
      *
      * @param username 用户名（必填）
-     * @param plainPassword 明文密码，将验证密码强度并使用 BCrypt 加密
+     * @param encodedPassword 加密后的密码（应用服务层已加密）
      * @param nickname 昵称（可选），如果为 null 或空字符串则默认使用用户名
-     * @param email 邮箱（可选），如果为 null 或空字符串则不设置；
-     *              如果格式无效则抛出 {@link com.aieducenter.account.domain.error.UserError#EMAIL_INVALID}
-     * @param phone 手机号（可选），如果为 null 或空字符串则不设置；
-     *              如果格式无效则抛出 {@link com.aieducenter.account.domain.error.UserError#PHONE_NUMBER_INVALID}
+     * @param email 邮箱（可选）
+     * @param phone 手机号（可选）
      * @return 新创建的 User 实例
      */
-    public static User register(String username, String plainPassword, String nickname, String email, String phone) {
-        User user = new User(username, plainPassword, nickname, null);
-        if (email != null && !email.isBlank()) {
-            user.updateEmail(email);
-        }
-        if (phone != null && !phone.isBlank()) {
-            user.updatePhoneNumber(phone);
-        }
+    public static User register(String username, String encodedPassword, String nickname, String email, String phone) {
+        User user = new User(username, encodedPassword, nickname);
+        user.setEmail(email);
+        user.setPhoneNumber(phone);
         return user;
     }
 
-    // ========== Getter ==========
-
-    public Optional<String> getEmail() {
-        return Optional.ofNullable(email);
-    }
-
-    public Optional<String> getPhoneNumber() {
-        return Optional.ofNullable(phoneNumber);
-    }
-
-    public Optional<String> getAvatar() {
-        return Optional.ofNullable(avatar);
-    }
-
-    /**
-     * 获取加密后的密码。
-     * <p>注意：仅供基础设施层使用，不应暴露给外部。</p>
-     *
-     * @return 加密后的密码
-     */
-    public String getPassword() {
-        return password;
-    }
-
     // ========== 业务行为 ==========
-
-    /**
-     * 验证密码。
-     *
-     * @param plainPassword 明文密码
-     * @return 是否匹配
-     */
-    public boolean matchesPassword(String plainPassword) {
-        return PASSWORD_ENCODER.matches(plainPassword, this.password);
-    }
 
     /**
      * 修改用户名。
@@ -220,36 +159,8 @@ public class User extends AuditableSoftDeletable implements AggregateRoot<User> 
      * @param newUsername 新用户名
      */
     public void updateUsername(String newUsername) {
-        if (!isValidUsername(newUsername)) {
-            throw new DomainException(UserError.USERNAME_INVALID);
-        }
+        validateUsername(newUsername);
         this.username = newUsername;
-    }
-
-    /**
-     * 修改邮箱（含格式验证）。
-     *
-     * @param email 新邮箱（null 则清空）
-     * @throws DomainException 邮箱格式不正确时抛出
-     */
-    public void updateEmail(String email) {
-        if (email != null && !Validator.isEmail(email)) {
-            throw new DomainException(UserError.EMAIL_INVALID);
-        }
-        this.email = email;
-    }
-
-    /**
-     * 修改手机号（含格式验证）。
-     *
-     * @param phoneNumber 新手机号（null 则清空）
-     * @throws DomainException 手机号格式不正确时抛出
-     */
-    public void updatePhoneNumber(String phoneNumber) {
-        if (phoneNumber != null && !Validator.isMobile(phoneNumber)) {
-            throw new DomainException(UserError.PHONE_NUMBER_INVALID);
-        }
-        this.phoneNumber = phoneNumber;
     }
 
     /**
@@ -264,38 +175,37 @@ public class User extends AuditableSoftDeletable implements AggregateRoot<User> 
     }
 
     /**
-     * 修改头像。
-     *
-     * @param avatar 新头像 URL（null 则清空）
-     */
-    public void updateAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    /**
      * 修改密码。
      *
-     * @param oldPassword 旧密码
-     * @param newPassword 新密码
+     * @param oldEncodedPassword 旧密码（已加密）
+     * @param newEncodedPassword 新密码（已加密）
      * @throws DomainException 旧密码不正确时抛出
      */
-    public void updatePassword(String oldPassword, String newPassword) {
+    public void updatePassword(String oldEncodedPassword, String newEncodedPassword) {
         Assertions.require(
-            matchesPassword(oldPassword),
+            oldEncodedPassword.equals(this.password),
             UserError.PASSWORD_INCORRECT
         );
-        validatePasswordStrength(newPassword);
-        this.password = PASSWORD_ENCODER.encode(newPassword);
+        Assertions.require(newEncodedPassword != null, UserError.PASSWORD_WEAK);
+        this.password = newEncodedPassword;
     }
 
     /**
      * 重置密码（无需旧密码，管理员或找回密码场景使用）。
      *
-     * @param plainPassword 新明文密码
-     * @throws DomainException 密码强度不足时抛出
+     * @param encodedPassword 新密码（已加密）
+     * @throws DomainException 密码为 null 时抛出
      */
-    public void resetPassword(String plainPassword) {
-        validatePasswordStrength(plainPassword);
-        this.password = PASSWORD_ENCODER.encode(plainPassword);
+    public void resetPassword(String encodedPassword) {
+        Assertions.require(encodedPassword != null, UserError.PASSWORD_WEAK);
+        this.password = encodedPassword;
+    }
+
+    // ========== Private 方法 ==========
+
+    private void validateUsername(String value) {
+        if (value == null || !value.matches(USERNAME_PATTERN)) {
+            throw new DomainException(UserError.USERNAME_INVALID);
+        }
     }
 }

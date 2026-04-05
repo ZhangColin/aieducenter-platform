@@ -1,4 +1,4 @@
-package com.aieducenter.account.application.dto;
+package com.aieducenter.account.application.dto.command;
 
 import jakarta.validation.constraints.NotBlank;
 

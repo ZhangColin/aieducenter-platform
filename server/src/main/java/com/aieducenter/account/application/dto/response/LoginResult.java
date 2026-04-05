@@ -1,4 +1,4 @@
-package com.aieducenter.account.application.dto;
+package com.aieducenter.account.application.dto.response;
 
 import java.util.Objects;
 
