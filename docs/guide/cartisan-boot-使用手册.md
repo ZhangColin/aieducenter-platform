@@ -1,1079 +1,2321 @@
- # cartisan-boot 基础框架设计文档
+# cartisan-boot 使用手册
 
-> 版本：v0.3 | 日期：2026-03-11
-> 定位：可复用的 Java 基础研发框架，为公司所有 Spring Boot 项目提供 DDD 基建、Web 规范、安全抽象、数据层封装、通用技术能力封装和测试守护。
-> 性质：Epic 阶段前的输入——项目愿景与技术蓝图。
-
----
-
-## 目录
-
-- [一、项目定位与设计原则](#一项目定位与设计原则)
-- [二、技术栈](#二技术栈)
-- [三、模块架构](#三模块架构)
-- [四、各模块详细设计](#四各模块详细设计)
-- [五、模块间依赖关系](#五模块间依赖关系)
-- [六、业务项目接入方式](#六业务项目接入方式)
-- [七、Epic 拆分建议](#七epic-拆分建议)
+> **版本**：v2.0 | **日期**：2026-04-05
+> **更新内容**：
+> - 重构文档结构，删除重复内容
+> - 精简使用示例，聚焦框架使用
+> - 将详细功能指南整合到各模块章节
+> - 将注意事项分散到各模块章节
+> - 添加设计理念和配置说明章节
+> - 更新 ArchUnit 规则到 v1.1（新增3条规则）
+> - 添加新规则迁移策略说明
+>
+> **定位**：框架使用指南（怎么用）
+> **目标读者**：使用 cartisan-boot 框架的业务项目开发者
 
 ---
 
-## 一、项目定位与设计原则
+## 一、快速开始
 
-### 1.1 定位
+### 1.1 依赖引入
 
-cartisan-boot 是**业务无关的技术基础框架**。它为所有 Java 项目提供统一的技术能力封装，让业务项目专注于业务逻辑本身。
+在业务项目的 `build.gradle.kts` 或 `pom.xml` 中引入 cartisan-boot BOM：
 
-### 1.2 收纳准则
+```kotlin
+// Gradle Kotlin DSL
+implementation(platform("com.cartisan:cartisan-dependencies:0.1.0"))
+implementation("com.cartisan:cartisan-core")
+implementation("com.cartisan:cartisan-web")
+implementation("com.cartisan:cartisan-data-jpa")
+// 根据需要添加其他模块
+```
 
-**一个技术能力是否应该放入 cartisan-boot，由以下三条准则判定：**
+```xml
+<!-- Maven -->
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>com.cartisan</groupId>
+            <artifactId>cartisan-dependencies</artifactId>
+            <version>0.1.0</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
 
-| # | 准则 | 说明 |
-|---|------|------|
-| 1 | **不需要业务数据库表** | 框架不建表、不管理业务数据。需要持久化配置/规则的能力属于业务层 |
-| 2 | **不同项目的调用方式基本一致** | 接口定义和使用模式是稳定的、通用的。如果每个项目用法差异大，说明它含有业务语义 |
-| 3 | **API 足够稳定** | 底层依赖的 SDK/框架不会频繁 breaking change。不满足时预留位置但暂不实现 |
+<dependencies>
+    <dependency>
+        <groupId>com.cartisan</groupId>
+        <artifactId>cartisan-core</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.cartisan</groupId>
+        <artifactId>cartisan-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.cartisan</groupId>
+        <artifactId>cartisan-data-jpa</artifactId>
+    </dependency>
+    <!-- 根据需要添加其他模块 -->
+</dependencies>
+```
 
-**三条全满足 → 放入 cartisan-boot。**
-**第 3 条暂不满足 → 预留模块位置，等稳定后纳入。**
-**第 1 或第 2 条不满足 → 属于业务层，不放入。**
+### 1.2 自动配置
 
-判定示例：
+cartisan-boot 模块支持 Spring Boot 自动配置，引入依赖后自动启用，无需手动配置。
 
-| 能力 | 准则 1 | 准则 2 | 准则 3 | 结论 |
-|------|--------|--------|--------|------|
-| 统一响应体、全局异常处理 | ✅ 无表 | ✅ 一致 | ✅ 稳定 | 放入 |
-| 大模型调用（Provider 适配器） | ✅ 无表 | ✅ 一致 | ✅ 稳定 | 放入 |
-| 文件存储（OSS/MinIO 封装） | ✅ 无表 | ✅ 一致 | ✅ 稳定 | 放入 |
-| 支付对接（微信/支付宝封装） | ✅ 无表 | ✅ 一致 | ✅ 稳定 | 放入 |
-| Agent 框架封装 | ✅ 无表 | ✅ 一致 | ❌ 快速迭代中 | 预留，暂不实现 |
-| 路由规则管理（按成本/质量路由） | ❌ 需要规则表 | ❌ 不同项目策略不同 | — | 业务项目 |
-| 租户管理 CRUD | ❌ 需要租户表 | ❌ 不同项目模型不同 | — | 业务项目 |
-| 计费（虚拟币/汇率） | ❌ 需要流水表 | ❌ 不同项目模型不同 | — | 业务项目 |
+### 1.3 基础配置
 
-### 1.3 设计原则
+在 `application.yml` 中添加基础配置（可选）：
 
-| 原则 | 说明 |
+```yaml
+cartisan:
+  web:
+    enum-controller:
+      enabled: true  # 启用默认枚举 Controller
+```
+
+---
+
+## 二、模块能力清单
+
+### 1.1 cartisan-core 模块
+
+| 能力 | 说明 |
 |------|------|
-| **业务无关** | 只封装技术能力，不含业务逻辑。框架不知道"用户"、"订单"、"套餐"是什么 |
-| **零侵入** | 业务项目按需引入模块，不用的不引入。框架不绑架业务 |
-| **强约束** | 通过泛型、接口、ArchUnit 规则，在编译期/测试期约束代码质量 |
-| **AI 友好** | 强类型、命名规范、无魔法——让 AI 生成的代码有工具链兜底 |
-| **可替换** | 底层实现可切换（Sa-Token → Spring Security，MinIO → 阿里云 OSS），业务代码通过抽象层隔离 |
+| **DDD 基础类型** | 聚合根、实体、值对象、领域事件、标识符 |
+| **异常体系** | 统一错误码接口 + 业务异常层次 |
+| **架构注解** | DDD 分层标记注解（限界上下文、聚合、端口、适配器） |
+| **断言工具** | Design by Contract 风格的前置/后置条件断言 |
+| **RedisKey 工具** | Redis Key 管理（前缀、过期时间） |
 
-### 1.4 框架提供什么，业务项目做什么
+### 1.2 cartisan-test 模块
 
-| | cartisan-boot 提供 | 业务项目实现 |
-|---|---|---|
-| DDD | 聚合根、实体、值对象、领域事件等基础积木 | 具体的聚合根、实体、领域服务 |
-| Web | 统一响应体、全局异常处理、请求上下文 | Controller、DTO |
-| 安全 | 认证/授权抽象、多租户上下文基础设施 | 用户/租户/权限的业务逻辑 |
-| 数据 | Repository 基类、审计字段、软删除 | 具体的 DomainEntity 和 Repository |
-| 事件 | 领域事件发布/订阅基础设施 | 具体的业务事件定义 |
-| AI | 大模型调用 SPI + 各厂商适配器 + SSE 流式工具 | 路由策略、Token 计费、Agent 编排 |
-| 存储 | 文件上传/下载 SPI + 各厂商适配器 | "附件"的业务概念（关联实体、权限） |
-| 支付 | 支付下单/回调 SPI + 微信/支付宝适配器 | 充值套餐、订单管理等业务流程 |
-| 测试 | ArchUnit 规则集、Testcontainers 基类 | 具体的业务测试 |
+| 能力 | 说明 |
+|------|------|
+| **ArchUnit 规则（v1.2）** | 15 条规则：分层、命名、禁止、编码规范规则的自动验证 |
+| **集成测试基类** | IntegrationTestBase（需手动启动测试环境） |
+| **环境检查工具** | TestEnvironmentChecker 检查 PostgreSQL/Redis 是否可用 |
+| **API 测试** | MockMvc 测试基类 + 断言辅助 |
+| **Fixture 工具** | 随机数据生成器 + 对象构建器 |
 
----
+**迁移策略（v1.2 新规则）**：
 
-## 二、技术栈
+如果您是现有项目，新规则可能会导致测试失败。以下是迁移建议：
 
-| 层面 | 选型 | 版本 | 理由 |
-|------|------|------|------|
-| 语言 | Java | 21 | Virtual Threads（高并发长连接）、Record（不可变 DTO）、Sealed Classes、Pattern Matching |
-| 框架 | Spring Boot | 3.4.x | Virtual Threads 原生支持、Spring Modulith |
-| 构建 | Gradle Kotlin DSL | 最新 | 多模块灵活管理、Version Catalog 统一版本 |
-| 编程模型 | Virtual Threads + 阻塞式 | — | 代码直观，AI 生成质量高，Virtual Threads 解决吞吐量 |
-| 持久化（写） | Spring Data JPA (Hibernate) | — | 聚合根持久化，DDD 标准实践 |
-| 持久化（读） | jOOQ | — | 类型安全 SQL，编译期校验，CQRS 读侧 |
-| 数据库 | PostgreSQL | 16+ | JSONB、强并发控制、丰富扩展 |
-| 缓存 | Redis (Lettuce) | — | 会话、限流、热数据缓存 |
-| 认证 | Sa-Token | — | 轻量实用，通过框架抽象层隔离，可替换 |
-| DB 迁移 | Flyway | — | 数据库版本管理 |
-| API 文档 | SpringDoc OpenAPI 3.1 | — | 标准化，可自动生成前端 TypeScript 类型 |
-| 单元测试 | JUnit 5 + AssertJ + Mockito | — | 业界标准 |
-| 架构测试 | ArchUnit | — | 自动化架构规则守护 |
-| 集成测试 | Testcontainers | — | 真实中间件环境 |
-| 变异测试 | PIT (Pitest) | — | 验证测试质量 |
-| 监控 | Micrometer + Prometheus | — | 可观测性基础 |
+**1. 分阶段启用**：
+- Week 1：在本地环境运行新规则，发现违规
+- Week 2：修复关键违规，对历史代码添加 `@ArchIgnore` 豁免
+- Week 3：在 CI 中启用新规则，强制执行
 
----
+**2. 豁免机制**（用于历史代码）：
 
-## 三、模块架构
-
-### 3.1 模块总览
-
-```
-cartisan-boot/
-├── gradle/
-│   └── libs.versions.toml                 # Version Catalog
-├── build.gradle.kts
-├── settings.gradle.kts
-│
-├── cartisan-dependencies/                  # BOM
-│
-│  ── 核心模块（短期实现）──
-├── cartisan-core/                          # DDD 基建
-├── cartisan-web/                           # Web 层规范
-├── cartisan-security/                      # 安全与多租户基础设施
-├── cartisan-data-jpa/                      # JPA 写侧封装
-├── cartisan-data-query/                    # jOOQ 读侧封装
-├── cartisan-event/                         # 领域事件基础设施
-├── cartisan-test/                          # 测试工具箱
-├── cartisan-ai/                            # 大模型调用封装
-│
-│  ── 扩展模块（按需实现）──
-├── cartisan-storage/                       # 文件存储封装
-├── cartisan-payment/                       # 支付对接封装
-│
-│  ── 预留模块（暂不实现）──
-└── cartisan-ai-agent/                      # Agent 框架封装（待生态稳定）
-```
-
-### 3.2 各模块一句话定位
-
-| 模块 | 状态 | 定位 |
-|------|------|------|
-| **cartisan-dependencies** | — | BOM（Bill of Materials）：业务项目引入即可管理所有 cartisan 模块版本 |
-| **cartisan-core** | 短期实现 | DDD 战术设计基础积木：实体、值对象、聚合根、领域事件、架构注解、错误码体系。**零外部依赖，纯 Java** |
-| **cartisan-web** | 短期实现 | Spring MVC 统一封装：强类型响应体、全局异常处理、请求上下文、参数校验格式化 |
-| **cartisan-security** | 短期实现 | 认证授权薄抽象层 + 多租户上下文基础设施。底层 Sa-Token 可替换 |
-| **cartisan-data-jpa** | 短期实现 | JPA 持久化封装：Repository 基类（含事件自动发布）、审计字段、软删除、分布式 ID |
-| **cartisan-data-query** | 短期实现 | jOOQ 读侧封装：自动配置、分页工具、代码生成配置 |
-| **cartisan-event** | 短期实现 | 领域事件发布/订阅基础设施：Spring Events 桥接，预留消息队列扩展 |
-| **cartisan-test** | 短期实现 | 测试工具箱：ArchUnit 预置规则集、Testcontainers 基类、测试辅助工具 |
-| **cartisan-ai** | 短期实现 | 大模型调用 SPI + 各厂商 Provider 实现 + SSE 流式输出工具 |
-| **cartisan-storage** | 按需实现 | 文件存储 SPI + 各厂商适配器（阿里云 OSS、MinIO 等） |
-| **cartisan-payment** | 按需实现 | 支付 SPI + 各渠道适配器（微信支付、支付宝等） |
-| **cartisan-ai-agent** | 预留 | Agent 编排框架封装。等 LangChain4j / Spring AI Agent 稳定后纳入 |
-
----
-
-## 四、各模块详细设计
-
-### 4.1 cartisan-dependencies（BOM）
-
-**职责：** 统一管理所有 cartisan 模块的版本号，业务项目只需引入 BOM，无需逐个指定版本。
-
-无代码，只有 Gradle 配置。通过 `javaPlatform` 插件发布为 BOM。
-
----
-
-### 4.2 cartisan-core（DDD 基建）
-
-**核心约束：零外部依赖，只依赖 JDK 标准库。** 这保证了领域模型的纯粹性——任何放在 domain 包中的代码不会被框架污染。
-
-#### 包结构
-
-```
-com.cartisan.core/
-├── domain/               # 领域建模基础类型
-├── exception/            # 异常与错误码体系
-├── stereotype/           # DDD 架构注解
-└── util/                 # 通用工具
-```
-
-#### domain — 领域建模基础类型
-
-**AggregateRoot 体系：**
-
-```
-AggregateRoot                          — 标记接口：标识哪些实体是聚合根
-  └── AbstractAggregateRoot            — 抽象类：携带领域事件注册能力
-
-  核心行为：
-  - registerEvent(DomainEvent)         — 注册一个待发布的领域事件
-  - getDomainEvents() → List           — 获取已注册的事件列表
-  - clearDomainEvents()                — 清空事件（发布后调用）
-```
-
-只有实现 `AggregateRoot` 的实体才能拥有 Repository——这通过 `BaseRepository<T extends AggregateRoot>` 的泛型约束在编译期强制。
-
-**DomainEntity 接口：**
-
-```
-DomainEntity<T, ID>
-  - getId() → ID                       — 获取标识
-  - sameIdentityAs(T other) → boolean  — 身份比较
-```
-
-**ValueObject 接口：**
-
-```
-ValueObject<T>
-  - sameValueAs(T other) → boolean     — 值相等比较
-```
-
-推荐使用 Java Record 实现值对象，天然不可变且自动生成 equals/hashCode。
-
-**Identity 接口：**
-
-```
-Identity<T>
-  - value() → T                        — 获取原始值
-```
-
-用于类型安全的 ID 封装。避免 `Long userId` 和 `Long orderId` 被混用——`UserId` 和 `OrderId` 是不同类型。
-
-**DomainEvent 基类：**
-
-```
-DomainEvent
-  - eventId: String                    — 唯一标识（UUID）
-  - occurredAt: Instant                — 发生时间
-  - aggregateId: String                — 触发事件的聚合根 ID
-```
-
-所有业务事件继承此基类。
-
-**Auditable 基类：**
-
-```
-Auditable（JPA @MappedSuperclass）
-  - createdAt: LocalDateTime            — 创建时间（自动填充）
-  - updatedAt: LocalDateTime            — 更新时间（自动填充）
-  - createdBy: String                   — 创建人（可选，配合安全模块）
-  - updatedBy: String                   — 更新人（可选）
-```
-
-**AuditableSoftDeletable 基类：**
-
-```
-AuditableSoftDeletable extends Auditable implements SoftDeletable
-  - deleted: boolean = false            — 软删除标记
-  自动过滤：查询时自动排除 deleted=true 的记录（@SQLRestriction）
-
-**SoftDeletable 接口：**
-```
-SoftDeletable（接口）
-  - markAsDeleted()                     — 标记为已删除（领域方法）
-  - getDeleted() → boolean              — 获取软删除标记值
-```
-
-#### exception — 异常与错误码体系
-
-**错误码设计：**
-
-```
-CodeMessage（接口）
-  - code() → int
-  - message() → String
-
-BaseCodeMessage（枚举，实现 CodeMessage）
-  - SUCCESS(200, "success")
-  - BAD_REQUEST(400, "请求参数错误")
-  - UNAUTHORIZED(401, "未认证")
-  - FORBIDDEN(403, "无权限")
-  - NOT_FOUND(404, "资源不存在")
-  - CONFLICT(409, "资源冲突")
-  - INTERNAL_ERROR(500, "系统内部错误")
-```
-
-`CodeMessage` 是接口而非枚举，这样业务模块可以定义自己的错误码枚举并实现该接口。
-
-**异常体系：**
-
-```
-CartisanException（统一业务异常，携带 CodeMessage）
-  ├── DomainException（领域层异常）
-  └── ApplicationException（应用层异常）
-```
-
-#### stereotype — DDD 架构注解
-
-所有注解使用 `@Retention(RUNTIME)`，支持 ArchUnit 在测试时检查。
-
-```
-@BoundedContext(name, subDomain)        — 标注在 package-info.java 上
-  subDomain: Core / Supporting / Generic
-
-@Aggregate                              — 标注在聚合根类上
-@DomainService                          — 标注在领域服务类上
-@Port(PortType)                         — 标注在端口接口上
-  PortType: Repository / Client / Publisher
-@Adapter(PortType)                      — 标注在适配器实现上
-```
-
-这些注解本身不产生运行时行为，它们是"可执行的架构文档"——人读了知道这个类的角色，ArchUnit 读了可以自动检查分层约束。
-
-#### util — 通用工具
-
-```
-Assertions
-  - requirePresent(Optional<T>) → T           — Optional 断言，不存在则抛 NOT_FOUND
-  - requirePresent(Optional<T>, CodeMessage)   — 自定义错误码
-  - require(boolean, CodeMessage)              — 条件断言
-  - ensure(boolean, String)                    — 后置条件断言
-```
-
----
-
-### 4.3 cartisan-web（Web 层规范）
-
-#### 包结构
-
-```
-com.cartisan.web/
-├── response/             # 统一响应体
-├── exception/            # 全局异常处理
-├── context/              # 请求上下文
-└── config/               # 自动配置
-```
-
-#### 核心组件
-
-**ApiResponse\<T\> — 统一响应体（替代 Map 式响应）：**
-
-```
-ApiResponse<T>（Record）
-  - code: int
-  - message: String
-  - data: T                             — 强类型，泛型安全
-  - requestId: String                   — 全链路追踪 ID
-
-  静态工厂：
-  - ok(T data) → ApiResponse<T>
-  - ok() → ApiResponse<Void>
-  - error(CodeMessage) → ApiResponse<Void>
-
-  优势：
-  - AI 生成 Controller 时，返回类型有编译器校验
-  - 前端可从 OpenAPI 自动生成 TypeScript 类型
-  - 不再需要 (Type) 强制转换
-```
-
-**PageResponse\<T\> — 分页响应体：**
-
-```
-PageResponse<T>
-  - items: List<T>
-  - total: long
-  - page: int
-  - size: int
-```
-
-**GlobalExceptionHandler — 全局异常 → ApiResponse 映射：**
-
-```
-@ControllerAdvice
-处理映射：
-  CartisanException     → ApiResponse.error(exception.codeMessage)
-  ConstraintViolation   → ApiResponse.error(400, 格式化的校验错误)
-  MethodArgumentNotValid → ApiResponse.error(400, 格式化的校验错误)
-  AccessDeniedException → ApiResponse.error(403, "无权限")
-  Exception             → ApiResponse.error(500, "系统内部错误") + 日志记录
-```
-
-业务项目不需要自己处理异常到响应的转换——抛 `CartisanException` 即可，框架自动转为标准格式。
-
-**RequestContext — 请求上下文：**
-
-```
-RequestContext（基于 ThreadLocal / ScopedValue）
-  - getRequestId() → String             — 请求唯一标识
-  - getClientIp() → String              — 客户端 IP
-  
-RequestContextFilter
-  - 在请求进入时初始化 RequestContext
-  - 生成 requestId（或从 Header 读取，支持链路追踪）
-  - 请求结束时清理
-```
-
-**自动配置：**
-
-通过 Spring Boot AutoConfiguration 机制，业务项目引入 `cartisan-web` 依赖后，上述组件自动生效，零配置。
-
----
-
-### 4.4 cartisan-security（安全与多租户基础设施）
-
-#### 包结构
-
-```
-com.cartisan.security/
-├── annotation/           # 权限注解
-├── context/              # 安全/租户上下文
-├── authentication/       # 认证抽象与实现
-└── config/               # 自动配置
+```java
+@ArchIgnore(reason = "Legacy code, will be refactored in v2.0")
+@ArchTest
+static final ArchRule some_rule = ...;
 ```
 
-#### 核心设计：薄抽象层
-
-**原则：** 业务代码使用框架提供的抽象（注解、Context），不直接调用 Sa-Token API。底层实现封装在 cartisan-security 内部，将来可整体替换为 Spring Security。
-
-**权限注解：**
-
-```
-@RequireAuth                            — 需要登录
-@RequireRole("admin")                   — 需要角色
-@RequirePermission("user:create")       — 需要权限
-```
-
-**SecurityContext — 当前用户上下文：**
-
-```
-SecurityContext
-  - getCurrentUserId() → Long
-  - getCurrentUsername() → String
-  - hasRole(String) → boolean
-  - hasPermission(String) → boolean
-  - isAuthenticated() → boolean
-```
-
-**TenantContext — 多租户上下文基础设施：**
-
-```
-TenantContext
-  - getCurrentTenantId() → Long
-  - setCurrentTenantId(Long)
-  - clear()
-
-TenantContextFilter
-  - 从请求 Header（X-Tenant-Id）或 Token 中解析 tenantId
-  - 放入 TenantContext
-  - 请求结束时清理
-
-  注意：兼容 Virtual Threads（ScopedValue 或 ThreadLocal + 复制策略）
-```
-
-**TenantContext 只是基础设施**——它负责"在当前请求上下文中保持 tenantId"。至于"租户怎么创建、怎么审批、数据怎么隔离"——这些是业务项目的事。但业务项目的数据隔离拦截器可以读取 `TenantContext.getCurrentTenantId()` 来实现。
-
-**认证服务抽象：**
-
-```
-AuthenticationService（接口）
-  - login(username, password) → TokenInfo
-  - logout()
-  - getTokenInfo() → TokenInfo
-
-SaTokenAuthenticationService（实现）
-  - 内部调用 Sa-Token API
-```
-
----
-
-### 4.5 cartisan-data-jpa（JPA 写侧封装）
-
-#### 包结构
-
-```
-com.cartisan.data.jpa/
-├── repository/           # Repository 基类
-├── id/                   # 分布式 ID 生成
-├── audit/                # 审计配置
-└── config/               # 自动配置
-```
-
-#### 核心组件
-
-**BaseRepository — Repository 基类：**
-
-```
-BaseRepository<T extends AggregateRoot, ID extends Serializable>
-  extends JpaRepository<T, ID>, JpaSpecificationExecutor<T>
-
-  泛型约束 T extends AggregateRoot 确保：
-  - 只有聚合根才能有 Repository
-  - 非聚合根实体必须通过聚合根访问（DDD 规则的编译期强制）
-```
-
-**BaseRepositoryImpl — 增强实现：**
-
-```
-在 save() 方法中：
-  1. 调用 JPA save
-  2. 如果实体是 AbstractAggregateRoot：
-     a. 获取 domainEvents 列表
-     b. 通过 DomainEventPublisher 逐一发布
-     c. 清空 domainEvents
-  
-  效果：业务代码只需要在领域模型中 registerEvent()，
-  save 时事件自动发布，业务代码不需要手动发布事件。
-```
-
-**TSID — 分布式 ID 生成：**
-
-```
-TsidGenerator
-  - 基于 TSID（Time-Sorted ID）算法
-  - 时间有序 + 全局唯一
-  - 比 Snowflake 更现代：无需配置 workerId/dataCenterId
-  - 生成的 Long 值可排序、可提取时间戳
-```
-
-**审计配置：**
-
-```
-自动配置 Spring Data JPA Auditing：
-  - @CreatedDate / @LastModifiedDate 自动填充时间
-  - @CreatedBy / @LastModifiedBy 自动填充操作人
-    （从 SecurityContext 获取当前用户）
-```
-
----
-
-### 4.6 cartisan-data-query（jOOQ 读侧封装）
-
-#### 包结构
-
-```
-com.cartisan.data.query/
-├── tenant/               # 多租户工具
-└── config/               # jOOQ 自动配置
-```
-
-#### 核心组件
-
-**jOOQ 自动配置：**
-
-```
-- 配置 DSLContext Bean（使用项目的 DataSource）
-- 配置 PostgreSQL 方言
-- 配置 SQL 执行日志（可选）
-- 通过 Spring Boot AutoConfiguration 实现，引入依赖后自动生效
-```
-
-**多租户工具（可选依赖 cartisan-security）：**
-
-```
-JooqTenantSupport
-  - eqTenantId(TableField<?, Long> tenantIdField) → Condition
-
-设计原则：
-  - 按列入参（TableField），任意表都可用
-  - 显式调用，代码意图清晰，调试友好
-  - 无租户上下文时返回 noCondition()，不添加过滤
-
-业务项目使用示例：
-  ctx.selectFrom(USER)
-     .where(eqTenantId(USER.TENANT_ID))
-     .fetch();
-```
-
-**代码生成（在业务项目中完成）：**
-
-```
-本模块不提供独立代码生成 CLI，而是提供：
-  - 标准 build.gradle.kts 配置片段
-  - PostgreSQL 方言与生成策略示例
-  - 文档：generateJooq 依赖 flywayMigrate、生成目录约定等
-
-代码生成必须在业务项目执行，因为真实 schema 来自业务项目的 Flyway 迁移。
-```
-
-**集成测试：**
-
-```
-必测项：
-  - jOOQ DSL 正确查询数据库
-  - 分页计算正确（offset/limit 转换、PageResponse 封装）
-  - DataSource 集成正常
-
-可选增强（CQRS 共存验证）：
-  - JPA 写 → jOOQ 读 数据一致性
-  - 不涉及事务边界、领域事件等复杂场景
-```
-
-**CQRS 使用模式：**
-
-```
-写侧：JPA Repository → 操作聚合根实体
-读侧：jOOQ DSL → 直接查询返回 DTO（不经过领域模型）
-
-好处：
-  - 写侧保持 DDD 模型的纯粹性
-  - 读侧不受领域模型约束，可以灵活组合多表、做聚合查询
-  - jOOQ 的类型安全在编译期捕获 SQL 错误，AI 生成的查询更可靠
-```
-
----
-
-### 4.7 cartisan-event（领域事件基础设施）
-
-#### 包结构
-
-```
-com.cartisan.event/
-├── DomainEventPublisher.java           # 发布器接口
-├── SpringDomainEventPublisher.java     # Spring Events 实现
-└── config/
-```
-
-#### 设计
-
-```
-DomainEventPublisher（接口）
-  - publish(DomainEvent event)
-
-SpringDomainEventPublisher（实现）
-  - 将 DomainEvent 包装为 Spring ApplicationEvent 发布
-  - 同一事务内同步处理（@TransactionalEventListener 可选异步）
-
-扩展路径：
-  后续可增加 MQ 实现（如 KafkaDomainEventPublisher），
-  将事件发布到消息队列供其他服务消费。
-  业务代码不变，只切换 Publisher 实现。
-```
-
-**使用方式（在业务项目中）：**
-
-```
-领域模型中：
-  this.registerEvent(new OrderCreatedEvent(this.id));
-
-Repository save 时自动发布（cartisan-data-jpa 处理）。
-
-消费方：
-  @EventListener
-  void handle(OrderCreatedEvent event) { ... }
-```
-
----
-
-### 4.8 cartisan-test（测试工具箱）
-
-#### 包结构
-
-```
-com.cartisan.test/
-├── archunit/             # ArchUnit 预置规则集
-├── container/            # Testcontainers 预配置
-├── base/                 # 测试基类
-└── fixture/              # 测试辅助工具
-```
-
-#### ArchUnit 预置规则集
-
-cartisan-test 提供一组开箱即用的架构规则，业务项目继承后自动生效：
-
-**DDD 分层规则：**
-- 领域层不依赖基础设施层和应用层
-- 领域层不依赖 Spring 框架
-- Controller 只依赖应用服务层
-- 应用服务不直接操作数据库（通过 Repository）
-
-**命名规范规则：**
-- `@RestController` 类必须以 `Controller` 结尾
-- `@Service` 在 application 包下的类以 `AppService` 结尾
-- Repository 接口以 `Repository` 结尾
-
-**禁止规则：**
-- 禁止 `@Autowired` 字段注入（必须构造函数注入）
-- 禁止 `java.util.Date`（使用 `java.time`）
-- 禁止 `Double`/`Float` 用于金额字段
-
-**业务项目使用方式：**
-
-```
-继承 CartisanArchRules 并指定扫描包：
+**3. 选择性继承**：
 
-@AnalyzeClasses(packages = "com.aieducenter")
-class ArchitectureTest extends CartisanArchRules {
-    // 自动继承所有预置规则
-    // 可追加业务特有规则
+```java
+// 业务项目可以选择性继承规则
+public class ArchitectureTest extends CartisanLayeringRules {
+    // 不继承命名规范规则
+    // 不继承编码规范规则
 }
 ```
 
-#### Testcontainers 预配置
+> **详细迁移指南**参见设计文档《cartisan-boot 文档重构设计方案》第七章。
 
+#### 架构测试使用方法
+
+**继承全部规则**
+
+业务平台通过继承 `CartisanArchRules` 即可获得完整的架构守护：
+
+```java
+@AnalyzeClasses(packages = "com.yourcompany")
+public class ArchitectureTest extends CartisanArchRules {
+    // 完了。所有规则自动生效。
+}
 ```
-PostgresTestContainer
-  - 预配置 PostgreSQL 16 容器
-  - 自动注入 DataSource 属性
 
-RedisTestContainer
-  - 预配置 Redis 容器
-  - 自动注入 Redis 连接属性
+**规则列表**
+
+当前框架提供 **15 条架构规则**：
+
+**分层规则**（5 条）：
+- 领域层不能依赖基础设施层
+- 领域层不能依赖 Spring
+- Controller 只能依赖应用层
+- 应用服务不能直接操作数据库
+- Controller 不应依赖聚合根
+
+**命名规则**（5 条）：
+- Controller 命名规范
+- 应用服务命名规范
+- 领域服务命名规范
+- Repository 命名规范
+- 外部 API Controller 版本号
+
+**禁止规则**（3 条）：
+- 禁止字段注入
+- 禁止使用 java.util.Date
+- 禁止金额字段使用浮点数
+
+**编码规范规则**（2 条）：
+- 领域层枚举必须实现 BaseEnum
+- MapStruct Mapper 必须继承 DomainMapper
+
+**自定义规则**
+
+如需添加平台特有的规则，可以在测试类中追加 `@ArchTest` 字段：
+
+```java
+@AnalyzeClasses(packages = "com.yourcompany")
+public class ArchitectureTest extends CartisanArchRules {
+
+    @ArchTest
+    static final ArchRule myCustomRule = classes()
+        .that()
+        .resideInAPackage("..mypackage..")
+        .should()
+        .onlyDependOnClassesThat()
+        .resideInAnyPackage("..mypackage..", "java..");
+}
 ```
 
-#### 测试基类
+**选择性继承**
 
-```
-IntegrationTestBase
-  - 启动 PostgreSQL + Redis 容器
-  - 加载 Spring 上下文
-  - 每个测试方法后自动清理数据
+如只需部分规则，可只继承特定的规则类：
 
-ApiTestBase
-  - 集成 MockMvc
-  - 提供发送请求和断言响应的便捷方法
+```java
+@AnalyzeClasses(packages = "com.yourcompany")
+public class LayeringTest extends CartisanLayeringRules {
+    // 只继承分层规则
+}
 ```
+
+或者不继承，直接在测试类中声明需要的规则字段。
+
+### 1.3 cartisan-web 模块
+
+| 能力 | 说明 |
+|------|------|
+| **统一响应体** | `ApiResponse<T>`、`PageResponse<T>`、`FieldError` |
+| **全局异常处理** | `@ControllerAdvice` 自动捕获异常并转换为响应 |
+| **请求上下文** | `RequestContext` 存储 requestId、clientIp（ThreadLocal） |
+| **DomainMapper** | MapStruct 批量转换默认方法（List/Set） |
+| **TreeNode** | 树结构数据支持（前端树组件） |
+| **防重提交** | `@PreventResubmit` 注解（基于 Redis） |
+| **请求日志** | `RequestLogFilter` 记录请求信息 |
+| **MDC 集成** | requestId 自动放入 MDC |
+| **Jackson 配置** | 全局序列化配置（Long→String、日期格式等） |
+| **自动响应包装** | `AutoResponseAdvice` 可选功能 |
+| **自动配置** | Spring Boot AutoConfiguration 零配置启用 |
+| **枚举选项** | `EnumOption`、`EnumOptionUtils`、`EnumController` 支持前端获取枚举选项列表 |
+
+**注意事项**：
+
+| 规则 | 说明 |
+|------|------|
+| **WEB-001** | `@PreventResubmit` 需要 Redis 环境，无 Redis 时不生效 |
+| **WEB-002** | `AutoResponseAdvice` 对 String 类型特殊处理，避免二次序列化 |
+| **WEB-003** | `TreeNodeBuilder` 需要 ID 类型转换，使用 Function 映射 |
+| **WEB-004** | `RequestLogFilter` 自动排除 swagger、druid、actuator 路径 |
+| **WEB-005** | MDC requestId 自动清理，请求结束无需手动处理 |
+
+> **更多规则和详细说明**参见 PITFALLS.md。
+
+##### @Condition 注解详细说明
+
+`@Condition` 注解用于标注查询 DTO 字段，指定查询条件类型，配合 JPA Specification 使用。
+
+**ConditionType 枚举（11 种查询类型）**：
+
+| 类型 | SQL 示例 | 说明 |
+|------|----------|------|
+| `EQUAL` | `WHERE field = value` | 相等查询（默认） |
+| `NOT_EQUAL` | `WHERE field != value` | 不相等查询 |
+| `GREATER_EQUAL` | `WHERE field >= value` | 大于等于 |
+| `LESS_EQUAL` | `WHERE field <= value` | 小于等于 |
+| `INNER_LIKE` | `WHERE field LIKE '%value%'` | 中间模糊查询 |
+| `LEFT_LIKE` | `WHERE field LIKE '%value'` | 左模糊查询 |
+| `RIGHT_LIKE` | `WHERE field LIKE 'value%'` | 右模糊查询 |
+| `IN` | `WHERE field IN (value1, value2, ...)` | IN 查询 |
+| `BETWEEN` | `WHERE field BETWEEN value1 AND value2` | 区间查询 |
+
+**使用示例**：
+
+```java
+// 定义查询 DTO
+public record ProductQuery(
+    @Condition(type = ConditionType.INNER_LIKE) String name,
+    @Condition(propName = "stock", type = ConditionType.GREATER_EQUAL) Integer minStock
+) {}
+
+// Repository 使用
+public interface ProductRepository extends BaseRepository<Product, Long> {
+    default List<Product> findByCondition(ProductQuery query) {
+        return findAll(ConditionSpecifications.fromAnnotation(query));
+    }
+}
+```
+
+> **注意**：null 和空字符串自动跳过，不会生成查询条件。
+
+### 1.4 cartisan-data-jpa 模块
+
+| 能力 | 说明 |
+|------|------|
+| **BaseRepository** | 约束 T 必须是 `AggregateRoot<?>`，继承 JPA + Specification |
+| **事件自动发布** | Repository save() 时自动发布领域事件 |
+| **审计支持** | `@CreatedDate`、`@LastModifiedDate`、`@CreatedBy`、`@LastModifiedBy` |
+| **软删除** | `@SQLRestriction` 自动过滤已删除记录 |
+| **分布式 ID** | TSID 生成器（42 位时间戳 + 22 位随机数） |
+| **@Condition 注解** | 简化 JPA Specification 查询（11 种条件类型） |
+| **Druid 集成** | 支持 Druid 数据源，提供 SQL 监控、慢 SQL 记录、防火墙功能 |
+| **枚举增强** | `BaseEnum` + `@EnumConvert` 实现 Enum ↔ Integer 自动转换 |
+
+##### 枚举增强详细说明
+
+**BaseEnum 接口**：业务枚举必须实现 `BaseEnum<T>` 接口，提供 `code`/`name` 映射。
+
+**@EnumConvert 注解**：实体枚举字段使用 `@EnumConvert(枚举类.class)` 注解，自动注册 JPA Converter。
+
+**自动转换**：
+- 数据库 → Java：Integer 自动转换为枚举
+- Java → 数据库：枚举自动转换为 Integer
+- JSON → Java：Integer code 自动反序列化为枚举
+- Java → JSON：枚举自动序列化为 Integer code
+
+> **详细使用示例**参见《限界上下文代码编写规范》3.6.1 节。
+
+**注意事项**：
+
+| 规则 | 说明 |
+|------|------|
+| **DATA-001** | JPA `save()` 后必须用原始 entity 发布事件，而非返回值 |
+| **DATA-002** | Repository 不是 Spring Bean，依赖注入用静态持有者模式 |
+| **DATA-003** | `@MappedSuperclass` 需要添加 `@EntityListeners(AuditingEntityListener.class)` |
+| **DATA-004** | `@SQLRestriction` 在 `@MappedSuperclass` 上可能无法正确继承，子类重复声明才保险 |
+| **DATA-005** | JPQL `@Query` 查询不受 `@SQLRestriction` 影响，需手动添加软删除条件 |
+| **DATA-006** | 自动软删除通过 `instanceof` 判断类型 |
+| **DATA-007** | `@EnumConvert` 用于 BaseEnum 字段，自动注册 `UniversalEnumConverter` |
+| **DATA-008** | BaseEnum Jackson 序列化为 code，反序列化通过 `ContextualDeserializer` |
+
+> **更多规则和详细说明**参见 PITFALLS.md。
+
+### 1.5 cartisan-event 模块
+
+| 能力 | 说明 |
+|------|------|
+| **事件发布器** | `DomainEventPublisher` 接口 + Spring 实现 |
+| **事务监听** | 支持 `@TransactionalEventListener(phase=AFTER_COMMIT)` |
+| **自动配置** | Spring Boot AutoConfiguration 零配置启用 |
+
+### 1.6 cartisan-security 模块
+
+| 能力 | 说明 |
+|------|------|
+| **权限注解** | `@RequireAuth`、`@RequireRole`、`@RequirePermission` |
+| **权限扫描** | `PermissionScanner` 扫描代码中的权限注解，自动采集权限定义 |
+| **MVC 拦截器** | `SecurityInterceptor` 处理鉴权逻辑 |
+| **异常处理** | `SecurityExceptionHandler` 处理 Sa-Token 异常（401/403） |
+| **安全上下文** | `SecurityContext` 获取当前用户信息 |
+| **多租户上下文** | `TenantContext` 获取租户 ID（Header > Session 优先级） |
+| **租户过滤器** | `TenantContextFilter` 解析租户 ID，兼容 Virtual Threads |
+| **认证服务** | `AuthenticationService` 接口 + Sa-Token 实现 |
+| **@CurrentUser 注解** | Controller 方法参数直接注入当前用户 ID |
+| **自动配置** | Spring Boot AutoConfiguration 零配置启用 |
+
+**注意事项**：
+
+| 规则 | 说明 |
+|------|------|
+| **SECURITY-001** | Sa-Token 包路径是 `cn.dev33.satoken`，不是 `cn.dev33.sa-token` |
+| **SECURITY-002** | Sa-Token Session 类是 `SaSession`，不是 `Session` |
+| **SECURITY-003** | TenantContext 使用 `ScopedValue`，先 `isBound()` 再 `get()` |
+| **SECURITY-004** | MockMvc 集成测试需要测试专用 Controller |
+| **SECURITY-005** | `@Component` Bean 名称需显式指定避免冲突 |
+| **SECURITY-006** | `@CurrentUser Long` 未登录时调用 `StpUtil.checkLogin()` 抛异常 |
+
+> **更多规则和详细说明**参见 PITFALLS.md。
+
+### 1.7 cartisan-data-query 模块
+
+| 能力 | 说明 |
+|------|------|
+| **jOOQ 自动配置** | `DSLContext` Bean 自动配置（PostgreSQL 方言、SQL 日志） |
+| **多租户查询** | `JooqTenantSupport.eqTenantId()` 租户过滤条件生成 |
+| **自动配置** | Spring Boot AutoConfiguration 零配置启用 |
+
+**注意事项**：
+
+| 规则 | 说明 |
+|------|------|
+| **QUERY-001** | `generateJooq` 任务必须依赖 `flywayMigrate` |
+| **QUERY-002** | jOOQ 代码生成目录为 `build/generated/jooq` |
+| **QUERY-003** | `JooqTenantSupport` 需要 `cartisan-security` 可选依赖 |
+| **QUERY-004** | jOOQ 版本由 `cartisan-dependencies` BOM 管理 |
+| **QUERY-005** | `@Condition` 注解 BigDecimal 类型有类型推断限制 |
+| **QUERY-006** | `@Condition` 的 `blurry` 属性使用 OR 连接多字段 |
+| **QUERY-007** | `@Condition` 注解 null 和空字符串自动跳过 |
+
+> **更多规则和详细说明**参见 PITFALLS.md。
+
+### 1.8 cartisan-ai 模块
+
+| 能力 | 说明 |
+|------|------|
+| **统一对话模型** | `ChatMessage`、`ChatRequest`、`ChatResponse`、`TokenUsage`、`ChatStreamEvent` |
+| **Provider SPI** | `ModelProvider` 接口，支持同步调用和流式调用 |
+| **Provider Registry** | 按提供商 ID 或模型名称查找 Provider |
+| **OpenAI Provider** | 支持 OpenAI API（同步 + SSE 流式） |
+| **DeepSeek Provider** | 兼容 OpenAI 协议，支持 DeepSeek API |
+| **Anthropic Provider** | 支持 Anthropic Claude API（独立协议） |
+| **SSE 流式工具** | `SseHelper` 将 `Flux<ChatStreamEvent>` 转换为 `SseEmitter` |
+| **ModelUsageListener** | Token 使用量监听扩展点 |
+| **自动配置** | Spring Boot AutoConfiguration 零配置启用 |
+
+**注意事项**：
+
+| 规则 | 说明 |
+|------|------|
+| **AI-001** | `ChatRequest.withStream()` 创建副本，避免修改原请求 |
+| **AI-002** | `ModelProviderRegistry` 的 Listener 异常不中断流程 |
+| **AI-003** | `SseHelper` 的 `usageCallback` 仅在流完成且有 usage 时触发 |
+| **AI-004** | Provider 条件装配基于 `api-key` 配置，无 key 则不创建 Bean |
+
+> **更多规则和详细说明**参见 PITFALLS.md。
 
 ---
 
-### 4.9 cartisan-ai（大模型调用封装）
+## 三、核心概念和 API
 
-#### 包结构
+### 2.1 DDD 基础类型（com.cartisan.core.domain）
 
-```
-com.cartisan.ai/
-├── model/                 # 统一模型（ChatMessage, ChatCompletion 等）
-├── provider/              # Provider SPI + 各厂商实现
-├── sse/                   # SSE 流式输出工具
-└── config/                # 自动配置
-```
+| 接口/类 | 方法 | 说明 |
+|---------|------|------|
+| `AggregateRoot` | - | 聚合根标记接口 |
+| `AbstractAggregateRoot<T>` | `registerEvent(event)` | 注册领域事件 |
+| | `getDomainEvents()` | 获取待发布事件列表 |
+| | `clearDomainEvents()` | 清空事件列表 |
+| `DomainEntity<T, ID>` | `getId()` | 获取实体 ID |
+| | `sameIdentityAs(other)` | 判断是否为同一实体 |
+| `ValueObject<T>` | `sameValueAs(other)` | 判断值是否相等 |
+| `Identity<T>` | `value()` | 获取标识符值 |
+| `DomainEvent` | `eventId()` | 事件 ID（UUID） |
+| | `occurredAt()` | 发生时间 |
+| | `aggregateId()` | 聚合根 ID |
+| | `eventType()` | 事件类型名 |
 
-#### 核心设计
+### 2.1.1 BaseEnum 接口（com.cartisan.core.domain）
 
-**统一对话模型（与具体厂商无关的中间表示）：**
+| 接口/方法 | 说明 |
+|-----------|------|
+| `BaseEnum<T>` | 业务枚举基础接口，包含 code/name 映射 |
+| `getCode()` | 获取枚举的整数值（存储到数据库） |
+| `getName()` | 获取枚举的显示名称 |
+| `parseByCode(Class, Integer)` | 根据 code 查找枚举（找不到返回 null） |
+| `requireByCode(Class, Integer)` | 根据 code 查找枚举（找不到抛异常） |
 
-```
-ChatMessage（Record）
-  - role: Role（SYSTEM / USER / ASSISTANT）
-  - content: String
+### 2.1.2 @EnumConvert 注解（com.cartisan.data.jpa.annotation）
 
-ChatRequest
-  - model: String                          — 模型标识（gpt-4o, claude-sonnet-4 等）
-  - messages: List<ChatMessage>
-  - temperature: Double（可选）
-  - maxTokens: Integer（可选）
-  - stream: boolean
+| 注解 | 属性 | 说明 |
+|------|------|------|
+| `@EnumConvert` | `value` | 指定枚举类型，配合 `UniversalEnumConverter` 使用 |
 
-ChatResponse（Record）
-  - content: String
-  - model: String                          — 实际使用的模型
-  - usage: TokenUsage                      — Token 消耗统计
+### 2.1.3 UniversalEnumConverter（com.cartisan.data.jpa.converter）
 
-TokenUsage（Record）
-  - promptTokens: int
-  - completionTokens: int
-  - totalTokens: int
+| 类 | 方法 | 说明 |
+|----|------|------|
+| `UniversalEnumConverter<E>` | `convertToDatabaseColumn(E)` | Enum → Integer（写数据库） |
+| | `convertToEntityAttribute(Integer)` | Integer → Enum（读数据库） |
 
-ChatStreamEvent（Record）
-  - delta: String                          — 增量内容
-  - finished: boolean
-  - usage: TokenUsage（仅最后一个 event 携带）
-```
+### 2.1.4 BaseEnum 序列化支持（com.cartisan.web.config）
 
-**Provider SPI — 各厂商统一抽象：**
+| 类 | 说明 |
+|----|------|
+| `BaseEnumSerializer` | Jackson 序列化器：BaseEnum → Integer code |
+| `BaseEnumDeserializer` | Jackson 反序列化器：Integer → BaseEnum（使用 ContextualDeserializer） |
+| `BaseEnumConverter` | Spring MVC Converter：String(Integer code) → BaseEnum，支持 `@RequestParam`、`@PathVariable` |
 
-```
-ModelProvider（接口）
-  - id() → String                          — 提供商标识（openai / anthropic / deepseek 等）
-  - supportedModels() → List<String>       — 该 Provider 支持的模型列表
-  - chat(ChatRequest) → ChatResponse       — 同步调用
-  - chatStream(ChatRequest) → Flux<ChatStreamEvent>  — 流式调用
+**BaseEnum 参数绑定**：
 
-内置实现（短期完成核心，其余按需扩展）：
-  OpenAiProvider                           — OpenAI / Azure OpenAI
-  AnthropicProvider                        — Claude 系列
-  DeepSeekProvider                         — DeepSeek
+业务枚举实现 `BaseEnum` 接口后，**零配置**即可在 Controller 中直接使用枚举类型：
 
-扩展方式：
-  业务项目或后续 cartisan 版本实现新的 ModelProvider，
-  通过 Spring SPI（@Component）注册即可自动发现。
-```
+```java
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
 
-**ModelProviderRegistry — Provider 管理：**
+    // GET /api/users?status=1  → status 自动转换为 UserStatus.ACTIVE
+    @GetMapping
+    public List<UserDTO> getUsers(@RequestParam UserStatus status) {
+        return userService.getUsersByStatus(status);
+    }
 
-```
-ModelProviderRegistry
-  - getProvider(providerId) → ModelProvider
-  - getProviderByModel(modelName) → ModelProvider
-  - listProviders() → List<ModelProvider>
-
-  自动扫描所有 ModelProvider Bean，建立 model→provider 映射。
-  业务项目可以通过 model name 直接调用，无需关心具体 Provider。
-```
-
-注意边界：**ModelProviderRegistry 只做"按名查找"**。按成本/质量/负载做智能路由，需要业务规则表，属于业务项目（如 aieducenter-platform 的 AI Gateway Context）。
-
-**SSE 流式工具：**
-
-```
-SseHelper
-  - toSse(Flux<ChatStreamEvent>) → SseEmitter   — 将流式事件转为 Spring SSE
-  - toSse(Flux<ChatStreamEvent>, Consumer<TokenUsage>)  — 流结束时回调 usage
-
-  封装 SSE 连接管理：超时、异常、客户端断开等边界情况。
-  业务项目的 Controller 只需一行即可返回流式响应。
+    // PUT /api/users/123?status=0  → status 自动转换为 UserStatus.DISABLED
+    @PutMapping("/{id}")
+    public void updateUserStatus(
+            @PathVariable Long id,
+            @RequestParam UserStatus status) {
+        userService.updateStatus(id, status);
+    }
+}
 ```
 
-**自动配置：**
+**特性**：
+- ✅ **零配置**：引入 `cartisan-web` 依赖即生效
+- ✅ **只支持 Integer code**：如 `?status=1`，不支持 name 格式（如 `?status=ACTIVE`）
+- ✅ **null 处理**：null/空字符串返回 null，由 `@NotNull` 等校验处理
+- ✅ **错误处理**：无效 code 返回 400 Bad Request（而非 404）
 
-```
-cartisan:
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY}
-      base-url: https://api.openai.com/v1     # 可指向代理
-    anthropic:
-      api-key: ${ANTHROPIC_API_KEY}
-    deepseek:
-      api-key: ${DEEPSEEK_API_KEY}
+**设计取舍**：
+1. **只支持 code 不支持 name**：API 传输应该是稳定的 code 值，而不是可能变化的 name
+2. **null 返回 null**：Converter 负责类型转换，校验由业务层注解处理（职责分离）
+3. **自动注册**：通过 `CartisanWebAutoConfiguration` 实现 `WebMvcConfigurer` 自动注册
 
-各 Provider 条件装配：配了 api-key 才创建对应 Provider Bean。
+### 2.2 异常体系（com.cartisan.core.exception）
+
+| 类 | 说明 |
+|----|------|
+| `CodeMessage` | 错误码接口：`code()`, `message()`, `httpStatus()` |
+| `BaseCodeMessage` | HTTP 规范错误码枚举（11 个）+ 通用业务错误码（4 个） |
+| `CartisanException` | 异常基类，支持参数化消息 |
+| `DomainException` | 领域层异常（业务规则违反） |
+| `ApplicationException` | 应用层异常（用例/流程问题） |
+
+### 2.3 架构注解（com.cartisan.core.stereotype）
+
+| 注解 | 目标 | 用途 |
+|------|------|------|
+| `@BoundedContext` | PACKAGE | 标注限界上下文 |
+| `@Aggregate` | TYPE | 标注聚合根 |
+| `@DomainService` | TYPE | 标注领域服务 |
+| `@Port(PortType)` | TYPE | 标注端口接口 |
+| `@Adapter(PortType)` | TYPE | 标注适配器实现 |
+
+**PortType 类型**：
+
+| 类型 | 用途 | 示例 |
+|------|------|------|
+| `REPOSITORY` | 仓储端口：聚合根持久化 | `OrderRepository` |
+| `CLIENT` | 客户端端口：调用外部服务 | `PasswordEncoderPort`、`SmsSenderPort` |
+| `PUBLISHER` | 发布者端口：发布领域事件 | `DomainEventPublisher` |
+
+### 2.3.1 Repository 模式 vs Service Port 模式
+
+| 特性 | Repository 模式 | Service Port 模式 |
+|------|-----------------|-------------------|
+| **用途** | 数据持久化 | 外部服务调用 |
+| **PortType** | `PortType.REPOSITORY` | `PortType.CLIENT` |
+| **操作** | CRUD 操作 | 调用/发送/查询等 |
+| **返回值** | 聚合根/值对象 | 响应 DTO 或基础类型 |
+| **示例** | `AdminUserRepository` | `SmsSenderPort`、`PaymentGatewayPort` |
+
+**Service Port 适用场景**：
+- **跨限界上下文调用**：如订单上下文调用库存上下文
+- **外部 API 调用**：如短信服务、支付网关、OSS 存储
+- **中间件交互**：如消息队列、缓存、搜索引擎
+
+**不适合 Service Port 的场景**：
+- 纯工具类（如 BCryptPasswordEncoder、UUID 生成器）- 直接注入使用
+- 领域业务逻辑 - 应在聚合根或领域服务中
+- 应用服务编排 - 应在 Application Service 中
+
+### 2.4 断言工具（com.cartisan.core.util.Assertions）
+
+| 方法 | 异常类型 | 用途 |
+|------|---------|------|
+| `require(condition, codeMessage, args)` | `DomainException` | 前置条件断言 |
+| `ensure(condition, message)` | `IllegalStateException` | 后置条件断言 |
+| `requirePresent(optional)` | `DomainException` | Optional 存在性断言（快捷版） |
+| `requirePresent(optional, codeMessage)` | `DomainException` | Optional 存在性断言（完整版） |
+
+### 2.5 ArchUnit 规则（com.cartisan.test.archunit）
+
+| 类 | 规则数 | 说明 |
+|----|--------|------|
+| `CartisanLayeringRules` | 5 | DDD 分层规则（新增：Controller 不应依赖聚合根） |
+| `CartisanNamingRules` | 5 | 命名规范规则（新增：外部 API Controller 版本号） |
+| `CartisanProhibitionRules` | 3 | 禁止规则 |
+| `CartisanCodingStandardsRules` | 1 | 编码规范规则（新增：领域层枚举实现 BaseEnum） |
+| `CartisanArchRules` | 14 | 聚合全部规则 |
+
+### 2.6 测试基类（com.cartisan.test.base）
+
+| 类 | 继承关系 | 提供能力 |
+|----|----------|----------|
+| `IntegrationTestBase` | - | JdbcTemplate + 环境配置 |
+| `ApiTestBase` | - | MockMvc |
+
+### 2.7 环境检查工具（com.cartisan.test.base）
+
+| 类 | 方法 | 说明 |
+|----|------|------|
+| `TestEnvironmentChecker` | `checkPostgreSQL(...)` | 检查 PostgreSQL 连接 |
+| | `checkRedis(...)` | 检查 Redis 连接 |
+| | `checkFromEnvironment()` | 从环境变量读取配置并检查 |
+| `TestEnvironmentCheckerMain` | `main(...)` | 可直接运行的环境检查工具 |
+
+### 2.8 Fixture 工具（com.cartisan.test.fixture）
+
+| 类 | 方法示例 | 说明 |
+|----|----------|------|
+| `FixtureStrings` | `randomString()`, `randomEmail()` | 字符串随机生成 |
+| `FixtureNumbers` | `randomInt()`, `randomAmount()` | 数字/金额随机生成 |
+| `FixtureDates` | `pastDays(7)`, `futureDays(3)` | 日期随机生成 |
+| `FixtureBuilder<T>` | `of(clazz).with(name, value).build()` | 对象构建器 |
+
+### 2.9 Web 响应体（com.cartisan.web.response）
+
+| 类/Record | 方法/字段 | 说明 |
+|-----------|----------|------|
+| `ApiResponse<T>` | `code`, `message`, `data`, `requestId`, `errors` | 统一响应字段 |
+| | `ok(T data)` | 成功响应（带数据） |
+| | `ok()` | 成功响应（无数据） |
+| | `error(CodeMessage)` | 错误响应（枚举） |
+| | `error(CodeMessage, Object...)` | 错误响应（参数化） |
+| | `error(int, String)` | 错误响应（自定义） |
+| | `validationError(List<FieldError>)` | 校验失败响应 |
+| `PageResponse<T>` | `items`, `total`, `page`, `size` | 分页响应字段 |
+| `FieldError` | `field`, `message`, `errorCode` | 字段级错误 |
+
+### 2.10 请求上下文（com.cartisan.web.context）
+
+| 类 | 方法 | 说明 |
+|----|------|------|
+| `RequestContext` | `getRequestId()` | 获取请求追踪 ID（可能为 null） |
+| | `getClientIp()` | 获取客户端 IP（可能为 null） |
+| `RequestContextFilter` | - | 自动初始化 RequestContext（@Component） |
+
+### 2.11 BaseRepository（com.cartisan.data.jpa.repository）
+
+| 接口 | 约束 | 说明 |
+|----|------|------|
+| `BaseRepository<T, ID>` | `T extends AggregateRoot<?>` | 继承 JpaRepository + JpaSpecificationExecutor |
+| | `ID extends Serializable` | ID 类型约束 |
+| `BaseRepositoryImpl` | 重写 `save()` | JPA save 后自动发布领域事件 |
+
+### 2.12 审计与软删除（com.cartisan.data.jpa.domain）
+
+| 类/接口 | 字段/注解/方法 | 说明 |
+|----|----------|------|
+| `Auditable` | `@CreatedDate createdAt` | 创建时间（LocalDateTime，自动填充） |
+| | `@LastModifiedDate lastModifiedDate` | 修改时间（LocalDateTime，自动更新） |
+| | `@CreatedBy createdBy` | 创建人ID（Long，需 AuditorAware） |
+| | `@LastModifiedBy lastModifiedBy` | 修改人ID（Long，需 AuditorAware） |
+| `AuditableSoftDeletable` | 继承 `Auditable`，实现 `SoftDeletable` | 可审计且可软删除实体基类 |
+| | `boolean deleted` | 软删除标记 |
+| | `@SQLRestriction("deleted = false")` | 查询自动过滤 |
+| | `markAsDeleted()` | 标记为已删除（领域方法），供 Repository.delete() 调用 |
+| `SoftDeletable` | `markAsDeleted()` | 软删除接口方法 |
+| | `getDeleted()` | 获取软删除标记值 |
+
+**自动软删除支持**：
+
+| 方法 | 行为 |
+|------|------|
+| `BaseRepositoryImpl.delete(T)` | 实现 `SoftDeletable` 接口的实体调用 `markAsDeleted()` + `save()`，其他实体物理删除 |
+| `BaseRepositoryImpl.deleteById(ID)` | 先查找实体，再调用 `delete()` |
+| `BaseRepositoryImpl.deleteAll(Iterable)` | 混合处理：软删除实体 UPDATE，其他 DELETE |
+| `BaseRepositoryImpl.deleteAll()` | 软删除实体批量 UPDATE，其他物理删除 |
+| `BaseRepositoryImpl.deleteAllById()` | 批量按 ID 删除 |
+
+**重要设计取舍**：
+- 软删除复用 `save()` 的事件发布逻辑
+- 通过 `JpaRepositoryFactoryEntryCustomizer` 全局配置，业务端无需手动指定 `repositoryBaseClass`
+- JPQL `@Query` 查询不受 `@SQLRestriction` 影响，需手动添加软删除条件（见 DATA-005）
+
+### 2.13 TSID 生成器（com.cartisan.data.jpa.id）
+
+| 类 | 方法 | 说明 |
+|----|------|------|
+| `TsidGenerator` | `generate()` | 生成时间排序的全局唯一 Long ID |
+| | `toInstant(long tsid)` | 从 TSID 提取生成时间 |
+| | `newInstance()` | 创建默认实例（ThreadLocalRandom） |
+| | `withRandom(Random)` | 测试用：指定随机数源 |
+
+### 2.14 领域事件发布器（com.cartisan.event）
+
+| 接口/类 | 方法 | 说明 |
+|---------|------|------|
+| `DomainEventPublisher` | `publish(DomainEvent)` | 发布领域事件 |
+| `SpringDomainEventPublisher` | - | 委托给 Spring ApplicationEventPublisher |
+
+### 2.15 权限注解（com.cartisan.security.annotation）
+
+| 注解 | 目标 | 说明 |
+|------|------|------|
+| `@RequireAuth` | TYPE/METHOD | 需要登录 |
+| `@RequireRole` | TYPE/METHOD | 需要指定角色（OR 逻辑） |
+| `@RequirePermission` | METHOD | 需要指定权限（单值，支持 name 和 scope 属性） |
+
+**@RequirePermission 属性说明：**
+- `value`: 权限 code，格式 `{context}:{module}:{action}`
+- `name`: 权限显示名称（可选，空字符串时使用 code）
+- `scope`: 权限作用域（可选，空字符串时转为 null）
+
+### 2.16 SecurityContext（com.cartisan.security.context）
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getCurrentUserId()` | `Long` / `null` | 获取当前用户 ID |
+| `getCurrentUsername()` | `String` / `null` | 获取当前用户名（登录 ID） |
+| `hasRole(String role)` | `boolean` | 判断是否拥有角色 |
+| `hasPermission(String permission)` | `boolean` | 判断是否拥有权限 |
+| `isAuthenticated()` | `boolean` | 判断是否已登录 |
+
+### 2.17 TenantContext（com.cartisan.security.context）
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getCurrentTenantId()` | `Long` / `null` | 获取当前租户 ID |
+| `hasTenant()` | `boolean` | 判断是否有租户上下文 |
+| `requireTenant()` | `Long` | 获取租户 ID，不存在抛异常 |
+
+**存储机制**：使用 `ScopedValue`（Java 21+），兼容 Virtual Threads，作用域结束自动清理。
+
+### 2.18 AuthenticationService（com.cartisan.security.authentication）
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `AuthenticationService` | `login(Long loginId)` | 创建登录会话 |
+| | `logout()` | 销毁当前会话 |
+| | `getTokenInfo()` | 获取当前 Token 信息 |
+| | `authenticate(username, password)` | 业务层扩展点（默认抛异常） |
+
+### 2.19 TokenInfo（com.cartisan.security.authentication）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `token` | `String` | Token 值 |
+| `loginId` | `Long` | 用户标识 |
+| `expireTime` | `Instant` | 过期时间 |
+
+### 2.20 异常处理器（com.cartisan.security.config）
+
+| 异常类型 | HTTP 状态码 | 响应消息 |
+|---------|------------|---------|
+| `NotLoginException` | 401 UNAUTHORIZED | 未登录或登录已过期 |
+| `NotRoleException` | 403 FORBIDDEN | 无权限访问 |
+| `NotPermissionException` | 403 FORBIDDEN | 无权限访问 |
+
+### 2.21 配置属性（com.cartisan.security.config.properties）
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `cartisan.security.interceptor.path-patterns` | `List<String>` | `["/**"]` | 拦截器生效路径 |
+| `cartisan.security.interceptor.exclude-path-patterns` | `List<String>` | `["/error", "/actuator/**"]` | 排除路径 |
+
+### 2.22 @CurrentUser 注解（com.cartisan.security.annotation）
+
+| 注解/类 | 目标/方法 | 说明 |
+|---------|----------|------|
+| `@CurrentUser` | PARAMETER | Controller 方法参数注解，注入当前用户 ID |
+| `CurrentUserMethodArgumentResolver` | `supportsParameter()` | 判断参数是否支持解析（有注解 + 类型为 Long 或 Optional&lt;Long&gt;） |
+| | `resolveArgument()` | 从 SecurityContext 获取用户 ID 并注入 |
+
+**支持的参数类型**：
+- `@CurrentUser Long userId` — 必需登录，未登录抛 `NotLoginException`（401）
+- `@CurrentUser Optional<Long> userId` — 可选登录，未登录返回 `Optional.empty()`
+
+**执行时序**：Filter → Interceptor（@RequireAuth 检查）→ 参数解析（@CurrentUser）→ Controller
+
+### 2.23 PermissionScanner（com.cartisan.security.permission）
+
+| 接口/类 | 方法 | 说明 |
+|---------|------|------|
+| `PermissionScanner` | `scanAll()` → `List<Permission>` | 扫描全部权限 |
+| | `scanByScope(String scope)` → `List<Permission>` | 按作用域扫描权限（null = 无作用域） |
+| `Permission` | `code()` → `String` | 权限 code |
+| | `name()` → `String` | 显示名称 |
+| | `scope()` → `String` | 作用域（可能为 null） |
+| `DefaultPermissionScanner` | - | 默认实现，自动注册为 Spring Bean |
+
+**使用示例：**
+
+```java
+@Service
+public class PermissionInitService {
+    private final PermissionScanner permissionScanner;
+
+    public void initPermissions() {
+        // 扫描指定作用域
+        List<Permission> adminPermissions = permissionScanner.scanByScope("admin");
+
+        // 扫描全部权限
+        List<Permission> allPermissions = permissionScanner.scanAll();
+
+        // 同步到权限管理表
+        permissionRepository.syncPermissions(allPermissions);
+    }
+}
 ```
+
+### 2.24 DSLContext 自动配置（com.cartisan.data.query.config）
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `cartisan.data-query.jooq.sql-logging` | `boolean` | `false` | 是否启用 SQL 执行日志 |
+
+**自动配置类**：`JooqAutoConfiguration`
+- 条件：存在 `DataSource` 且无用户自定义 `DSLContext`
+- 方言：固定为 `SQLDialect.POSTGRES`
+- Bean：可被用户自定义配置覆盖
+
+### 2.25 JooqTenantSupport（com.cartisan.data.query.support）
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `eqTenantId(TableField<?, Long>)` | `Condition` | 生成租户等值过滤条件 |
+
+**行为**：
+- 有租户上下文时：返回 `tenantIdField.eq(tenantId)`
+- 无租户上下文时：返回 `DSL.noCondition()`（不添加过滤）
+
+**依赖说明**：需要 `cartisan-security` 模块（可选依赖）
+
+### 2.26 AI 对话模型（com.cartisan.ai.model）
+
+| 类/Record | 字段/方法 | 说明 |
+|----------|----------|------|
+| `Role` | `SYSTEM / USER / ASSISTANT` | 消息角色枚举 |
+| `ChatMessage` | `role()`, `content()` | 单条对话消息 |
+| `ChatRequest` | `model`, `messages`, `temperature`, `maxTokens`, `stream` | 对话请求 |
+| | `withStream(boolean)` | 创建流式/非流式请求副本 |
+| `ChatResponse` | `content()`, `model()`, `usage()` | 对话响应 |
+| `TokenUsage` | `promptTokens()`, `completionTokens()`, `totalTokens()` | Token 使用统计 |
+| `ChatStreamEvent` | `delta()`, `finished()`, `usage()` | 流式事件 |
+
+### 2.27 ModelProvider SPI（com.cartisan.ai.provider）
+
+| 接口/类 | 方法 | 说明 |
+|---------|------|------|
+| `ModelProvider` | `id()` → `String` | 提供商标识（openai/anthropic/deepseek） |
+| | `supportedModels()` → `List<String>` | 支持的模型列表 |
+| | `chat(ChatRequest)` → `ChatResponse` | 同步调用 |
+| | `chatStream(ChatRequest)` → `Flux<ChatStreamEvent>` | 流式调用 |
+| `ModelProviderRegistry` | `getProvider(providerId)` → `ModelProvider` | 按 ID 查找 Provider |
+| | `getProviderByModel(modelName)` → `ModelProvider` | 按模型名查找 Provider |
+| | `listProviders()` → `List<ModelProvider>` | 列出所有 Provider |
+| | `chat(providerId, request)` → `ChatResponse` | 通过 Registry 调用 |
+| | `chatStream(providerId, request)` → `Flux<ChatStreamEvent>` | 通过 Registry 流式调用 |
+| `ModelUsageListener` | `onUsage(providerId, model, usage)` | Token 使用监听器（扩展点） |
+
+### 2.28 SSE 流式工具（com.cartisan.ai.sse）
+
+| 类 | 方法 | 说明 |
+|----|------|------|
+| `SseHelper` | `toSse(Flux<ChatStreamEvent>)` → `SseEmitter` | 转换为 SSE（无回调） |
+| | `toSse(Flux<ChatStreamEvent>, Consumer<TokenUsage>)` → `SseEmitter` | 转换为 SSE（usage 回调） |
+| `SseProperties` | `timeout`（默认 30 秒） | SSE 超时配置 |
+
+### 2.29 RedisKey 工具（com.cartisan.core.util.RedisKey）
+
+| 类/方法 | 说明 |
+|---------|------|
+| `RedisKey.of(prefix, expireSeconds)` | 创建带过期时间的 Key |
+| `RedisKey.permanent(prefix)` | 创建永不过期的 Key |
+| `key(suffix)` | 生成完整的 Redis Key（格式：`prefix:suffix`） |
+| `expireSeconds()` | 获取过期时间（秒），0 表示永不过期 |
+| `isPermanent()` | 判断是否为永久 Key |
+
+### 2.30 DomainMapper（com.cartisan.web.mapper）
+
+| 接口/方法 | 说明 |
+|----------|------|
+| `DomainMapper<S, T>` | MapStruct 转换器基接口 |
+| `convert(S source)` | 转换单个对象（需由 MapStruct 生成） |
+| `convertList(List<S> sources)` | 批量转换 List（默认方法） |
+| `convertSet(Set<S> sources)` | 批量转换 Set（默认方法） |
+
+**注意**：`convertList` 和 `convertSet` 在输入为 null 或空时返回空集合。
+
+### 2.31 TreeNode（com.cartisan.web.support）
+
+| 类/方法 | 说明 |
+|---------|------|
+| `TreeNode<T>` | 树节点泛型类 |
+| `TreeNode(id, name, parentId)` | 基本构造 |
+| `TreeNode(id, name, parentId, children)` | 完整构造 |
+| `TreeNodeBuilder.build(nodes, idMapper, parentIdMapper, rootParentId)` | 构建树形结构 |
+
+### 2.32 @PreventResubmit（com.cartisan.web.resubmit）
+
+| 注解/类 | 属性/方法 | 说明 |
+|---------|----------|------|
+| `@PreventResubmit` | `delaySeconds`（默认 20） | 防重提交时间窗口（秒） |
+| | `prefix`（默认 ""） | Redis key 前缀 |
+| `ResubmitLock` | `lock(key, delaySeconds)` | 基于 Redis 的分布式锁 |
+| `ResubmitAspect` | - | AOP 切面，拦截注解方法 |
+
+### 2.33 Jackson 全局配置（com.cartisan.web.config）
+
+| 配置项 | 说明 |
+|--------|------|
+| `Long → String` | 解决 JavaScript Long 精度问题 |
+| `LocalDateTime → ISO 8601` | 标准日期时间格式 |
+| `BigDecimal → 禁止科学计数法` | 保持金额精度 |
+| `Enum → 字符串` | 枚举值序列化为字符串 |
+| `忽略未知属性` | 反序列化时忽略未知字段 |
+
+### 2.34 RequestLogFilter（com.cartisan.web.filter）
+
+| 类 | 说明 |
+|----|------|
+| `RequestLogFilter` | 记录 HTTP 请求基本信息（requestId、IP、方法、URI） |
+
+**排除路径**：`/swagger-ui`、`/v3/api-docs`、`/swagger-resources`、`/druid`、`/actuator`
+
+### 2.35 @Condition 注解（com.cartisan.data.jpa.specification）
+
+| 注解/枚举 | 说明 |
+|----------|------|
+| `@Condition` | 查询条件注解（propName、type、blurry） |
+| `ConditionType` | 11 种查询类型：EQUAL、NOT_EQUAL、GREATER、GREATER_EQUAL、LESS、LESS_EQUAL、INNER_LIKE、LEFT_LIKE、RIGHT_LIKE、IN、BETWEEN |
+| `ConditionSpecifications.fromAnnotation(query)` | 从注解生成 Specification |
+
+**详细使用指南**：[condition-annotation.md](condition-annotation.md)
+
+### 2.36 枚举选项支持（com.cartisan.web.response）
+
+| 类/方法 | 说明 |
+|--------|------|
+| `EnumOption` | 枚举选项 DTO，包含 code 和 name 字段 |
+| `EnumOptionUtils.fromEnum(Class)` | 将枚举类转换为选项列表 |
+| `EnumOptionUtils.fromEnumGeneric(Class)` | 将枚举类转换为选项列表（通配符版本） |
+| `EnumOptionUtils.fromEnums(E...)` | 将枚举数组转换为选项列表 |
+| `EnumRegistry` | 枚举注册表，维护枚举类名到 Class 的映射 |
+| `EnumController` | 默认 Controller，提供 `/api/enums/{enumName}` 和 `/api/enums/batch` 端点 |
+| `EnumControllerBase` | Controller 基类，可继承自定义 |
+
+**配置属性**：
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `cartisan.web.enum-controller.enabled` | `boolean` | `true` | 是否启用默认 Controller |
+| `cartisan.web.enum-controller.path` | `String` | `/api/enums` | Controller 路径 |
+| `cartisan.web.enum-controller.scan-packages` | `String[]` | - | 要扫描的包列表（默认：com.cartisan, com.example） |
+
+### 2.36 AutoResponseAdvice（com.cartisan.web.response）
+
+| 配置项 | 说明 |
+|--------|------|
+| `cartisan.web.auto-response.enabled` | 启用自动响应包装（默认 false） |
+
+**排除路径**：`/swagger-ui`、`/v3/api-docs`、`/actuator`
+
+**详细使用指南**：[optional-features.md](optional-features.md)
 
 ---
 
-### 4.10 cartisan-storage（文件存储封装）
+## 四、使用示例
 
-#### 包结构
+### 3.1 定义聚合根
 
-```
-com.cartisan.storage/
-├── StorageService.java                    # 存储 SPI
-├── StorageObject.java                     # 存储对象模型
-├── provider/                              # 各厂商适配器
-│   ├── AliyunOssStorageProvider.java
-│   ├── MinioStorageProvider.java
-│   └── LocalStorageProvider.java          # 开发环境用本地存储
-└── config/                                # 自动配置
-```
-
-#### 核心设计
-
-```
-StorageObject（Record）
-  - key: String                            — 存储路径/key
-  - url: String                            — 访问地址
-  - size: long                             — 文件大小
-  - contentType: String                    — MIME 类型
-
-StorageService（接口）
-  - upload(key, InputStream, contentType) → StorageObject
-  - download(key) → InputStream
-  - delete(key) → void
-  - getUrl(key) → String                   — 生成访问 URL（支持预签名）
-  - exists(key) → boolean
-
-内置实现：
-  AliyunOssStorageProvider                 — 阿里云 OSS
-  MinioStorageProvider                     — MinIO / S3 兼容
-  LocalStorageProvider                     — 本地文件系统（开发/测试用）
-```
-
-**自动配置：**
-
-```
-cartisan:
-  storage:
-    provider: aliyun-oss                   # aliyun-oss / minio / local
-    aliyun-oss:
-      endpoint: oss-cn-hangzhou.aliyuncs.com
-      access-key-id: ${OSS_ACCESS_KEY}
-      access-key-secret: ${OSS_ACCESS_SECRET}
-      bucket-name: my-bucket
-    minio:
-      endpoint: http://localhost:9000
-      access-key: ${MINIO_ACCESS_KEY}
-      secret-key: ${MINIO_SECRET_KEY}
-      bucket-name: my-bucket
-    local:
-      root-path: /data/storage
-
-条件装配：根据 provider 配置创建对应实现 Bean。
-```
-
----
-
-### 4.11 cartisan-payment（支付对接封装）
-
-#### 包结构
-
-```
-com.cartisan.payment/
-├── PaymentService.java                    # 支付 SPI
-├── model/                                 # 统一模型
-│   ├── PaymentRequest.java
-│   ├── PaymentResult.java
-│   └── RefundRequest.java
-├── callback/                              # 回调处理
-│   └── PaymentCallbackHandler.java
-├── provider/                              # 各渠道适配器
-│   ├── WechatPayProvider.java
-│   └── AlipayProvider.java
-└── config/                                # 自动配置
-```
-
-#### 核心设计
-
-```
-PaymentRequest（Record）
-  - outTradeNo: String                     — 业务方订单号
-  - amount: BigDecimal                     — 金额（元）
-  - subject: String                        — 商品描述
-  - channel: PayChannel                    — 支付渠道（WECHAT / ALIPAY）
-  - notifyUrl: String                      — 回调地址
-
-PaymentResult（Record）
-  - outTradeNo: String
-  - transactionId: String                  — 支付平台交易号
-  - channel: PayChannel
-  - status: PayStatus                      — PENDING / SUCCESS / FAILED
-  - paidAt: Instant
-
-RefundRequest（Record）
-  - outTradeNo: String
-  - refundNo: String
-  - amount: BigDecimal
-  - reason: String
-
-PaymentService（接口）
-  - createPayment(PaymentRequest) → PaymentResult
-  - queryPayment(outTradeNo) → PaymentResult
-  - refund(RefundRequest) → RefundResult
-  - verifyCallback(headers, body) → PaymentResult  — 验签 + 解析回调
-
-内置实现：
-  WechatPayProvider                        — 微信支付（V3 API）
-  AlipayProvider                           — 支付宝
-```
-
-注意边界：PaymentService 只负责**技术层面的下单/回调/验签**。至于"充值套餐"、"虚拟币兑换"、"流水记录"——这些需要数据库表，属于业务项目。
-
-**自动配置：**
-
-```
-cartisan:
-  payment:
-    wechat:
-      app-id: ${WECHAT_APP_ID}
-      mch-id: ${WECHAT_MCH_ID}
-      private-key-path: classpath:wechat/apiclient_key.pem
-      certificate-serial-no: ${WECHAT_CERT_SERIAL}
-      api-v3-key: ${WECHAT_API_V3_KEY}
-    alipay:
-      app-id: ${ALIPAY_APP_ID}
-      private-key: ${ALIPAY_PRIVATE_KEY}
-      alipay-public-key: ${ALIPAY_PUBLIC_KEY}
-
-条件装配：配了对应渠道参数才创建 Provider Bean。
-```
-
----
-
-### 4.12 cartisan-ai-agent（预留，暂不实现）
-
-**预留理由：** Agent 框架（LangChain4j、Spring AI Agent、AgentScope）当前迭代速度极快，API 频繁 breaking change，不满足收纳准则第 3 条。
-
-**预计纳入时机：** 2026 年底至 2027 年初，待主流框架发布稳定大版本。
-
-**预期能力方向：**
-- Agent 定义与编排 SPI
-- Tool/Function Calling 注册与分发
-- Memory / Context 管理抽象
-- Multi-Agent 协作基础设施
-
-**当前策略：** 在 aieducenter-platform 中直接使用 LangChain4j / Spring AI，积累实践经验。待 API 稳定后，提取通用部分到 cartisan-ai-agent。
-
----
-
-## 五、模块间依赖关系
-
-```
-cartisan-core（零外部依赖，纯 Java）
-    │
-    ├──→ cartisan-web        （core + Spring MVC）
-    ├──→ cartisan-data-jpa   （core + Spring Data JPA）
-    ├──→ cartisan-event      （core + Spring Context）
-    ├──→ cartisan-ai         （core + WebFlux/Reactor for SSE）
-    └──→ cartisan-test       （core + JUnit 5 + ArchUnit + Testcontainers）
-
-cartisan-security            （core + web + Sa-Token）
-
-cartisan-data-query          （jOOQ，依赖 web 复用 PageResponse；可独立使用，配合 web 时更顺畅）
-
-cartisan-storage             （Spring Boot Starter，不依赖 core）
-
-cartisan-payment             （Spring Boot Starter，不依赖 core）
-
-cartisan-data-jpa ──→ cartisan-event（save 时发布领域事件）
-cartisan-data-query ──→ cartisan-web（复用 PageResponse，读侧与写侧分页 API 一致）
-```
-
-**依赖方向铁律：**
-- core 不依赖任何其他 cartisan 模块
-- core 不依赖 Spring
-- web、data-jpa、event、ai、test 依赖 core
-- security 依赖 core + web
-- data-query 依赖 web（复用 PageResponse，读侧与写侧分页 API 一致）
-- storage、payment 是独立 Starter，仅依赖 Spring Boot
-- 任何模块不产生循环依赖
-
----
-
-## 六、业务项目接入方式
-
-### 6.1 开发期：Gradle Composite Build
-
-在框架和业务项目并行开发期间，使用 Composite Build 实现本地联调：
-
-```
-// aieducenter-platform/settings.gradle.kts
-includeBuild("../cartisan-boot")
-```
-
-修改 cartisan-boot 后，业务项目立即可见，无需发布。
-
-### 6.2 稳定期：私有 Maven 仓库
-
-框架发布稳定版本后，业务项目通过 BOM 引入：
-
-```
-// aieducenter-platform/build.gradle.kts
-dependencyManagement {
-    imports {
-        mavenBom("com.cartisan:cartisan-dependencies:1.0.0")
+```java
+// ID 定义（推荐使用 Record）
+public record OrderId(String value) implements Identity<String> {
+    public OrderId {
+        Objects.requireNonNull(value, "orderId cannot be null");
     }
 }
 
-dependencies {
-    implementation("com.cartisan:cartisan-core")
-    implementation("com.cartisan:cartisan-web")
-    implementation("com.cartisan:cartisan-security")
-    implementation("com.cartisan:cartisan-data-jpa")
-    implementation("com.cartisan:cartisan-data-query")
-    implementation("com.cartisan:cartisan-event")
-    implementation("com.cartisan:cartisan-ai")         // 按需
-    implementation("com.cartisan:cartisan-storage")    // 按需
-    implementation("com.cartisan:cartisan-payment")    // 按需
-    testImplementation("com.cartisan:cartisan-test")
+// 领域事件
+public class OrderCreatedEvent extends DomainEvent {
+    private final String customerId;
+    private final BigDecimal totalAmount;
+
+    public OrderCreatedEvent(String orderId, String customerId, BigDecimal totalAmount) {
+        super(orderId);
+        this.customerId = customerId;
+        this.totalAmount = totalAmount;
+    }
+}
+
+// 聚合根
+@Aggregate
+public class Order extends AbstractAggregateRoot<Order> implements AggregateRoot {
+    private OrderId id;
+    private OrderStatus status;
+    private List<OrderItem> items;
+
+    public Order(String customerId, List<OrderItem> items) {
+        this.id = new OrderId(UUID.randomUUID().toString());
+        this.status = OrderStatus.PENDING;
+        this.items = new ArrayList<>(items);
+
+        BigDecimal totalAmount = calculateTotal();
+        registerEvent(new OrderCreatedEvent(id.value(), customerId, totalAmount));
+    }
+
+    public void ship() {
+        Assertions.require(
+            this.status != OrderStatus.SHIPPED,
+            OrderError.CANNOT_SHIP_SHIPPED
+        );
+
+        this.status = OrderStatus.SHIPPED;
+        registerEvent(new OrderShippedEvent(id.value()));
+    }
+
+    public OrderId getId() {
+        return id;
+    }
 }
 ```
 
-### 6.3 业务项目推荐目录结构
+### 3.2 使用异常体系
 
+```java
+// 领域层 - 业务规则违反
+public class Order extends AbstractAggregateRoot<Order> {
+    public void cancel() {
+        Assertions.require(
+            this.status != OrderStatus.COMPLETED,
+            OrderError.CANNOT_CANCEL_COMPLETED
+        );
+        this.status = OrderStatus.CANCELLED;
+    }
+}
+
+// 应用层 - 用例前置条件
+public class OrderApplicationService {
+    public OrderDto getOrder(Long orderId) {
+        // 快捷版：标准 404 场景
+        Order order = Assertions.requirePresent(
+            orderRepository.findById(orderId)
+        );
+        return OrderDto.from(order);
+    }
+
+    public void cancelOrder(Long orderId, Long userId) {
+        // 完整版：区分不同资源类型
+        Order order = Assertions.requirePresent(
+            orderRepository.findById(orderId),
+            OrderError.ORDER_NOT_FOUND
+        );
+
+        Assertions.require(
+            order.belongsToUser(userId),
+            OrderError.NOT_ORDER_OWNER
+        );
+
+        order.cancel();
+    }
+}
 ```
-aieducenter-platform/
-├── CLAUDE.md
-├── docs/
-├── src/main/java/com/aieducenter/
-│   ├── account/                    # Account Context
-│   │   ├── domain/                 # 聚合根、实体、领域服务
-│   │   ├── application/            # 应用服务
-│   │   ├── controller/             # REST 控制器
-│   │   └── infrastructure/         # 适配器（Repository 实现等）
-│   ├── tenant/                     # Tenant Context（同上分层）
-│   ├── ai/                         # AI Gateway Context
-│   ├── billing/                    # Billing Context
-│   └── ...
-└── src/test/java/com/aieducenter/
-    ├── ArchitectureTest.java       # 继承 CartisanArchRules
-    └── ...
+
+### 3.3 使用架构注解
+
+#### 3.4.1 Repository 模式（数据持久化）
+
+```java
+// package-info.java - 标注限界上下文
+@BoundedContext(name = "OrderManagement", subDomain = SubDomain.CORE)
+package com.cartisan.order;
+
+// 端口接口
+@Port(PortType.REPOSITORY)
+public interface OrderRepository extends BaseRepository<Order, OrderId> {
+}
+
+// 适配器实现
+@Adapter(PortType.REPOSITORY)
+public class JpaOrderRepository implements OrderRepository {
+    // ...
+}
+
+// 领域服务
+@DomainService
+public class OrderPricingService {
+    // 不属于任何聚合根的定价逻辑
+}
+```
+
+#### 3.4.2 Service Port 模式（领域服务 + 南向接口）
+
+当领域层需要调用外部服务（如短信、支付、OSS）或跨限界上下文时，应使用**领域服务 + 南向接口模式**：
+
+```java
+// ========== 领域层 ==========
+// Step 1: 定义南向接口（端口）
+@Port(PortType.CLIENT)
+public interface SmsSenderPort {
+    void sendVerificationCode(String phoneNumber, String code);
+    void sendNotification(String phoneNumber, String message);
+}
+
+// Step 2: 创建领域服务
+@DomainService
+public class NotificationService {
+    private final SmsSenderPort smsSender;
+
+    public NotificationService(SmsSenderPort smsSender) {
+        this.smsSender = smsSender;
+    }
+
+    public void sendLoginCode(User user, String code) {
+        smsSender.sendVerificationCode(user.getPhoneNumber(), code);
+    }
+}
+
+// ========== 基础设施层 ==========
+// Step 3: 实现适配器（阿里云短信）
+@Component("aliyunSmsSender")
+@Adapter(PortType.CLIENT)
+public class AliyunSmsSenderAdapter implements SmsSenderPort {
+    private final AliyunSmsClient client;
+
+    public AliyunSmsSenderAdapter(AliyunSmsClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public void sendVerificationCode(String phoneNumber, String code) {
+        client.sendWithTemplate(phoneNumber, "VERIFY_CODE_TEMPLATE", Map.of("code", code));
+    }
+
+    @Override
+    public void sendNotification(String phoneNumber, String message) {
+        client.send(phoneNumber, message);
+    }
+}
+
+// ========== 应用层 ==========
+// Step 4: 应用服务使用
+@ApplicationService
+public class UserAuthAppService {
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+
+    public void sendLoginCode(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        String code = generateRandomCode();
+        notificationService.sendLoginCode(user, code);
+        // 保存验证码到 Redis...
+    }
+}
+```
+
+**关键点**：
+
+| 要点 | 说明 |
+|------|------|
+| `@Port(PortType.CLIENT)` | 标记客户端端口接口 |
+| `@DomainService` | 领域服务封装外部服务调用 |
+| `@Component` | 适配器必须添加，Spring 才能发现 Bean |
+| `@Adapter(PortType.CLIENT)` | 标记适配器类型 |
+| 构造函数注入 | 所有依赖字段声明为 final |
+| 可替换性 | 可轻松切换阿里云/腾讯云/云片短信 |
+
+### 3.4 使用 ArchUnit 规则
+
+```java
+// 业务项目中继承即可获得全部规则
+@AnalyzeClasses(packages = "com.aieducenter")
+public class ArchitectureTest extends CartisanArchRules {
+    // 完成！所有规则自动生效
+}
+
+// 或选择性使用
+@AnalyzeClasses(packages = "com.aieducenter")
+public class ArchitectureTest {
+    @ArchTest
+    static final ArchRules layering = ArchRules.in(CartisanLayeringRules.class);
+
+    @ArchTest
+    static final ArchRules codingStandards = ArchRules.in(CartisanCodingStandardsRules.class);
+    // 不使用 naming 和 prohibition 规则
+}
+```
+
+### 3.5 使用审计和软删除基类
+
+```java
+// 仅审计
+@Entity
+public class Product extends Auditable {
+    @Id private Long id;
+    private String name;
+    // 自动拥有：createdAt, lastModifiedDate, createdBy, lastModifiedBy
+}
+
+// 审计 + 软删除
+@Entity
+public class Order extends AuditableSoftDeletable {
+    @Id private Long id;
+    private String status;
+    // 自动拥有：审计字段 + deleted（带 @SQLRestriction）
+}
+
+// 软删除操作
+orderRepository.delete(order);  // UPDATE SET deleted = true
+orderRepository.findAll();      // 自动过滤 deleted = true
+```
+
+### 3.6 使用 TSID 生成器
+
+```java
+@Entity
+public class Order extends AbstractAggregateRoot<Order> {
+
+    @Id
+    private Long id;
+
+    @PrePersist
+    void generateId() {
+        if (id == null) {
+            id = tsidGenerator.generate();
+        }
+    }
+}
+
+// 或在 Service 层生成
+@Service
+public class OrderService {
+    private final TsidGenerator tsidGenerator;
+
+    public Long createOrder() {
+        Long orderId = tsidGenerator.generate();
+        Instant createTime = tsidGenerator.toInstant(orderId);
+        // ...
+        return orderId;
+    }
+}
+```
+
+### 3.7 监听领域事件
+
+```java
+@Component
+public class OrderEventHandler {
+
+    // 事务提交后执行（推荐）
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handle(OrderCreatedEvent event) {
+        // 发送通知、调用外部服务等
+        notificationService.sendOrderCreated(event);
+    }
+
+    // 事务内同步执行
+    @EventListener
+    public void handle2(OrderShippedEvent event) {
+        // 同库操作，如更新其他聚合根
+    }
+}
+```
+
+### 3.8 使用权限注解
+
+```java
+// 类级别注解
+@RestController
+@RequireAuth  // 类内所有方法都需要登录
+@RequestMapping("/api/v1/users")
+public class UserController {
+    @GetMapping("/me")
+    public ApiResponse<User> getCurrentUser() { ... }
+}
+
+// 方法级别注解
+@RestController
+@RequestMapping("/api/v1/admin")
+public class AdminController {
+
+    @RequireRole({"admin"})
+    @PostMapping("/users")
+    public ApiResponse<Void> createUser() { ... }
+
+    @RequirePermission(
+        value = "admin:user:read",
+        name = "平台管理 / 用户管理 / 查看",
+        scope = "admin"
+    )
+    @GetMapping("/users")
+    public ApiResponse<List<User>> listUsers() { ... }
+
+    @RequirePermission("admin:user:write")
+    @PostMapping("/users")
+    public ApiResponse<Void> createUser() { ... }
+}
+
+// 方法覆盖类注解
+@RestController
+@RequireAuth  // 默认需要登录
+@RequestMapping("/api/v1/public")
+public class PublicController {
+
+    @GetMapping("/info")
+    public ApiResponse<Info> getInfo() { ... }  // 需要登录
+
+    @RequireAuth(false)  // 覆盖类注解，允许匿名访问
+    @GetMapping("/ping")
+    public ApiResponse<String> ping() { ... }
+}
+```
+
+**权限 Code 规范：** 采用 3 级结构 `{context}:{module}:{action}`
+- context: 限界上下文（如 admin）
+- module: 业务模块（如 user）
+- action: 操作（如 read/write/delete）
+
+### 3.9 使用 SecurityContext
+
+```java
+@Service
+public class OrderService {
+
+    public void createOrder(CreateOrderRequest request) {
+        // 推荐用法：先检查是否登录
+        if (SecurityContext.isAuthenticated()) {
+            Long userId = SecurityContext.getCurrentUserId();
+            String username = SecurityContext.getCurrentUsername();
+
+            // 判断角色/权限
+            boolean isAdmin = SecurityContext.hasRole("admin");
+            boolean canCreate = SecurityContext.hasPermission("order:create");
+
+            // 使用用户信息...
+        }
+    }
+
+    // 或者：对返回值做 null 检查
+    public void updateOrder(Long orderId, UpdateOrderRequest request) {
+        Long userId = SecurityContext.getCurrentUserId();
+        if (userId != null) {
+            // 使用 userId...
+        }
+    }
+}
+```
+
+### 3.10 使用 TenantContext
+
+```java
+@Service
+public class OrderService {
+
+    public void createOrder(CreateOrderRequest request) {
+        // 获取租户 ID（可能为 null）
+        Long tenantId = TenantContext.getCurrentTenantId();
+
+        // 判断是否有租户上下文
+        if (TenantContext.hasTenant()) {
+            // 使用租户 ID...
+            Order order = new Order(tenantId, request);
+            orderRepository.save(order);
+        }
+    }
+
+    // 强制必须有租户上下文
+    public void deleteOrder(Long orderId) {
+        Long tenantId = TenantContext.requireTenant();  // 无租户抛异常
+        Order order = orderRepository.findByIdAndTenantId(orderId, tenantId)
+            .orElseThrow();
+        orderRepository.delete(order);
+    }
+}
+```
+
+### 3.11 使用 AuthenticationService
+
+```java
+@RestController
+@RequestMapping("/api/v1/auth")
+public class AuthController {
+
+    private final AuthenticationService authService;
+
+    // 业务层验证密码后调用 login
+    @PostMapping("/login")
+    public ApiResponse<TokenInfo> login(@RequestBody LoginRequest request) {
+        // 1. 业务层验证密码
+        User user = userService.validatePassword(request.getUsername(), request.getPassword());
+
+        // 2. 调用认证服务创建会话
+        TokenInfo tokenInfo = authService.login(user.getId());
+
+        // 3. 可选：设置租户 ID 到 Session
+        StpUtil.getSession().set("tenantId", user.getTenantId());
+
+        return ApiResponse.ok(tokenInfo);
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout() {
+        authService.logout();
+        return ApiResponse.ok();
+    }
+
+    @GetMapping("/token-info")
+    public ApiResponse<TokenInfo> getTokenInfo() {
+        TokenInfo tokenInfo = authService.getTokenInfo();
+        if (tokenInfo == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        return ApiResponse.ok(tokenInfo);
+    }
+}
+```
+
+### 3.12 使用 @CurrentUser 注解
+
+```java
+// 必需登录场景
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    // 方式一：只用 @CurrentUser
+    @GetMapping("/profile")
+    public ApiResponse<UserProfile> getProfile(@CurrentUser Long userId) {
+        // 未登录会在参数解析时抛 NotLoginException → 401
+        return ApiResponse.ok(userService.getProfile(userId));
+    }
+
+    // 方式二：@RequireAuth + @CurrentUser（推荐，语义更明确）
+    @RequireAuth
+    @GetMapping("/profile")
+    public ApiResponse<UserProfile> getProfile(@CurrentUser Long userId) {
+        // 未登录会在拦截器阶段被拦截，不会到达参数解析
+        return ApiResponse.ok(userService.getProfile(userId));
+    }
+
+    @PutMapping("/profile")
+    public ApiResponse<Void> updateProfile(@CurrentUser Long userId,
+                                           @RequestBody UpdateProfileCommand cmd) {
+        userService.updateProfile(userId, cmd);
+        return ApiResponse.ok();
+    }
+}
+
+// 可选登录场景（允许匿名访问）
+@RestController
+@RequestMapping("/api/preferences")
+public class PreferencesController {
+
+    @GetMapping
+    public ApiResponse<Preferences> getPreferences(@CurrentUser Optional<Long> userId) {
+        if (userId.isPresent()) {
+            return ApiResponse.ok(preferencesService.getForUser(userId.get()));
+        }
+        return ApiResponse.ok(preferencesService.getDefault());
+    }
+
+    // 简化写法
+    @GetMapping("/widgets")
+    public ApiResponse<Widgets> getWidgets(@CurrentUser Optional<Long> userId) {
+        return ApiResponse.ok(widgetsService.getWidgets(userId.orElse(null)));
+    }
+}
+```
+
+**@CurrentUser 与 @RequireAuth 的区别**：
+
+| 注解 | 作用时机 | 适用场景 |
+|------|---------|---------|
+| `@RequireAuth` | 拦截器阶段 | 整个接口需要登录 |
+| `@CurrentUser Long userId` | 参数解析阶段 | 需要使用 userId，未登录抛异常 |
+| `@CurrentUser Optional<Long> userId` | 参数解析阶段 | 允许匿名访问，已登录可获取 userId |
+
+### 3.13 配置拦截器路径
+
+```yaml
+# 仅保护 API 路径（默认是 /**）
+cartisan:
+  security:
+    interceptor:
+      path-patterns:
+        - "/api/**"
+        - "/admin/**"
+
+# 完整配置示例
+cartisan:
+  security:
+    interceptor:
+      path-patterns:
+        - "/api/**"
+        - "/admin/**"
+        - "/internal/**"
+      exclude-path-patterns:
+        - "/api/public/**"
+        - "/api/health"
+        - "/error"
+        - "/actuator/**"
+```
+
+### 3.14 使用 jOOQ 自动配置
+
+```java
+// 引入依赖后，DSLContext 自动注入可用
+@Service
+public class UserService {
+    private final DSLContext dsl;
+
+    public UserService(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    public List<User> findActiveUsers() {
+        return dsl.selectFrom(USER)
+            .where(USER.STATUS.eq("ACTIVE"))
+            .orderBy(USER.CREATED_AT.desc())
+            .fetchInto(User.class);
+    }
+
+    // 复杂查询示例：JOIN + 聚合
+    public List<OrderSummary> getOrderSummaries(LocalDate startDate) {
+        return dsl.select(
+                USER.ID,
+                USER.NAME,
+                DSL.count.ORDER_ID().as("orderCount"),
+                DSL.sum(ORDER.TOTAL_AMOUNT).as("totalAmount")
+            )
+            .from(USER)
+            .leftJoin(ORDER).on(ORDER.USER_ID.eq(USER.ID))
+            .where(ORDER.CREATED_AT.ge(startDate))
+            .groupBy(USER.ID, USER.NAME)
+            .fetchInto(OrderSummary.class);
+    }
+}
+```
+
+### 3.15 启用 SQL 日志
+
+```yaml
+# application.yml
+cartisan:
+  data-query:
+    jooq:
+      sql-logging: true  # 启用 SQL 执行日志
+```
+
+### 3.16 使用多租户查询
+
+```java
+import static com.cartisan.data.query.support.JooqTenantSupport.eqTenantId;
+
+@Service
+public class UserService {
+    private final DSLContext dsl;
+
+    // 查询时自动添加租户过滤
+    public List<User> listUsers() {
+        return dsl.selectFrom(USER)
+            .where(eqTenantId(USER.TENANT_ID))  // 自动根据当前租户过滤
+            .fetchInto(User.class);
+    }
+
+    // 组合条件查询
+    public List<User> listActiveUsers() {
+        return dsl.selectFrom(USER)
+            .where(
+                USER.STATUS.eq("ACTIVE")
+                .and(eqTenantId(USER.TENANT_ID))  // 租户过滤 + 其他条件
+            )
+            .fetchInto(User.class);
+    }
+
+    // 无租户上下文时，eqTenantId 返回 noCondition()，不影响查询
+    public List<User> listAllUsersForAdmin() {
+        return dsl.selectFrom(USER)
+            .where(eqTenantId(USER.TENANT_ID))  // 管理员可能无租户限制
+            .fetchInto(User.class);
+    }
+}
+```
+
+### 3.17 jOOQ 代码生成配置
+
+在业务项目 `build.gradle.kts` 中添加：
+
+```kotlin
+plugins {
+    id("nu.studer.jooq") version "8.2.1"
+}
+
+dependencies {
+    // jOOQ 代码生成器依赖
+    jooqGenerator("org.jooq:jooq-codegen")
+    jooqGenerator("org.jooq:jooq-meta")
+    jooqGenerator("org.postgresql:postgresql")
+}
+
+jooq {
+    configuration {
+        generator {
+            database {
+                name = "org.jooq.meta.postgres.PostgresDatabase"
+            }
+            generate {
+                isJavaTimeTypes = true  // 使用 java.time 类型
+            }
+            target {
+                packageName = "com.example.db"  // 生成代码的包名
+                directory = "build/generated/jooq"
+            }
+        }
+    }
+}
+
+// 关键：先执行 Flyway 迁移，再生成 jOOQ 代码
+tasks.named<nu.studer.jooq.GenerateJooqTask>("generateJooq") {
+    dependsOn("flywayMigrate")
+}
+```
+
+生成后使用：
+
+```java
+import static com.example.db.Tables.*;
+
+// 类型安全的 DSL 查询
+List<UserRecord> users = dsl.selectFrom(USER)
+    .where(USER.AGE.gt(18))
+    .fetch();
+```
+
+### 3.18 使用 cartisan-ai 同步调用
+
+```java
+@Service
+public class AiService {
+    private final ModelProviderRegistry registry;
+
+    // 通过 Registry 调用（推荐，支持动态切换 Provider）
+    public String chat(String providerId, String userMessage) {
+        ChatRequest request = new ChatRequest(
+            "gpt-4o-mini",  // 或其他模型名
+            List.of(
+                new ChatMessage(Role.SYSTEM, "You are a helpful assistant."),
+                new ChatMessage(Role.USER, userMessage)
+            ),
+            0.7,    // temperature
+            null,   // maxTokens
+            false   // stream
+        );
+
+        ChatResponse response = registry.chat(providerId, request);
+        return response.content();
+    }
+
+    // 直接注入特定 Provider
+    public String chatWithOpenAi(String userMessage) {
+        // OpenAiProvider 会自动注入
+        ModelProvider provider = registry.getProvider("openai");
+        // ... 同上
+    }
+}
+```
+
+### 3.19 使用 cartisan-ai 流式调用（SSE）
+
+```java
+@RestController
+@RequestMapping("/api/ai")
+public class AiController {
+    private final ModelProviderRegistry registry;
+    private final SseHelper sseHelper;
+
+    // 返回 SSE 流
+    @GetMapping("/chat/stream")
+    public SseEmitter chatStream(
+            @RequestParam(defaultValue = "openai") String providerId,
+            @RequestParam String message) {
+
+        ChatRequest request = new ChatRequest(
+            "gpt-4o-mini",
+            List.of(new ChatMessage(Role.USER, message)),
+            null, null, true  // stream = true
+        );
+
+        Flux<ChatStreamEvent> events = registry.chatStream(providerId, request);
+
+        // 转换为 SSE，流结束时记录 Token 使用
+        return sseHelper.toSse(events, usage -> {
+            log.info("Token usage: prompt={}, completion={}",
+                usage.promptTokens(), usage.completionTokens());
+        });
+    }
+
+    // 或者返回 Flux（让客户端处理 Reactor 类型）
+    @GetMapping(value = "/chat/flux", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ChatStreamEvent> chatFlux(@RequestParam String message) {
+        ChatRequest request = new ChatRequest(
+            "gpt-4o-mini",
+            List.of(new ChatMessage(Role.USER, message)),
+            null, null, true
+        );
+
+        return registry.chatStream("openai", request);
+    }
+}
+```
+
+### 3.20 配置 cartisan-ai Provider
+
+```yaml
+# application.yml
+cartisan:
+  ai:
+    # OpenAI 配置
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: https://api.openai.com/v1  # 可选，支持代理/Azure
+    # DeepSeek 配置
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: https://api.deepseek.com/v1
+    # Anthropic 配置
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      base-url: https://api.anthropic.com
+    # SSE 超时配置
+    sse:
+      timeout: 30s  # 默认 30 秒
+```
+
+**条件装配规则**：
+- 只有配置了对应 `api-key` 的 Provider 才会被创建
+- 至少需要配置一个 Provider，`ModelProviderRegistry` 才会被创建
+
+### 3.21 实现 ModelUsageListener
+
+```java
+@Component
+public class TokenUsageLogger implements ModelUsageListener {
+
+    private static final Logger log = LoggerFactory.getLogger(TokenUsageLogger.class);
+
+    @Override
+    public void onUsage(String providerId, String model, TokenUsage usage) {
+        log.info("AI Usage - Provider: {}, Model: {}, Prompt: {}, Completion: {}, Total: {}",
+            providerId, model, usage.promptTokens(), usage.completionTokens(), usage.totalTokens());
+
+        // 可以写入数据库、发送监控告警等
+    }
+}
+```
+
+### 3.22 使用 RedisKey 工具
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final StringRedisTemplate redisTemplate;
+
+    // 定义带过期时间的 Key（1 小时）
+    private static final RedisKey USER_CACHE_KEY = RedisKey.of("user:cache", 3600);
+
+    // 定义永不过期的 Key
+    private static final RedisKey SYSTEM_CONFIG_KEY = RedisKey.permanent("system:config");
+
+    public void cacheUser(Long userId, String userData) {
+        String key = USER_CACHE_KEY.key(String.valueOf(userId));
+        redisTemplate.opsForValue().set(key, userData, USER_CACHE_KEY.expireSeconds(), TimeUnit.SECONDS);
+    }
+
+    public String getUserCache(Long userId) {
+        String key = USER_CACHE_KEY.key(String.valueOf(userId));
+        return redisTemplate.opsForValue().get(key);
+    }
+}
+```
+
+### 3.23 使用 DomainMapper 批量转换
+
+```java
+@Mapper(componentModel = "spring")
+public interface UserMapper extends DomainMapper<User, UserResponse> {
+    // convert 方法由 MapStruct 自动生成
+}
+
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final UserMapper userMapper;
+
+    public UserResponse getUser(Long id) {
+        User user = userRepository.findById(id);
+        return userMapper.convert();  // 单个对象
+    }
+
+    public List<UserResponse> listUsers() {
+        List<User> users = userRepository.findAll();
+        return userMapper.convertList(users);  // List 批量转换
+    }
+
+    public Set<UserResponse> setUsers() {
+        Set<User> users = userRepository.findAllAsSet();
+        return userMapper.convertSet(users);  // Set 批量转换
+    }
+}
+```
+
+### 3.24 使用 TreeNode 构建树结构
+
+```java
+@Service
+@RequiredArgsConstructor
+public class DepartmentService {
+    private final DepartmentRepository departmentRepository;
+
+    public List<TreeNode<Long>> getDepartmentTree() {
+        // 1. 从数据库获取扁平的部门列表
+        List<Department> departments = departmentRepository.findAll();
+
+        // 2. 转换为 TreeNode
+        List<TreeNode<Long>> nodes = departments.stream()
+            .map(dept -> new TreeNode<>(
+                dept.getId(),
+                dept.getName(),
+                dept.getParentId()
+            ))
+            .toList();
+
+        // 3. 构建树形结构
+        return TreeNodeBuilder.build(
+            nodes,
+            id -> String.valueOf(id),           // ID 映射函数
+            parentId -> String.valueOf(parentId), // 父 ID 映射函数
+            0L                                    // 根节点的父 ID
+        );
+    }
+}
+```
+
+### 3.25 使用 @PreventResubmit 防重提交
+
+```java
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+    private final UserService userService;
+
+    @PostMapping
+    @PreventResubmit(delaySeconds = 10, prefix = "createUser")
+    public ApiResponse<Void> createUser(@RequestBody CreateUserRequest request) {
+        userService.create(request);
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/batch")
+    @PreventResubmit(delaySeconds = 30)  // 使用默认前缀
+    public ApiResponse<Void> batchCreate(@RequestBody List<CreateUserRequest> requests) {
+        userService.batchCreate(requests);
+        return ApiResponse.ok();
+    }
+}
+```
+
+### 3.26 使用 @Condition 注解查询
+
+```java
+// 定义查询 DTO
+public record ProductQuery(
+    @Condition(type = ConditionType.INNER_LIKE) String name,
+    @Condition(propName = "stock", type = ConditionType.GREATER_EQUAL) Integer minStock
+) {}
+
+// Repository 使用
+public interface ProductRepository extends BaseRepository<Product, Long> {
+    default List<Product> findByCondition(ProductQuery query) {
+        return findAll(ConditionSpecifications.fromAnnotation(query));
+    }
+}
+```
+
+> **详细说明**：参见 cartisan-web 模块章节中的 @Condition 注解详细说明
+
+### 3.27 启用自动响应包装
+
+```yaml
+# application.yml
+cartisan:
+  web:
+    auto-response:
+      enabled: true
+```
+
+启用后 Controller 可以直接返回数据：
+
+```java
+@GetMapping("/{id}")
+public User getById(@PathVariable Long id) {
+    return userService.findById(id);
+}
+```
+
+### 3.28 使用枚举选项工具
+
+```java
+// 转换单个枚举
+List<EnumOption> options = EnumOptionUtils.fromEnum(UserStatus.class);
+
+// 转换枚举数组
+List<EnumOption> options = EnumOptionUtils.fromEnums(
+    UserStatus.ACTIVE,
+    UserStatus.INACTIVE
+);
+
+// 在 Response 中包含选项
+public record UserResponse(
+    Long id,
+    UserStatus status,
+    List<EnumOption> statusOptions
+) {}
+
+@Mapper(componentModel = "spring")
+public interface UserMapper extends DomainMapper<User, UserResponse> {
+    @Mapping(target = "statusOptions",
+             expression = "java(EnumOptionUtils.fromEnum(UserStatus.class))")
+    UserResponse toResponse(User user);
+}
+```
+
+### 3.29 使用默认枚举 Controller
+
+```yaml
+# application.yml（默认配置）
+cartisan:
+  web:
+    enum-controller:
+      enabled: true
+      path: /api/enums
+```
+
+```javascript
+// 前端调用示例
+const fetchEnums = async () => {
+  // 单个枚举
+  const response1 = await fetch('/api/enums/UserStatus');
+  const data1 = await response1.json();
+  // data1.data = [{code: 1, name: "启用"}, {code: 0, name: "禁用"}]
+
+  // 批量获取
+  const response2 = await fetch('/api/enums/batch', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({enums: ['UserStatus', 'OrderStatus']})
+  });
+  const data2 = await response2.json();
+  // data2.data.enums = {UserStatus: [...], OrderStatus: [...]}
+};
+```
+
+### 3.30 自定义枚举 Controller
+
+```yaml
+# 禁用默认实现
+cartisan:
+  web:
+    enum-controller:
+      enabled: false
+```
+
+```java
+@RestController
+@RequestMapping("/api/v2/dict")
+public class DictController extends EnumControllerBase {
+
+    public DictController(EnumRegistry enumRegistry) {
+        super(enumRegistry);
+    }
+
+    @GetMapping("/{enumName}")
+    public ApiResponse<List<EnumOption>> getEnum(@PathVariable String enumName) {
+        return ApiResponse.ok(enumRegistry.getEnumOptions(enumName));
+    }
+
+    @PostMapping("/batch")
+    public ApiResponse<Map<String, List<EnumOption>>> batch(
+            @RequestBody EnumBatchRequest request) {
+        return ApiResponse.ok(batchEnums(request.enums()));
+    }
+}
 ```
 
 ---
 
-## 七、Epic 拆分建议
+## 五、CQRS 架构说明
 
-cartisan-boot 的开发可按以下 Epic 顺序推进：
+### 5.1 读写分离设计
 
-| Epic | 内容 | 依赖 | 复杂度 | 优先级 |
-|------|------|------|--------|--------|
-| **Epic 1: 项目骨架 + Core + Test** | Gradle 多模块项目搭建、cartisan-core 全部类型、cartisan-test 的 ArchUnit 规则集 | 无 | M | P0 |
-| **Epic 2: Web + Data-JPA + Event** | cartisan-web 统一响应和异常处理、cartisan-data-jpa Repository 和审计、cartisan-event 事件发布 | Epic 1 | L | P0 |
-| **Epic 3: Security** | cartisan-security 认证抽象、多租户上下文、Sa-Token 集成 | Epic 2 | M | P0 |
-| **Epic 4: Data-Query** | cartisan-data-query jOOQ 自动配置、代码生成、分页工具 | Epic 2 | S | P0 |
-| **Epic 5: AI** | cartisan-ai 统一模型、Provider SPI + OpenAI/Anthropic/DeepSeek 实现、SSE 工具 | Epic 1 | M | P1 |
-| **Epic 6: Storage** | cartisan-storage 存储 SPI + 阿里云 OSS / MinIO / Local 实现 | 无 | S | P2 |
-| **Epic 7: Payment** | cartisan-payment 支付 SPI + 微信支付 / 支付宝实现 | 无 | M | P2 |
+| 模块 | 职责 | 技术 |
+|------|------|------|
+| **cartisan-data-jpa** | 写侧（Command） | JPA + Hibernate |
+| **cartisan-data-query** | 读侧（Query） | jOOQ + DSL |
 
-**开发节奏：**
+### 5.2 典型使用场景
 
-- aieducenter-platform 可在 **Epic 1 完成后**即开始领域建模和业务开发（使用 Composite Build 引用）
-- Epic 5（AI）在 aieducenter-platform 需要接入大模型时启动，可与 Epic 3/4 并行
-- Epic 6/7（Storage、Payment）独立于其他模块，在业务需要时按需启动
-- cartisan-ai-agent 不占 Epic，待框架生态稳定后单独规划
+```java
+// 写：使用 JPA 保存聚合根
+@Service
+public class OrderService {
+    private final OrderRepository orderRepository;  // JPA
+
+    public void createOrder(CreateOrderRequest request) {
+        Order order = new Order(request.getCustomerId(), request.getItems());
+        orderRepository.save(order);  // 自动发布领域事件
+    }
+}
+
+// 读：使用 jOOQ 高效查询
+@Service
+public class OrderQueryService {
+    private final DSLContext dsl;  // jOOQ
+
+    public Page<OrderDto> queryOrders(OrderQuery query, Pageable pageable) {
+        // 类型安全的 DSL 查询
+        List<OrderDto> orders = dsl.select(
+                ORDER.ID,
+                ORDER.CUSTOMER_ID,
+                ORDER.STATUS,
+                ORDER.TOTAL_AMOUNT
+            )
+            .from(ORDER)
+            .where(buildConditions(query))
+            .orderBy(OrderConstant)
+            .limit(pageable.getPageSize())
+            .offset(pageable.getOffset())
+            .fetchInto(OrderDto.class);
+
+        long total = dsl.fetchCount(ORDER);
+        return new PageImpl<>(orders, pageable, total);
+    }
+}
+```
+
+---
+
+#### TOOL-008 / SECURITY-001：Sa-Token 包路径
+
+```java
+// ❌ 错误：包路径不是 cn.dev33.sa-token
+import cn.dev33.sa-token.stp.StpUtil;
+
+// ✅ 正确：包路径是 cn.dev33.satoken
+import cn.dev33.satoken.stp.StpUtil;
+```
+
+#### TOOL-009 / SECURITY-002：Sa-Token Session 类
+
+```java
+// ❌ 错误：没有 cn.dev33.satoken.session.Session
+import cn.dev33.satoken.session.Session;
+
+// ✅ 正确：Session 类是 SaSession
+import cn.dev33.satoken.session.SaSession;
+```
+
+#### SECURITY-003：ScopedValue 使用方式
+
+```java
+// ❌ 错误：直接 get() 可能抛 NoSuchElementException
+public static Long getCurrentTenantId() {
+    return TENANT_ID.get();
+}
+
+// ✅ 正确：先检查 isBound()，再 get()
+public static Long getCurrentTenantId() {
+    if (!TENANT_ID.isBound()) {
+        return null;
+    }
+    return TENANT_ID.get();
+}
+
+// ✅ 或使用 getOrDefault()
+public static Long getCurrentTenantId() {
+    return ScopedValue.getOrDefault(TENANT_ID, null);
+}
+```
+
+#### TEST-004 / SECURITY-004：MockMvc 集成测试方式
+
+```java
+// ❌ 错误：直接调用 StpUtil.login()，Sa-Token 上下文未初始化
+@Test
+void test() {
+    StpUtil.login(100L);
+    mvc.perform(get("/api/users"))
+        .andExpect(status().isOk());
+}
+
+// ✅ 正确：创建测试专用 Controller，通过 HTTP 请求触发登录
+@RestController
+@RequestMapping("/test/auth")
+class TestAuthController {
+    @PostMapping("/login")
+    public ApiResponse<Void> login(@RequestParam Long userId) {
+        StpUtil.login(userId);
+        return ApiResponse.ok();
+    }
+}
+
+@Test
+void test() throws Exception {
+    mvc.perform(post("/test/auth/login?userId=100"))
+        .andExpect(status().isOk());
+    // 现在 Sa-Token 上下文已正确初始化
+}
+```
+
+---
+
+## 六、模块依赖关系
+
+### 6.1 cartisan-core
+
+```
+零外部依赖，仅使用 JDK 标准库
+```
+
+### 6.2 cartisan-test
+
+```
+api 依赖：
+- JUnit 5
+- AssertJ
+- Mockito
+- ArchUnit
+- Spring Boot Test
+- Testcontainers
+
+implementation 依赖：
+- Spring Test
+- Spring Boot Starter Data Redis
+```
+
+### 6.3 cartisan-web
+
+```
+api 依赖：
+- cartisan-core
+
+implementation 依赖：
+- Spring Boot Starter Web
+- Spring Boot Starter Validation
+```
+
+### 6.4 cartisan-data-jpa
+
+```
+api 依赖：
+- cartisan-core
+
+implementation 依赖：
+- Spring Boot Starter Data JPA
+- Hibernate Core（传递）
+
+compileOnly 依赖：
+- Druid Spring Boot 3 Starter 1.2.23（可选，业务需显式配置才生效）
+```
+
+### 6.5 cartisan-event
+
+```
+api 依赖：
+- cartisan-core
+
+implementation 依赖：
+- Spring Context
+- Spring Boot AutoConfigure
+```
+
+### 6.6 cartisan-security
+
+```
+api 依赖：
+- cartisan-core
+- cartisan-web
+
+implementation 依赖：
+- Sa-Token 1.45.0（sa-token-spring-boot3-starter）
+```
+
+### 6.7 cartisan-data-query
+
+```
+api 依赖：
+- cartisan-web
+
+implementation 依赖：
+- jOOQ 3.19.29
+
+compileOnly 依赖：
+- cartisan-security（可选，用于 JooqTenantSupport）
+```
+
+### 6.8 cartisan-ai
+
+```
+api 依赖：
+- cartisan-core
+- spring-webflux（Flux 类型出现在公开 SPI 中）
+
+implementation 依赖：
+- spring-boot-starter
+
+可选依赖（由使用方提供）：
+- spring-boot-starter-web（SseEmitter 需要）
+- spring-boot-starter-webflux（WebClient 需要）
+```
+
+---
+
+## 七、参考文档
+
+### 7.1 设计文档
+
+- [cartisan-boot-设计文档.md](../cartisan-boot-设计文档.md)
+
+### 7.2 开发指南
+
+- [AI协作开发SOP.md](../sop/AI协作开发SOP.md)
+- [团队踩坑经验库 (PITFALLS.md)](../PITFALLS.md)
+
+> **说明**：@Condition、枚举增强等模块详细使用说明已整合到对应模块章节中。
+
+---
+
+---
+
+## 八、设计理念
+
+### 8.1 六边形架构（端口适配器）
+
+cartisan-boot 基于 DDD 六边形架构（端口适配器架构），清晰划分层次职责：
+
+```
+北向接口（Driving Side）：
+- REST API | GraphQL | gRPC | MQ
+
+应用层（Application Layer）：
+- 北向接口适配层 | 上下文出入口
+
+领域层（Domain Layer）：
+- 核心业务逻辑 | 南向端口接口
+
+南向接口（Driven Side）：
+- 密码加密 | 持久化 | 缓存 | 外部服务
+
+基础设施层（Infrastructure）：
+- 南向接口的适配器实现
+```
+
+**依赖方向**：
+- 北向接口 → 应用层 → 领域层
+- 领域层定义南向端口接口
+- 基础设施层实现南向端口接口
+
+> **详细设计说明**参见《cartisan-boot-设计文档》
+
+### 8.2 CQRS 架构（读写分离）
+
+cartisan-boot 支持 CQRS 架构，读写分离：
+
+| 模块 | 职责 | 技术 |
+|------|------|------|
+| **cartisan-data-jpa** | 写侧（Command） | JPA + Hibernate |
+| **cartisan-data-query** | 读侧（Query） | jOOQ + DSL |
+
+**典型使用场景**：
+- 写：使用 JPA 保存聚合根，自动发布领域事件
+- 读：使用 jOOQ 高效查询，类型安全的 DSL
+
+### 8.3 DDD 设计原则（精简版）
+
+cartisan-boot 提供 DDD 基础设施，但不强制 DDD 教条。
+
+**务实的设计取舍**：
+- 聚合根是否必须避免使用 `@Setter`？否，简单属性直接用 `@Setter`
+- 应用服务层可以直接调用聚合根的 setter？可以，务实做法
+- ID 是否必须用强类型值对象？否，不强求
+
+**原则总结**：提供能力，不强求风格。
+
+> **详细编码规范**参见《限界上下文代码编写规范》
+
+---
+
+## 九、配置说明
+
+### 9.1 application.yml 配置项
+
+```yaml
+cartisan:
+  web:
+    enum-controller:
+      enabled: true  # 启用默认枚举 Controller
+      path: /api/enums  # Controller 路径
+      scan-packages:  # 要扫描的包列表
+        - com.cartisan
+        - com.example
+    auto-response:
+      enabled: false  # 启用自动响应包装
+  data-query:
+    jooq:
+      sql-logging: false  # 启用 SQL 执行日志
+  ai:
+    sse:
+      timeout: 30s  # SSE 超时配置
+```
+
+### 9.2 可选功能开关
+
+| 功能 | 配置项 | 默认值 |
+|------|--------|--------|
+| 枚举 Controller | `cartisan.web.enum-controller.enabled` | `true` |
+| 自动响应包装 | `cartisan.web.auto-response.enabled` | `false` |
+| jOOQ SQL 日志 | `cartisan.data-query.jooq.sql-logging` | `false` |
+
+### 9.3 Druid 数据源配置
+
+```yaml
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: user
+    password: pass
+    druid:
+      stat-view-servlet:
+        enabled: true
+        login-username: admin
+        login-password: admin
+```
+
+---
+
+## 十、常见问题
+
+### 10.1 如何运行 ArchUnit 测试？
+
+```bash
+# 在业务项目中
+mvn test -Dtest=ArchitectureTest
+```
+
+### 10.2 如何配置 jOOQ 代码生成？
+
+参见使用手册 3.18 节 jOOQ 代码生成配置和 cartisan-data-query 模块章节的 QUERY-001 规则。
+
+### 10.3 如何枚举实现 BaseEnum？
+
+参见使用手册 2.1.1 节和《限界上下文代码编写规范》3.6.1 节。
+
+### 10.4 更多问题？
+
+参见《PITFALLS.md - 团队踩坑经验库》
+
+---
+
+**文档结束** | **版本**：v1.0 | **更新日期**：2026-04-05

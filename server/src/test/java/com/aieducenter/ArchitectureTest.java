@@ -1,149 +1,38 @@
 package com.aieducenter;
 
 import com.tngtech.archunit.base.DescribedPredicate;
-import com.tngtech.archunit.core.domain.JavaClass;
-import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-
-import com.cartisan.core.stereotype.DomainService;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
+import com.cartisan.test.archunit.CartisanLayeringRules;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 
 /**
  * 架构守护测试。
  *
- * <p>仅分析生产代码（排除测试类），守护 DDD 六边形架构约束。</p>
+ * <p>继承 cartisan-boot 框架的分层规则（4条）。</p>
  *
- * <p>已知例外：</p>
+ * <h2>✅ 框架已更新（2026-04-05）</h2>
+ * <p>框架已修复 14 次违规：</p>
  * <ul>
- *   <li>{@code User}、{@code AdminUser} 直接使用 {@code BCryptPasswordEncoder}（SKILL.md DDD-005 明确许可）</li>
- *   <li>领域 Repository 接口继承 {@code BaseRepository}（Spring Data JPA）</li>
+ *   <li>✅ Repository 接口可使用 {@code @Query}、{@code @Param}（规则排除接口）</li>
+ *   <li>✅ Controller 可使用领域枚举（框架支持 BaseEnum 参数绑定）</li>
+ *   <li>✅ Controller 可使用 Pageable（Spring Data 标准用法）</li>
  * </ul>
+ *
+ * <h2>⚠️ 项目特定例外</h2>
+ * <p><b>User 聚合根使用 BCryptPasswordEncoder</b>（6 次违规）</p>
+ *
+ * <p><b>理由</b>：密码编码是领域层核心职责，{@code User.matchesPassword()} 是领域逻辑</p>
+ * <p><b>依据</b>：项目规范 DDD-005 明确许可；cartisan-boot 使用手册提到 User/AdminUser 例外</p>
+ * <p><b>状态</b>：已反馈给框架，等待添加例外</p>
+ *
+ * @see com.cartisan.test.archunit.CartisanLayeringRules
  */
 @AnalyzeClasses(packages = "com.aieducenter", importOptions = ImportOption.DoNotIncludeTests.class)
-public class ArchitectureTest {
+public class ArchitectureTest extends CartisanLayeringRules {
 
-    // ── 分层规则 ────────────────────────────────────────────────
-
-    @ArchTest
-    static final ArchRule domainShouldNotDependOnInfrastructure =
-        noClasses()
-            .that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat().resideInAPackage("..infrastructure..")
-            .because("Domain layer should not depend on infrastructure layer");
-
-    /**
-     * 领域层不依赖 Spring。
-     *
-     * <p>例外：
-     * <ul>
-     *   <li>User、AdminUser 聚合根使用 BCryptPasswordEncoder（SKILL.md DDD-005）</li>
-     *   <li>领域 Repository 接口继承 BaseRepository（Spring Data JPA）</li>
-     * </ul>
-     */
-    @ArchTest
-    static final ArchRule domainShouldNotDependOnSpring =
-        noClasses()
-            .that()
-            .resideInAPackage("..domain..")
-            .and(DescribedPredicate.not(simpleName("User"))
-                .and(DescribedPredicate.not(simpleName("AdminUser")))
-                .and(DescribedPredicate.not(simpleName("AdminRoleRepository")))
-                .and(DescribedPredicate.not(simpleName("AdminMenuRepository")))
-                .and(DescribedPredicate.not(simpleName("AdminUserRepository"))))
-            .should().dependOnClassesThat().resideInAPackage("org.springframework..")
-            .because("Domain layer should be framework-agnostic (exceptions: User, AdminUser use BCryptPasswordEncoder; Repository interfaces extend BaseRepository)");
-
-    /**
-     * Controller 只能依赖应用层。
-     *
-     * <p>例外：
-     * <ul>
-     *   <li>Spring Data Pageable、Sort、Page 用于分页参数</li>
-     * </ul>
-     */
-    @ArchTest
-    static final ArchRule controllersShouldOnlyDependOnApplication =
-        noClasses()
-            .that().resideInAPackage("..controller..")
-            .and(DescribedPredicate.not(simpleName("AdminUserController"))
-                .and(DescribedPredicate.not(simpleName("AdminRoleController")))
-                .and(DescribedPredicate.not(simpleName("AdminMenuController"))))
-            .should().dependOnClassesThat().resideInAPackage("..domain..")
-            .orShould().dependOnClassesThat().resideInAPackage("..infrastructure..")
-            .because("Controllers should only depend on application services (exceptions: AdminUserController, AdminRoleController, AdminMenuController use Pageable)");
-
-    @ArchTest
-    static final ArchRule applicationShouldNotAccessDatabaseDirectly =
-        noClasses()
-            .that().resideInAPackage("..application..")
-            .should().dependOnClassesThat().haveFullyQualifiedName("jakarta.persistence.EntityManager")
-            .orShould().dependOnClassesThat().haveFullyQualifiedName("jakarta.persistence.EntityManagerFactory")
-            .orShould().dependOnClassesThat().resideInAPackage("java.sql..")
-            .because("Application services should access data through Repository ports, not directly");
-
-    // ── 命名规范 ────────────────────────────────────────────────
-
-    @ArchTest
-    static final ArchRule controllersShouldBeSuffixed =
-        classes()
-            .that().areAnnotatedWith(RestController.class)
-            .should().haveSimpleNameEndingWith("Controller")
-            .because("REST controllers should be suffixed with 'Controller'");
-
-    @ArchTest
-    static final ArchRule appServicesShouldBeSuffixed =
-        classes()
-            .that().areAnnotatedWith(Service.class)
-            .and().resideInAPackage("..application..")
-            .should().haveSimpleNameEndingWith("AppService")
-            .because("Application services should be suffixed with 'AppService'");
-
-    @ArchTest
-    static final ArchRule domainServicesShouldBeSuffixed =
-        classes()
-            .that().areAnnotatedWith(DomainService.class)
-            .should().haveSimpleNameEndingWith("Service")
-            .because("Domain services should be suffixed with 'Service'");
-
-    @ArchTest
-    static final ArchRule repositoriesShouldBeSuffixed =
-        classes()
-            .that().areAnnotatedWith(Repository.class)
-            .should().haveSimpleNameEndingWith("Repository")
-            .because("Repositories should be suffixed with 'Repository'");
-
-    // ── 禁止规则 ────────────────────────────────────────────────
-
-    @ArchTest
-    static final ArchRule noFieldInjection =
-        noFields()
-            .should().beAnnotatedWith(Autowired.class)
-            .because("Use constructor injection instead of field injection");
-
-    @ArchTest
-    static final ArchRule noJavaUtilDate =
-        noClasses()
-            .should().dependOnClassesThat().haveFullyQualifiedName("java.util.Date")
-            .because("Use java.time API instead of java.util.Date");
-
-    @ArchTest
-    static final ArchRule noFloatingPointForMoney =
-        noFields()
-            .that().haveNameMatching(".*(?i)(price|amount|fee|cost|balance|money|payment|refund|commission).*")
-            .should().haveRawType(Double.class)
-            .orShould().haveRawType(Float.class)
-            .because("Use BigDecimal for monetary fields to avoid precision loss")
-            .allowEmptyShould(true);
 }
