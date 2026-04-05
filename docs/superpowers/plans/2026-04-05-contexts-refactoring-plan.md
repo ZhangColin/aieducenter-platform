@@ -85,57 +85,57 @@ git commit -m "refactor(verification): add package-info.java with @BoundedContex
 
 ---
 
-### Task 2: 重命名 verification.web → verification.endpoints.controller
+### Task 2: 重命名 verification.web → verification.endpoints
 
 **文件:**
-- 移动: `server/src/main/java/com/aieducenter/verification/web/controller/VerificationCodeController.java`
-  → `server/src/main/java/com/aieducenter/verification/endpoints/controller/VerificationCodeController.java`
-- 移动: `server/src/main/java/com/aieducenter/verification/web/controller/CaptchaController.java`
-  → `server/src/main/java/com/aieducenter/verification/endpoints/controller/CaptchaController.java`
-- 修改测试文件中的 import 语句
+- 移动: `server/src/main/java/com/aieducenter/verification/web/VerificationCodeController.java`
+  → `server/src/main/java/com/aieducenter/verification/endpoints/VerificationCodeController.java`
+- 移动: `server/src/main/java/com/aieducenter/verification/web/CaptchaController.java`
+  → `server/src/main/java/com/aieducenter/verification/endpoints/CaptchaController.java`
+- 修改测试文件中的 package 声明和 import 语句
 
-- [ ] **Step 1: 创建新目录结构**
+- [ ] **Step 1: 创建新目录**
 
 ```bash
-mkdir -p server/src/main/java/com/aieducenter/verification/endpoints/controller
+mkdir -p server/src/main/java/com/aieducenter/verification/endpoints
 ```
 
 - [ ] **Step 2: 移动 VerificationCodeController.java**
 
 ```bash
 cd server/src/main/java/com/aieducenter/verification
-git mv web/controller/VerificationCodeController.java endpoints/controller/VerificationCodeController.java
+git mv web/VerificationCodeController.java endpoints/VerificationCodeController.java
 ```
 
 - [ ] **Step 3: 修改 VerificationCodeController.java 包声明**
 
-打开 `endpoints/controller/VerificationCodeController.java`，修改第 1 行：
+打开 `endpoints/VerificationCodeController.java`，修改第 1 行：
 
 ```java
 // 修改前
-package com.aieducenter.verification.web.controller;
+package com.aieducenter.verification.web;
 
 // 修改后
-package com.aieducenter.verification.endpoints.controller;
+package com.aieducenter.verification.endpoints;
 ```
 
 - [ ] **Step 4: 移动 CaptchaController.java**
 
 ```bash
 cd server/src/main/java/com/aieducenter/verification
-git mv web/controller/CaptchaController.java endpoints/controller/CaptchaController.java
+git mv web/CaptchaController.java endpoints/CaptchaController.java
 ```
 
 - [ ] **Step 5: 修改 CaptchaController.java 包声明**
 
-打开 `endpoints/controller/CaptchaController.java`，修改第 1 行：
+打开 `endpoints/CaptchaController.java`，修改第 1 行：
 
 ```java
 // 修改前
-package com.aieducenter.verification.web.controller;
+package com.aieducenter.verification.web;
 
 // 修改后
-package com.aieducenter.verification.endpoints.controller;
+package com.aieducenter.verification.endpoints;
 ```
 
 - [ ] **Step 6: 更新所有 import 语句**
@@ -144,19 +144,19 @@ package com.aieducenter.verification.endpoints.controller;
 
 ```bash
 cd server
-grep -r "com.aieducenter.verification.web" --include="*.java" .
+grep -r "com.aieducenter.verification.web" --include="*.java" . | grep -v "package com.aieducenter.verification.web"
 ```
 
 修改找到的文件中的 import 语句：
 
 ```java
 // 修改前
-import com.aieducenter.verification.web.controller.VerificationCodeController;
-import com.aieducenter.verification.web.controller.CaptchaController;
+import com.aieducenter.verification.web.VerificationCodeController;
+import com.aieducenter.verification.web.CaptchaController;
 
 // 修改后
-import com.aieducenter.verification.endpoints.controller.VerificationCodeController;
-import com.aieducenter.verification.endpoints.controller.CaptchaController;
+import com.aieducenter.verification.endpoints.VerificationCodeController;
+import com.aieducenter.verification.endpoints.CaptchaController;
 ```
 
 - [ ] **Step 7: 删除旧的 web 目录**
@@ -166,23 +166,34 @@ cd server/src/main/java/com/aieducenter/verification
 git rm -r web
 ```
 
-- [ ] **Step 8: 更新测试文件的包声明**
+- [ ] **Step 8: 更新测试文件的 package 声明**
 
-检查并修改测试文件中的包声明：
+检查测试文件：
 
 ```bash
 cd server
-find src/test -name "*VerificationCodeControllerTest*" -o -name "*CaptchaControllerTest*"
+find src/test -path "*verification/web*" -name "*.java"
 ```
 
-如果有测试文件，修改包声明和 import：
+对于每个测试文件，修改：
+1. 文件夹路径：`verification/web/` → `verification/endpoints/`
+2. package 声明：`package com.aieducenter.verification.web;` → `package com.aieducenter.verification.endpoints;`
 
+例如：
+```bash
+# 移动测试文件
+cd server/src/test/java/com/aieducenter/verification
+git mv web/VerificationCodeControllerTest.java endpoints/VerificationCodeControllerTest.java
+git mv web/CaptchaControllerTest.java endpoints/CaptchaControllerTest.java
+```
+
+然后修改每个测试文件顶部的 package 声明：
 ```java
-// 修改测试文件包声明
-package com.aieducenter.verification.endpoints.controller;
+// 修改前
+package com.aieducenter.verification.web;
 
-// 修改 import
-import com.aieducenter.verification.endpoints.controller.VerificationCodeController;
+// 修改后
+package com.aieducenter.verification.endpoints;
 ```
 
 - [ ] **Step 9: 验证编译和测试**
@@ -350,7 +361,7 @@ git add server/src/main/java/com/aieducenter/tenant/domain/aggregate/Tenant.java
 ### Task 6: 创建 Flyway 数据库迁移脚本
 
 **文件:**
-- 创建: `server/src/main/resources/db/migration/V2__alter_tenant_type_column.sql`
+- 创建: `server/src/main/resources/db/migration/V11__alter_tenant_type_column.sql`
 
 - [ ] **Step 1: 检查现有迁移脚本版本**
 
@@ -361,7 +372,7 @@ ls -la server/src/main/resources/db/migration/
 
 - [ ] **Step 2: 创建迁移脚本文件**
 
-创建 `server/src/main/resources/db/migration/V2__alter_tenant_type_column.sql`：
+创建 `server/src/main/resources/db/migration/V11__alter_tenant_type_column.sql`：
 
 ```sql
 -- ============================================================
@@ -418,7 +429,7 @@ cd server && ./gradlew flywayMigrate
 
 ```bash
 git add server/src/main/java/com/aieducenter/tenant/domain/aggregate/Tenant.java
-git add server/src/main/resources/db/migration/V2__alter_tenant_type_column.sql
+git add server/src/main/resources/db/migration/V11__alter_tenant_type_column.sql
 git commit -m "refactor(tenant): change Tenant.type to use @EnumConvert (Integer storage)
 
 - Replace @Enumerated(EnumType.STRING) with @EnumConvert(TenantType.class)
@@ -521,18 +532,32 @@ Expected: 覆盖率符合目标（tenant 上下文应保持高覆盖率）
 
 **目的:** 确保 @EnumConvert 注解正常工作
 
-- [ ] **Step 1: 检查 Tenant 序列化（JSON）**
+- [ ] **Step 1: 验证 Tenant 序列化（JSON → Integer）**
 
-临时添加测试或手动验证：
-```java
-// Tenant should serialize to JSON with Integer code
-// {"id": 123, "name": "test", "type": 1, "ownerId": 456}
+创建临时测试或使用 Postman/curl：
+
+```bash
+# 启动应用后，调用 API 获取 Tenant 数据
+curl http://localhost:8080/api/tenants/1 | jq
+
+# 预期输出中 type 为整数：
+# {
+#   "id": 1,
+#   "name": "Test",
+#   "type": 1,  ← 应该是整数，不是 "PERSONAL"
+#   "ownerId": 123
+# }
 ```
 
-- [ ] **Step 2: 检查 Tenant 反序列化（JSON）**
+- [ ] **Step 2: 验证 Tenant 反序列化（Integer → Java）**
 
-```java
-// JSON {"type": 1} should deserialize to TenantType.PERSONAL
+```bash
+# 发送 POST 请求，type 使用整数
+curl -X POST http://localhost:8080/api/tenants \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","type":1,"ownerId":123}' | jq
+
+# 预期返回成功响应
 ```
 
 - [ ] **Step 3: 验证数据库存储**
