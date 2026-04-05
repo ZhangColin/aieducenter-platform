@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.aieducenter.account.domain.aggregate.User;
 import com.cartisan.core.stereotype.Port;
 import com.cartisan.core.stereotype.PortType;
+import com.cartisan.data.jpa.repository.BaseRepository;
 
 /**
  * 用户仓储接口。
@@ -12,7 +13,7 @@ import com.cartisan.core.stereotype.PortType;
  * @since 0.1.0
  */
 @Port(PortType.REPOSITORY)
-public interface UserRepository {
+public interface UserRepository extends BaseRepository<User, Long> {
 
     Optional<User> findByUsername(String username);
 
@@ -25,6 +26,4 @@ public interface UserRepository {
     boolean existsByEmail(String email);
 
     boolean existsByPhoneNumber(String phoneNumber);
-
-    User save(User user);
 }
