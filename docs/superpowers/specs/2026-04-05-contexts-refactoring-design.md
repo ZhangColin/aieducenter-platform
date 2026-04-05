@@ -54,13 +54,16 @@ import com.cartisan.core.stereotype.SubDomain;
 
 **变更**:
 ```
-verification.web.controller
-  → verification.endpoints.controller
+verification.web
+  → verification.endpoints
 ```
 
 **影响文件**:
-- `VerificationCodeController.java`
-- `CaptchaController.java`
+- `server/src/main/java/com/aieducenter/verification/web/VerificationCodeController.java`
+  → `server/src/main/java/com/aieducenter/verification/endpoints/VerificationCodeController.java`
+- `server/src/main/java/com/aieducenter/verification/web/CaptchaController.java`
+  → `server/src/main/java/com/aieducenter/verification/endpoints/CaptchaController.java`
+- 对应的测试文件也需要移动并修改 package 声明
 
 ### 1.3 删除未使用的类
 
@@ -119,7 +122,7 @@ private TenantType type;
 
 ### 2.3 数据库迁移脚本
 
-**文件**: `server/src/main/resources/db/migration/V2__alter_tenant_type_column.sql`
+**文件**: `server/src/main/resources/db/migration/V11__alter_tenant_type_column.sql`
 
 ```sql
 -- ============================================================

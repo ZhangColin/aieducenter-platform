@@ -138,7 +138,7 @@ package com.aieducenter.verification.web;
 package com.aieducenter.verification.endpoints;
 ```
 
-- [ ] **Step 6: 更新所有 import 语句**
+- [ ] **Step 6: 更新所有 import 语句（包括跨上下文引用）**
 
 搜索所有引用旧包的文件：
 
@@ -147,7 +147,24 @@ cd server
 grep -r "com.aieducenter.verification.web" --include="*.java" . | grep -v "package com.aieducenter.verification.web"
 ```
 
-修改找到的文件中的 import 语句：
+检查是否有其他上下文引用了 verification.web（跨上下文依赖）：
+
+```bash
+cd server/src/main/java
+grep -r "com.aieducenter.verification.web" --include="*.java" . | grep -v "^./verification/"
+```
+
+如果发现跨上下文引用（如 admin、user 等），需要更新这些文件中的 import 语句：
+
+```java
+// 修改前
+import com.aieducenter.verification.web.VerificationCodeController;
+import com.aieducenter.verification.web.CaptchaController;
+
+// 修改后
+import com.aieducenter.verification.endpoints.VerificationCodeController;
+import com.aieducenter.verification.endpoints.CaptchaController;
+```
 
 ```java
 // 修改前
@@ -532,33 +549,36 @@ Expected: 覆盖率符合目标（tenant 上下文应保持高覆盖率）
 
 **目的:** 确保 @EnumConvert 注解正常工作
 
-- [ ] **Step 1: 验证 Tenant 序列化（JSON → Integer）**
+**前置条件**: 应用可启动，或使用单元测试验证
 
-创建临时测试或使用 Postman/curl：
+- [ ] **Step 1: 方法 A - 单元测试验证（推荐，无需启动应用）**
 
 ```bash
-# 启动应用后，调用 API 获取 Tenant 数据
-curl http://localhost:8080/api/tenants/1 | jq
-
-# 预期输出中 type 为整数：
-# {
-#   "id": 1,
-#   "name": "Test",
-#   "type": 1,  ← 应该是整数，不是 "PERSONAL"
-#   "ownerId": 123
-# }
+cd server && ./gradlew test --tests "*Tenant*"
 ```
 
-- [ ] **Step 2: 验证 Tenant 反序列化（Integer → Java）**
+如果测试通过，说明枚举序列化/反序列化正常。
+
+- [ ] **Step 2: 方法 B - 集成测试验证（需要应用启动）**
+
+如果需要手动验证，启动应用后：
 
 ```bash
-# 发送 POST 请求，type 使用整数
+# 1. 获取 Tenant 数据，验证 type 序列化为整数
+curl http://localhost:8080/api/tenants/1 2>/dev/null | jq '.type'
+
+# 预期输出：1（整数），而非 "PERSONAL"（字符串）
+
+# 2. 创建 Tenant，验证 type 反序列化
 curl -X POST http://localhost:8080/api/tenants \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test","type":1,"ownerId":123}' | jq
+  -d '{"name":"Test","type":1,"ownerId":999}' \
+  2>/dev/null | jq
 
 # 预期返回成功响应
 ```
+
+**注意**: 如果 tenant 上下文尚未有对外 API，跳过此步骤，使用方法 A 即可。
 
 - [ ] **Step 3: 验证数据库存储**
 
