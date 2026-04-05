@@ -1,4 +1,4 @@
-package com.aieducenter.verification.web;
+package com.aieducenter.verification.endpoints;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;

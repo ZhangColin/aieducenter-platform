@@ -1,4 +1,4 @@
-package com.aieducenter.verification.web;
+package com.aieducenter.verification.endpoints;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

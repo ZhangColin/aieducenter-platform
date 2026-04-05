@@ -1,4 +1,4 @@
-package com.aieducenter.verification.web;
+package com.aieducenter.verification.endpoints;
 
 import com.aieducenter.verification.application.VerificationCodeAppService;
 import com.aieducenter.verification.application.dto.SendCodeResponse;
