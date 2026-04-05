@@ -1,6 +1,7 @@
 package com.aieducenter.account.application;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.account.application.dto.command.LoginByPasswordCommand;
 import com.aieducenter.account.application.dto.command.LoginBySmsCommand;
@@ -17,7 +18,7 @@ import com.cartisan.security.authentication.AuthenticationService;
 /**
  * 账号登录应用服务。
  *
- * <p>支持密码登录和短信验证码登录两种方式，无 DB 写入，不需要事务。</p>
+ * <p>支持密码登录和短信验证码登录两种方式，登录时会产生会话状态。</p>
  *
  * @since 0.1.0
  */
@@ -52,6 +53,7 @@ public class AccountLoginAppService {
      * @return 登录结果（含 token）
      * @throws DomainException ACCOUNT_NOT_FOUND (401) / LOGIN_PASSWORD_INCORRECT (401) / CAPTCHA_INVALID (400)
      */
+    @Transactional  // 会产生会话状态，非只读
     public LoginResult loginByPassword(LoginByPasswordCommand command) {
         // 1. 验证图形验证码
         captchaAppService.verifyCaptcha(command.captchaId(), command.captchaCode());
@@ -82,6 +84,7 @@ public class AccountLoginAppService {
      * @return 登录结果（含 token）
      * @throws DomainException ACCOUNT_NOT_FOUND (401)，或 VerificationCodeError（验证码无效/过期/已用）
      */
+    @Transactional  // 会产生会话状态，非只读
     public LoginResult loginBySms(LoginBySmsCommand command) {
         // 注意：图形验证码已在发送短信验证码时校验过，这里不再重复校验
 
@@ -102,6 +105,7 @@ public class AccountLoginAppService {
      *
      * <p>调用 Sa-Token 的退出接口，清除服务端会话。</p>
      */
+    @Transactional  // 会清除会话状态
     public void logout() {
         authenticationService.logout();
     }

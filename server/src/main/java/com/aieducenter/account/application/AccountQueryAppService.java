@@ -1,6 +1,7 @@
 package com.aieducenter.account.application;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.aieducenter.account.domain.repository.UserRepository;
 
@@ -26,6 +27,7 @@ public class AccountQueryAppService {
      * @param username 用户名
      * @return true 可用，false 已被占用
      */
+    @Transactional(readOnly = true)
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
     }
@@ -36,6 +38,7 @@ public class AccountQueryAppService {
      * @param phone 手机号
      * @return true 可用，false 已被占用
      */
+    @Transactional(readOnly = true)
     public boolean isPhoneNumberAvailable(String phone) {
         return !userRepository.existsByPhoneNumber(phone);
     }
