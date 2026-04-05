@@ -1,8 +1,13 @@
 package com.aieducenter.tenant.domain.aggregate;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 import com.aieducenter.tenant.domain.model.TenantType;
+import com.cartisan.data.jpa.annotation.EnumConvert;
 import com.cartisan.core.domain.AggregateRoot;
 import com.cartisan.core.stereotype.Aggregate;
 import com.cartisan.data.jpa.domain.AuditableSoftDeletable;
@@ -36,8 +41,8 @@ public class Tenant extends AuditableSoftDeletable implements AggregateRoot<Tena
     private String name;
 
     @Getter
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 20)
+    @EnumConvert(TenantType.class)
+    @Column(name = "type", nullable = false)
     private TenantType type;
 
     @Getter
