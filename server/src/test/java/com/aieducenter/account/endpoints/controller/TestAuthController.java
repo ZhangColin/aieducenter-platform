@@ -1,4 +1,4 @@
-package com.aieducenter.account.web;
+package com.aieducenter.account.endpoints.controller;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.aieducenter.account.web;
+package com.aieducenter.account.endpoints.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
