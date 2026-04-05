@@ -19,8 +19,8 @@ export interface LoginByPasswordParams {
 export interface LoginBySmsParams {
   phone: string
   code: string
-  captchaId: string
-  captchaCode: string
+  captchaId?: string
+  captchaCode?: string
 }
 
 export interface LoginResponse {
